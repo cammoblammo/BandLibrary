@@ -1,0 +1,19 @@
+# Build / output
+output/
+tmp/
+build/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Logs
+*.log
+
+# Zip outputs
+*.zip

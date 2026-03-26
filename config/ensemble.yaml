@@ -1,0 +1,20 @@
+schema_version: 1
+
+ensemble:
+  name: Default Band
+
+booklets:
+  - id: trumpet_1
+    preferred_parts: [trumpet_1]
+
+  - id: trumpet_2
+    preferred_parts: [trumpet_2]
+
+  - id: trumpet_3
+    preferred_parts: [trumpet_3, trumpet_2, trumpet_1]
+
+  - id: flute_1
+    preferred_parts: [flute_1]
+
+  - id: percussion
+    preferred_parts: [percussion]
