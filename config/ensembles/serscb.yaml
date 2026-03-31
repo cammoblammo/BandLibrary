@@ -1,0 +1,58 @@
+schema_version: 1
+
+ensemble:
+  id: current-band
+  name: Current Band
+
+parts:
+  - id: flute
+    label: Flute
+    fallback: []
+
+  - id: clarinet_1
+    label: Clarinet 1
+    fallback: []
+
+  - id: clarinet_2
+    label: Clarinet 2
+    fallback: [clarinet_1]
+
+  - id: alto_sax
+    label: Alto Sax
+    fallback: [alto_sax_1]
+
+  - id: tenor_sax
+    label: Tenor Sax
+    fallback: []
+
+  - id: trumpet_1
+    label: Trumpet 1
+    fallback: []
+
+  - id: trumpet_2
+    label: Trumpet 2
+    fallback: [trumpet_1]
+
+  - id: trumpet_3
+    label: Trumpet 3
+    fallback: [trumpet_2, trumpet_1]
+
+  - id: trombone
+    label: Trombone
+    fallback: []
+
+  - id: bass_guitar
+    label: Bass Guitar
+    fallback: []
+
+  - id: guitar
+    label: Guitar
+    fallback: [electric_guitar]
+
+  - id: drum_kit
+    label: Drum Kit
+    fallback: []
+
+  - id: auxiliary_percussion
+    label: Auxiliary Percussion
+    fallback: []
