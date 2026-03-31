@@ -206,6 +206,8 @@ build_booklets.py --ensemble school.yaml --setlist concert.yaml
 - Instrument grouping
 - Repertoire/setlist tracking
 - Library query tools
+- Divider pages between pieces
+- When loading a piece, compare every pages entry against the source PDF page count.
 
 ## Key Design Principles
 
