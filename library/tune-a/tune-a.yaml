@@ -1,0 +1,17 @@
+schema_version: 1
+piece:
+  id: tune-a
+  title: Tune A
+  source_pdf: tune-a.pdf
+  status: manual
+parts:
+- label: Trumpet 1
+  id: trumpet_1
+  pages:
+  - 12
+  - 12
+- label: Trumpet 2
+  id: trumpet_2
+  pages:
+  - 13
+  - 14

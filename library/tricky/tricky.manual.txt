@@ -1,0 +1,24 @@
+# Test piece with messy real-world input
+
+Title:  A Very   Messy   Tune  
+
+# Basic parts
+Flute: 1
+Clarinet 1: 2-3
+Clarinet 2 : 4 - 5
+Alto Sax: 6
+Tenor Sax:7
+
+# Trumpets with spacing weirdness
+Trumpet 1: 8
+Trumpet 2: 9-10
+Trumpet   3 :   11
+
+# Mixed formatting
+Trombone:12
+Bass Guitar: 13
+Guitar :14
+Drum Kit: 15
+Auxiliary Percussion: 16-17
+
+

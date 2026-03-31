@@ -1,0 +1,77 @@
+schema_version: 1
+piece:
+  id: hound-dog-2024-08-21-06-40-47
+  title: Hound Dog
+  source_pdf: hound-dog-2024-08-21-06-40-47.pdf
+  status: manual
+parts:
+- label: Auxiliary percussion
+  id: auxiliary_percussion
+  pages:
+  - 1
+  - 2
+- label: Drum kit
+  id: drum_kit
+  pages:
+  - 3
+  - 3
+- label: Tuba
+  id: tuba
+  pages:
+  - 4
+  - 4
+- label: Trombone
+  id: trombone
+  pages:
+  - 5
+  - 5
+- label: Trumpet 2
+  id: trumpet_2
+  pages:
+  - 6
+  - 6
+- label: Trumpet 1
+  id: trumpet_1
+  pages:
+  - 7
+  - 7
+- label: Baritone sax
+  id: baritone_sax
+  pages:
+  - 8
+  - 8
+- label: Tenor sax
+  id: tenor_sax
+  pages:
+  - 9
+  - 9
+- label: Alto sax
+  id: alto_sax
+  pages:
+  - 10
+  - 10
+- label: Bass Clarinet
+  id: bass_clarinet
+  pages:
+  - 11
+  - 11
+- label: Clarinet 2
+  id: clarinet_2
+  pages:
+  - 12
+  - 12
+- label: Clarinet 1
+  id: clarinet_1
+  pages:
+  - 13
+  - 13
+- label: Oboe
+  id: oboe
+  pages:
+  - 14
+  - 14
+- label: Flute
+  id: flute
+  pages:
+  - 15
+  - 15
