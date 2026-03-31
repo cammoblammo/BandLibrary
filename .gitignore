@@ -17,3 +17,6 @@ __pycache__/
 
 # Zip outputs
 *.zip
+
+# Backups
+*~
