@@ -151,6 +151,11 @@ def load_piece(library_dir: Path, slug: str) -> Piece:
     if not pdf_path.exists():
         raise BookletBuildError(f"Source PDF not found for piece {slug}: {pdf_path}")
 
+    # Validate every declared part against the actual PDF page count now,
+    # not only when that part happens to be used by the current build.
+    reader = PdfReader(str(pdf_path))
+    total_pages = len(reader.pages)
+
     parts_by_id: dict[str, PiecePart] = {}
 
     for index, item in enumerate(parts):
@@ -175,9 +180,16 @@ def load_piece(library_dir: Path, slug: str) -> Piece:
             )
 
         start_page, end_page = pages
+
         if start_page <= 0 or end_page <= 0 or start_page > end_page:
             raise BookletBuildError(
                 f"Invalid page range for part {part_id!r} in {piece_yaml}: {pages}"
+            )
+
+        if end_page > total_pages:
+            raise BookletBuildError(
+                f"Part {part_id!r} in piece {slug} references page {end_page}, "
+                f"but PDF only has {total_pages} pages"
             )
 
         if part_id in parts_by_id:
@@ -395,6 +407,13 @@ def main() -> int:
 
     print(f"Generated {len(generated_files)} booklet PDF(s) in {args.output}")
     print(f"Created archive: {zip_path}")
+
+    print("Summary:")
+    for ensemble_part in ensemble_parts:
+        matches = grouped_matches[ensemble_part.id]
+        total = len(matches)
+        covered = sum(1 for match in matches if match.matched_id is not None)
+        print(f"  {ensemble_part.id}: {covered}/{total} pieces")
 
     return 0
 
