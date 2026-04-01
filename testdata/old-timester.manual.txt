@@ -1,0 +1,9 @@
+Part 1 Bb: 7
+Part 2 Bb: 8
+Part 3 Bb: 9
+Part 3 C: 10
+Tuba: 11
+Part 3 Eb: 12
+Part 3 F: 13
+Drum kit: 14
+Auxiliary percussion: 15
