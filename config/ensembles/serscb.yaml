@@ -19,7 +19,7 @@ parts:
 
   - id: alto_sax
     label: Alto Sax
-    fallback: [alto_sax_1]
+    fallback: []
 
   - id: tenor_sax
     label: Tenor Sax
@@ -47,7 +47,7 @@ parts:
 
   - id: guitar
     label: Guitar
-    fallback: [electric_guitar]
+    fallback: []
 
   - id: drum_kit
     label: Drum Kit
