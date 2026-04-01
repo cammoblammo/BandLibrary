@@ -1,0 +1,51 @@
+schema_version: 1
+
+aliases:
+  "Flute": flute
+
+  "Clarinet 1": clarinet_1
+  "Clarinet 2": clarinet_2
+  "Clarinet 3": clarinet_3
+  "Bb Clarinet 1": clarinet_1
+  "Bb Clarinet 2": clarinet_2
+  "Bb Clarinet 3": clarinet_3
+  "Clarinet in Bb 1": clarinet_1
+  "Clarinet in Bb 2": clarinet_2
+  "Clarinet in Bb 3": clarinet_3
+
+  "Alto sax": alto_sax
+  "Alto sax 1": alto_sax_1
+  "Alto sax 2": alto_sax_2
+  "Alto saxophone": alto_sax
+  "Alto saxophone 1": alto_sax_1
+  "Alto saxophone 2": alto_sax_2
+
+  "Tenor sax": tenor_sax
+  "Tenor saxophone": tenor_sax
+  "Baritone sax": baritone_sax
+  "Baritone saxophone": baritone_sax
+
+  "Trumpet 1": trumpet_1
+  "Trumpet 2": trumpet_2
+  "Trumpet 3": trumpet_3
+
+  "Trombone": trombone
+  "Trombone 1": trombone_1
+  "Trombone 2": trombone_2
+
+  "Euphonium": euphonium
+  "Tuba": tuba
+  "Bass Clarinet": bass_clarinet
+  "Oboe": oboe
+
+  "Guitar": guitar
+  "Electric guitar": guitar
+  "Bass guitar": bass_guitar
+  "Bass Guitar": bass_guitar
+
+  "Drum kit": drum_kit
+  "Drum Kit": drum_kit
+  "Drumkit": drum_kit
+  "Percussion": percussion
+  "Auxiliary percussion": auxiliary_percussion
+  "Auxiliary Percussion": auxiliary_percussion

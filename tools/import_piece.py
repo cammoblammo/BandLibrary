@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import argparse
 import re
 import shutil
 import sys
 from pathlib import Path
-import yaml
 import unicodedata
+
+try:
+    import yaml
+except ImportError:
+    print("ERROR: PyYAML is required. Install it with: pip install pyyaml", file=sys.stderr)
+    sys.exit(1)
 
 
 # -------------------------
@@ -26,8 +33,82 @@ def infer_title_from_filename(path: Path) -> str:
     return re.sub(r"[_\-]+", " ", path.stem).strip()
 
 
-def normalise_part_id(label: str) -> str:
+def default_normalise_part_id(label: str) -> str:
     return slugify(label).replace("-", "_")
+
+
+def canonicalise_alias_key(label: str) -> str:
+    """
+    Canonicalise labels for alias lookup so that small differences in spacing,
+    punctuation, and case do not matter too much.
+    """
+    text = unicodedata.normalize("NFKD", label)
+    text = text.encode("ascii", "ignore").decode("ascii")
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9]+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+# -------------------------
+# Alias loading
+# -------------------------
+
+def load_aliases(path: Path | None) -> dict[str, str]:
+    """
+    Load alias mappings from YAML.
+
+    Expected format:
+
+    schema_version: 1
+    aliases:
+      "Electric guitar": guitar
+      "Alto sax 1": alto_sax_1
+    """
+    if path is None:
+        return {}
+
+    if not path.exists():
+        raise FileNotFoundError(f"Alias file not found: {path}")
+    if not path.is_file():
+        raise ValueError(f"Alias path is not a file: {path}")
+
+    with path.open("r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+
+    if not isinstance(data, dict):
+        raise ValueError(f"Alias file must contain a top-level mapping: {path}")
+
+    aliases = data.get("aliases")
+    if aliases is None:
+        return {}
+    if not isinstance(aliases, dict):
+        raise ValueError(f"'aliases' in {path} must be a mapping")
+
+    loaded: dict[str, str] = {}
+
+    for raw_label, target_id in aliases.items():
+        if not isinstance(raw_label, str) or not raw_label.strip():
+            raise ValueError(f"Alias key must be a non-empty string in {path}")
+        if not isinstance(target_id, str) or not target_id.strip():
+            raise ValueError(f"Alias target must be a non-empty string in {path}")
+
+        key = canonicalise_alias_key(raw_label)
+        if key in loaded and loaded[key] != target_id:
+            raise ValueError(
+                f"Conflicting alias entries for {raw_label!r} in {path}"
+            )
+
+        loaded[key] = target_id.strip()
+
+    return loaded
+
+
+def normalise_part_id(label: str, aliases: dict[str, str]) -> str:
+    alias_key = canonicalise_alias_key(label)
+    if alias_key in aliases:
+        return aliases[alias_key]
+    return default_normalise_part_id(label)
 
 
 # -------------------------
@@ -58,7 +139,7 @@ def parse_page_spec(text: str, line_number: int):
     )
 
 
-def parse_manual_file(path: Path):
+def parse_manual_file(path: Path, aliases: dict[str, str]):
     title = None
     parts = []
 
@@ -84,7 +165,7 @@ def parse_manual_file(path: Path):
 
             parts.append({
                 "label": key,
-                "id": normalise_part_id(key),
+                "id": normalise_part_id(key, aliases),
                 "pages": [start, end]
             })
 
@@ -98,7 +179,13 @@ def parse_manual_file(path: Path):
 # Main import logic
 # -------------------------
 
-def import_piece(pdf_path: Path, manual_path: Path, library: Path, force: bool):
+def import_piece(
+    pdf_path: Path,
+    manual_path: Path,
+    library: Path,
+    force: bool,
+    aliases: dict[str, str],
+):
     if not pdf_path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
 
@@ -117,7 +204,7 @@ def import_piece(pdf_path: Path, manual_path: Path, library: Path, force: bool):
         return
 
     # Parse manual file first (fail early)
-    title, parts = parse_manual_file(manual_path)
+    title, parts = parse_manual_file(manual_path, aliases)
     if not title:
         title = infer_title_from_filename(pdf_path)
 
@@ -186,12 +273,14 @@ def main():
     parser.add_argument("pdf", type=Path)
     parser.add_argument("--manual", type=Path, required=True)
     parser.add_argument("--library", type=Path, default=Path("library"))
+    parser.add_argument("--aliases", type=Path, default=Path("config/aliases.yaml"))
     parser.add_argument("--force", action="store_true")
 
     args = parser.parse_args()
 
     try:
-        import_piece(args.pdf, args.manual, args.library, args.force)
+        aliases = load_aliases(args.aliases)
+        import_piece(args.pdf, args.manual, args.library, args.force, aliases)
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
