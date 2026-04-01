@@ -47,6 +47,7 @@ class Piece:
     title: str
     pdf_path: Path
     parts_by_id: dict[str, PiecePart]
+    assignments: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -56,7 +57,7 @@ class MatchResult:
     piece_slug: str
     piece_title: str
     matched_id: str | None
-    fallback_used: bool
+    match_reason: str | None  # "assignment", "direct", "fallback", or None
 
 
 def load_yaml_file(path: Path) -> dict:
@@ -133,11 +134,14 @@ def load_piece(library_dir: Path, slug: str) -> Piece:
 
     piece_meta = data.get("piece")
     parts = data.get("parts")
+    assignments_raw = data.get("assignments", {})
 
     if not isinstance(piece_meta, dict):
         raise BookletBuildError(f"Missing or invalid 'piece' section in {piece_yaml}")
     if not isinstance(parts, list):
         raise BookletBuildError(f"Missing or invalid 'parts' section in {piece_yaml}")
+    if not isinstance(assignments_raw, dict):
+        raise BookletBuildError(f"Invalid 'assignments' section in {piece_yaml}: must be a mapping")
 
     title = piece_meta.get("title")
     source_pdf = piece_meta.get("source_pdf")
@@ -151,8 +155,6 @@ def load_piece(library_dir: Path, slug: str) -> Piece:
     if not pdf_path.exists():
         raise BookletBuildError(f"Source PDF not found for piece {slug}: {pdf_path}")
 
-    # Validate every declared part against the actual PDF page count now,
-    # not only when that part happens to be used by the current build.
     reader = PdfReader(str(pdf_path))
     total_pages = len(reader.pages)
 
@@ -202,15 +204,46 @@ def load_piece(library_dir: Path, slug: str) -> Piece:
             end_page=end_page,
         )
 
+    assignments: dict[str, str] = {}
+    for target_id, source_id in assignments_raw.items():
+        if not isinstance(target_id, str) or not target_id.strip():
+            raise BookletBuildError(
+                f"Invalid assignment key in {piece_yaml}: assignment targets must be non-empty strings"
+            )
+        if not isinstance(source_id, str) or not source_id.strip():
+            raise BookletBuildError(
+                f"Invalid assignment value for {target_id!r} in {piece_yaml}: "
+                f"assignment sources must be non-empty strings"
+            )
+        if source_id not in parts_by_id:
+            raise BookletBuildError(
+                f"Assignment for {target_id!r} in {piece_yaml} refers to unknown part id {source_id!r}"
+            )
+        assignments[target_id] = source_id
+
     return Piece(
         slug=slug,
         title=title,
         pdf_path=pdf_path,
         parts_by_id=parts_by_id,
+        assignments=assignments,
     )
 
 
 def match_part(piece: Piece, ensemble_part: EnsemblePart) -> MatchResult:
+    # 1. Piece-specific assignment override
+    if ensemble_part.id in piece.assignments:
+        assigned_id = piece.assignments[ensemble_part.id]
+        return MatchResult(
+            requested_id=ensemble_part.id,
+            requested_label=ensemble_part.label,
+            piece_slug=piece.slug,
+            piece_title=piece.title,
+            matched_id=assigned_id,
+            match_reason="assignment",
+        )
+
+    # 2. Direct match
     if ensemble_part.id in piece.parts_by_id:
         return MatchResult(
             requested_id=ensemble_part.id,
@@ -218,9 +251,10 @@ def match_part(piece: Piece, ensemble_part: EnsemblePart) -> MatchResult:
             piece_slug=piece.slug,
             piece_title=piece.title,
             matched_id=ensemble_part.id,
-            fallback_used=False,
+            match_reason="direct",
         )
 
+    # 3. Ensemble fallback
     for fallback_id in ensemble_part.fallback:
         if fallback_id in piece.parts_by_id:
             return MatchResult(
@@ -229,16 +263,17 @@ def match_part(piece: Piece, ensemble_part: EnsemblePart) -> MatchResult:
                 piece_slug=piece.slug,
                 piece_title=piece.title,
                 matched_id=fallback_id,
-                fallback_used=True,
+                match_reason="fallback",
             )
 
+    # 4. Missing
     return MatchResult(
         requested_id=ensemble_part.id,
         requested_label=ensemble_part.label,
         piece_slug=piece.slug,
         piece_title=piece.title,
         matched_id=None,
-        fallback_used=False,
+        match_reason=None,
     )
 
 
@@ -268,7 +303,9 @@ def build_report(
                 warning_lines.append(
                     f"WARNING: {piece.slug} has no matching part for {ensemble_part.label}"
                 )
-            elif result.fallback_used:
+            elif result.match_reason == "assignment":
+                report_lines.append(f"  {piece.slug} -> {result.matched_id} (assignment)")
+            elif result.match_reason == "fallback":
                 report_lines.append(f"  {piece.slug} -> {result.matched_id} (fallback)")
             else:
                 report_lines.append(f"  {piece.slug} -> {result.matched_id}")
