@@ -47,15 +47,15 @@ parts:
 
   - id: baritone_tc
     label: Baritone TC
-    fallback: []
+    fallback: [bass_clarinet]
 
   - id: bass_guitar
     label: Bass Guitar
-    fallback: []
+    fallback: [tuba]
 
   - id: guitar
     label: Guitar
-    fallback: []
+    fallback: [oboe, flute]
 
   - id: drum_kit
     label: Drum Kit
