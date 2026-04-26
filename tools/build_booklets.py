@@ -400,6 +400,11 @@ def build_argument_parser() -> argparse.ArgumentParser:
         nargs="+",
         help="Piece slugs to include, in booklet order.",
     )
+    parser.add_argument(
+    "--dry-run",
+    action="store_true",
+    help="Print match report only; do not generate PDFs or ZIP archive.",
+    )
     return parser
 
 
@@ -451,6 +456,15 @@ def main() -> int:
         total = len(matches)
         covered = sum(1 for match in matches if match.matched_id is not None)
         print(f"  {ensemble_part.id}: {covered}/{total} pieces")
+
+    if args.dry_run:
+        if warning_lines:
+            print("Warnings:", file=sys.stderr)
+            for line in warning_lines:
+                print(line, file=sys.stderr)
+
+        print("Dry run only; no PDFs generated.")
+        return 0    
 
     return 0
 
