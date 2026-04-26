@@ -37,6 +37,7 @@ aliases:
   "Tuba": tuba
   "Bass Clarinet": bass_clarinet
   "Oboe": oboe
+  "Baritone TC": baritone_tc
 
   "Guitar": guitar
   "Electric guitar": guitar
@@ -47,5 +48,6 @@ aliases:
   "Drum Kit": drum_kit
   "Drumkit": drum_kit
   "Percussion": percussion
+  "Mallets": mallets
   "Auxiliary percussion": auxiliary_percussion
   "Auxiliary Percussion": auxiliary_percussion

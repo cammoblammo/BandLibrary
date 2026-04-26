@@ -41,6 +41,14 @@ parts:
     label: Trombone
     fallback: []
 
+  - id: baritone
+    label: Baritone
+    fallback: [trombone]
+
+  - id: baritone_tc
+    label: Baritone TC
+    fallback: []
+
   - id: bass_guitar
     label: Bass Guitar
     fallback: []
