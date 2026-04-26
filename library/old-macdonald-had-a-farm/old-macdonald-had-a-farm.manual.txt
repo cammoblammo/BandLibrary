@@ -1,0 +1,14 @@
+Flute: 1
+Clarinet: 2
+Clarinet in Eb: 3
+Bass Clarinet: 4
+Alto sax: 5
+Tenor sax: 6
+Baritone sax: 7
+Trumpet: 8
+French horn: 9
+Trombone: 10
+Baritone TC: 11
+Tuba: 12
+Mallets: 13
+Drum kit: 14

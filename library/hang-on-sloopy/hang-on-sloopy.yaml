@@ -1,0 +1,82 @@
+schema_version: 1
+piece:
+  id: hang-on-sloopy
+  title: hang on sloopy
+  source_pdf: hang-on-sloopy.pdf
+  status: manual
+parts:
+- label: flute
+  id: flute
+  pages:
+  - 1
+  - 1
+- label: oboe
+  id: oboe
+  pages:
+  - 2
+  - 2
+- label: clarinet 1
+  id: clarinet_1
+  pages:
+  - 3
+  - 3
+- label: clarinet 2
+  id: clarinet_2
+  pages:
+  - 4
+  - 4
+- label: alto sax
+  id: alto_sax
+  pages:
+  - 5
+  - 5
+- label: tenor sax
+  id: tenor_sax
+  pages:
+  - 6
+  - 6
+- label: baritone sax
+  id: baritone_sax
+  pages:
+  - 7
+  - 7
+- label: trumpet 2
+  id: trumpet_2
+  pages:
+  - 8
+  - 8
+- label: trumpet 1
+  id: trumpet_1
+  pages:
+  - 9
+  - 9
+- label: french horn
+  id: french_horn
+  pages:
+  - 10
+  - 10
+- label: trombone
+  id: trombone
+  pages:
+  - 11
+  - 11
+- label: baritone tc
+  id: baritone_tc
+  pages:
+  - 12
+  - 12
+- label: tuba
+  id: tuba
+  pages:
+  - 13
+  - 13
+- label: aux percussion
+  id: auxiliary_percussion
+  pages:
+  - 14
+  - 14
+- label: drum kit
+  id: drum_kit
+  pages:
+  - 15
+  - 15

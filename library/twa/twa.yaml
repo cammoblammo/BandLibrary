@@ -1,0 +1,77 @@
+schema_version: 1
+piece:
+  id: twa
+  title: twa
+  source_pdf: twa.pdf
+  status: manual
+parts:
+- label: flute
+  id: flute
+  pages:
+  - 1
+  - 1
+- label: clarinet 1
+  id: clarinet_1
+  pages:
+  - 2
+  - 2
+- label: clarinet 2
+  id: clarinet_2
+  pages:
+  - 3
+  - 3
+- label: alto sax
+  id: alto_sax
+  pages:
+  - 4
+  - 4
+- label: tenor sax
+  id: tenor_sax
+  pages:
+  - 5
+  - 5
+- label: baritone sax
+  id: baritone_sax
+  pages:
+  - 6
+  - 6
+- label: trumpet 1
+  id: trumpet_1
+  pages:
+  - 7
+  - 7
+- label: trumpet 2
+  id: trumpet_2
+  pages:
+  - 8
+  - 8
+- label: french horn
+  id: french_horn
+  pages:
+  - 9
+  - 9
+- label: baritone tc
+  id: baritone_tc
+  pages:
+  - 10
+  - 10
+- label: trombone
+  id: trombone
+  pages:
+  - 11
+  - 11
+- label: tuba
+  id: tuba
+  pages:
+  - 12
+  - 12
+- label: drum kit
+  id: drum_kit
+  pages:
+  - 13
+  - 13
+- label: aux percussion
+  id: auxiliary_percussion
+  pages:
+  - 14
+  - 14
