@@ -11,11 +11,15 @@ parts:
 
   - id: clarinet_1
     label: Clarinet 1
-    fallback: []
+    fallback: [clarinet]
 
   - id: clarinet_2
     label: Clarinet 2
-    fallback: [clarinet_1]
+    fallback: [clarinet_1, clarinet]
+
+  - id: clarinet_3
+    label: Clarinet 3
+    fallback: [clarinet_2, clarinet_1, clarinet]
 
   - id: alto_sax
     label: Alto Sax
@@ -27,15 +31,15 @@ parts:
 
   - id: trumpet_1
     label: Trumpet 1
-    fallback: []
+    fallback: [trumpet]
 
   - id: trumpet_2
     label: Trumpet 2
-    fallback: [trumpet_1]
+    fallback: [trumpet_1, trumpet]
 
   - id: trumpet_3
     label: Trumpet 3
-    fallback: [trumpet_2, trumpet_1]
+    fallback: [trumpet_2, trumpet_1, trumpet]
 
   - id: trombone
     label: Trombone
@@ -57,10 +61,14 @@ parts:
     label: Guitar
     fallback: [oboe, flute]
 
+  - id: piano
+    label: Piano
+    fallback: [mallets, oboe, flute]
+
   - id: drum_kit
     label: Drum Kit
     fallback: []
 
   - id: auxiliary_percussion
     label: Auxiliary Percussion
-    fallback: []
+    fallback: [drum_kit]
