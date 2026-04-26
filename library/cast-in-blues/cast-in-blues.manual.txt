@@ -1,0 +1,13 @@
+Flute: 1
+Clarinet 1: 2
+Clarinet 2: 3
+Alto sax: 4
+Tenor sax: 5
+Trumpet 1: 6
+Trumpet 2: 7
+Trumpet 3: 8
+Trombone: 9
+Baritone TC: 10
+Electric guitar: 11
+Bass guitar: 12-13
+Drum kit: 14

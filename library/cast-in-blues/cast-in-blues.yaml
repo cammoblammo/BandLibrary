@@ -1,0 +1,72 @@
+schema_version: 1
+piece:
+  id: cast-in-blues
+  title: Cast in Blues
+  source_pdf: cast-in-blues.pdf
+  status: manual
+parts:
+- label: Flute
+  id: flute
+  pages:
+  - 1
+  - 1
+- label: Clarinet 1
+  id: clarinet_1
+  pages:
+  - 2
+  - 2
+- label: Clarinet 2
+  id: clarinet_2
+  pages:
+  - 3
+  - 3
+- label: Alto sax
+  id: alto_sax
+  pages:
+  - 4
+  - 4
+- label: Tenor sax
+  id: tenor_sax
+  pages:
+  - 5
+  - 5
+- label: Trumpet 1
+  id: trumpet_1
+  pages:
+  - 6
+  - 6
+- label: Trumpet 2
+  id: trumpet_2
+  pages:
+  - 7
+  - 7
+- label: Trumpet 3
+  id: trumpet_3
+  pages:
+  - 8
+  - 8
+- label: Trombone
+  id: trombone
+  pages:
+  - 9
+  - 9
+- label: Baritone TC
+  id: baritone_tc
+  pages:
+  - 10
+  - 10
+- label: Electric guitar
+  id: guitar
+  pages:
+  - 11
+  - 11
+- label: Bass guitar
+  id: bass_guitar
+  pages:
+  - 12
+  - 13
+- label: Drum kit
+  id: drum_kit
+  pages:
+  - 14
+  - 14
