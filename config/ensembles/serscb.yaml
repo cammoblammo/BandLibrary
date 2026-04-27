@@ -47,7 +47,11 @@ parts:
 
   - id: baritone
     label: Baritone
-    fallback: [trombone]
+    fallback: [euphonium, trombone]
+
+  - id: euphonium
+    label: Euphonium
+    fallback: [baritone, trombone]
 
   - id: baritone_tc
     label: Baritone TC
