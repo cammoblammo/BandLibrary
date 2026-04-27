@@ -1,0 +1,11 @@
+drum kit: 1
+tuba: 2
+baritone: 3
+baritone tc: 4
+trombone: 5
+french horn: 6
+trumpet: 7
+tenor sax: 8
+alto sax: 9
+clarinet: 10
+flute: 11

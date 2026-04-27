@@ -1,0 +1,62 @@
+schema_version: 1
+piece:
+  id: idk
+  title: idk
+  source_pdf: idk.pdf
+  status: manual
+parts:
+- label: drum kit
+  id: drum_kit
+  pages:
+  - 1
+  - 1
+- label: tuba
+  id: tuba
+  pages:
+  - 2
+  - 2
+- label: baritone
+  id: baritone
+  pages:
+  - 3
+  - 3
+- label: baritone tc
+  id: baritone_tc
+  pages:
+  - 4
+  - 4
+- label: trombone
+  id: trombone
+  pages:
+  - 5
+  - 5
+- label: french horn
+  id: french_horn
+  pages:
+  - 6
+  - 6
+- label: trumpet
+  id: trumpet
+  pages:
+  - 7
+  - 7
+- label: tenor sax
+  id: tenor_sax
+  pages:
+  - 8
+  - 8
+- label: alto sax
+  id: alto_sax
+  pages:
+  - 9
+  - 9
+- label: clarinet
+  id: clarinet
+  pages:
+  - 10
+  - 10
+- label: flute
+  id: flute
+  pages:
+  - 11
+  - 11
