@@ -4,46 +4,80 @@ A toolchain for managing a band music library.
 
 ## Overview
 
-This project provides tools to:
+BandLibrary provides a set of tools to:
 
-- import PDF scores and parts into a structured library
-- define ensembles and their instrumentation
-- generate instrument-specific booklets from multiple pieces
+- create structured metadata for PDF scores and parts
+- import pieces into a organised library
+- generate instrument-specific booklets for any combination of pieces
+- support real-world edge cases such as publisher naming inconsistencies and non-standard part layouts
 
 ## Directory Structure
 
-library/  
-  One folder per piece (PDF + YAML metadata)
+```
+library/                    One folder per imported piece
+tools/                      Scripts and GUI tools
+config/
+  ensembles/                Ensemble definition files
+  aliases.yaml              Instrument name normalisation
+docs/                       Project documentation
+output/                     Generated files (not version-controlled)
+```
 
-tools/  
-  Scripts for importing and building booklets
+## Tools
 
-config/ensembles/  
-  Ensemble definition files
+### manual_editor.py
 
-docs/  
-  Project documentation
+A graphical tool for creating manual mapping files from PDF scores.
+This is the recommended starting point when importing a new piece.
 
-output/  
-  Generated files (ignored by git)
+```
+python3 tools/manual_editor.py
+```
+
+### import_piece.py
+
+Imports a PDF and its manual mapping file into the library,
+creating structured YAML metadata.
+
+```
+python3 tools/import_piece.py "Tune A.pdf" --manual "Tune A.manual.txt"
+```
+
+### build_booklets.py
+
+Generates per-instrument PDF booklets from one or more imported pieces.
+
+```
+python3 tools/build_booklets.py \
+  --ensemble config/ensembles/my-ensemble.yaml \
+  tune-a tune-b tune-c
+```
+
+### add_part.py
+
+Appends an additional part PDF to an existing imported piece.
+
+```
+python3 tools/add_part.py <piece-slug> "Part Label" part.pdf
+```
 
 ## Quick Start
 
-### Import a piece
-
-python tools/import_piece.py "Tune A.pdf" --manual "Tune A.manual.txt"
-
-### Build booklets (dry run)
-
-python tools/build_booklets.py \
-  --ensemble config/ensembles/current-band.yaml \
-  tune-a tune-b
+See `docs/quickstart.md` for a full walkthrough.
 
 ## Design Principles
 
-- deterministic behaviour
-- explicit data over inference
-- manual override always possible
-- incremental complexity
+- Deterministic behaviour over clever inference
+- Explicit data over hidden logic
+- Manual override always possible
+- Separation of concerns: piece data, ensemble config, and build logic are independent
+- Incremental complexity: build only what is needed now
 
-See ROADMAP.md for full project plan.
+## Further Reading
+
+- `docs/quickstart.md` — end-to-end workflow
+- `docs/manual-editor.md` — graphical mapping editor
+- `docs/importer.md` — importer reference
+- `docs/booklet-builder.md` — booklet builder reference
+- `docs/data-model.md` — YAML schemas and data structures
+- `docs/roadmap.md` — project history and future plans

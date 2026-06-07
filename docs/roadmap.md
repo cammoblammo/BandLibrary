@@ -1,252 +1,154 @@
-# Band Library Tooling Roadmap
+# BandLibrary Roadmap
 
 ## Overview
 
-This project provides a toolchain for managing a band music library.
-
-It consists of two primary tools:
-
-1. Importer  
-   Converts source PDFs and manual definitions into structured piece metadata.
-
-2. Booklet Builder  
-   Uses piece metadata and ensemble definitions to generate part booklets.
+BandLibrary is a toolchain for managing a band music library. It provides
+tools to import PDF scores, store structured metadata, and generate
+instrument-specific booklets automatically.
 
 ## Design Philosophy
 
-- Prefer deterministic behaviour over clever inference
-- Prefer explicit data over hidden logic
-- Always allow manual override
-- Build complexity incrementally
-- Keep piece data, ensemble config, and build logic separate
+- Deterministic behaviour over clever inference
+- Explicit data over hidden logic
+- Manual override always possible
+- Separation of concerns: piece data, ensemble config, and build logic are independent
+- Incremental complexity: build only what is needed now
 
-## Phase 0 — Foundation (Current)
+---
 
-### Goals
+## Completed
 
-- Establish core data model
-- Prove basic workflow
-- Avoid over-engineering
+### Phase 0 — Foundation
 
-### Importer (v1)
+- Importer (manual mode)
+  - Manual mapping file format
+  - Slugified directory and file naming
+  - Canonical YAML output per piece
+  - Validation: malformed lines, invalid ranges, duplicate parts
+  - `--force` overwrite with safe backup and rollback
+- Ensemble definition schema
+  - YAML-based part list
+  - Explicit fallback chains
+- Booklet builder (dry run)
+  - Reads ensemble and piece YAMLs
+  - Reports matches, fallbacks, and missing parts
 
-Features:
+### Phase 1 — Working System
 
-- Manual mode only
-- One PDF per invocation
-- Simple manual file format:
+- Booklet builder (full)
+  - PDF page extraction
+  - Per-instrument PDF generation
+  - Fallback resolution
+  - Timestamped ZIP archive output
 
-  Trumpet 1: 12  
-  Trumpet 2: 13-14  
+### Phase 2 — Quality of Life
 
-- Slugified:
-  - directory names
-  - filenames
-  - internal IDs
+- Alias system
+  - `config/aliases.yaml` for normalising publisher naming inconsistencies
+  - Case-insensitive, punctuation-tolerant matching
+- Layered part assignments
+  - `assignments` block in piece YAML
+  - Checked before direct matching and fallbacks
 
-- Output:
-  - canonical YAML per piece
+### Phase 3 — Manual Mapping Editor
 
-- Validation:
-  - malformed lines
-  - invalid page ranges
-  - duplicate parts
+- Graphical split-pane editor (`tools/manual_editor.py`)
+  - PDF viewer with page navigation, zoom, and rotation
+  - Fit-to-page on load
+  - Smart text editor with Enter-to-advance workflow
+  - Tab-cycling autocomplete from aliases file
+  - `--aliases` flag with `config/aliases.yaml` as default
+  - Save / Save As with slugified filename suggestion
+  - Import button invoking `import_piece.py` directly
+  - Force checkbox for reimport
 
-- --force overwrite support
+---
 
-Out of scope:
+## Current Development
 
-- automatic detection
-- OCR
-- alias handling
-- layered part mapping
+### CLI Enhancements
 
-### Ensemble Definition (v1)
+- `--piece-list <file>` for the booklet builder
+  Read repertoire from a text file rather than the command line
+- `--edition <label>` for the booklet builder
+  Include a user-defined label in output filenames
+- `add_part.py`
+  Append an additional part PDF to an existing imported piece
 
-Features:
+### Validation
 
-- YAML-based schema
-- Explicit part list
-- Explicit fallback chains
+- Library validation tool
+  Check PDFs exist, YAML is valid, page ranges are within bounds,
+  assignments reference real parts, no orphaned data
 
-Example:
+---
 
-parts:
-  - id: trumpet_3
-    label: Trumpet 3
-    fallback: [trumpet_2, trumpet_1]
+## Planned
 
-Out of scope:
+### Phase 4 — Backend Extraction
 
-- alias mapping
-- automatic fallback inference
-- instrument families
+Extract core logic from CLI scripts into reusable modules:
 
-### Booklet Builder (v1 — dry run)
+```
+bandlibrary/
+  importer.py
+  builder.py
+  models.py
+```
 
-Features:
+Required before the GUI can call build and import logic directly
+rather than via subprocess.
 
-- Reads:
-  - ensemble YAML
-  - piece YAMLs
+### Phase 5 — Graphical Interface
 
-- Outputs:
-  - console report of:
-    - part matches
-    - fallback usage
-    - missing parts warnings
+A unified PyQt6 application combining the manual editor and a
+booklet builder interface in a tabbed window.
 
-Out of scope:
+#### Editor tab
 
-- PDF extraction
-- merging
-- zip output
+The existing manual editor, largely unchanged.
 
-## Phase 1 — Minimal Working System
+#### Build tab
 
-### Goals
+- Ensemble selector
+- Piece list (add, remove, reorder)
+- Edition label field
+- Dry run / Build buttons
+- Output report panel
 
-- Generate usable part booklets
+#### Help menu
 
-### Booklet Builder (v2)
+In-application help drawn from the `docs/` directory.
 
-Features:
+### Phase 6 — Advanced Features (Future)
 
-- Extract pages from PDFs
-- Build one PDF per ensemble part
-- Respect command-line piece order
-- Apply fallback rules
-- Emit warnings for missing parts
-
-Output:
-
-output/
-  trumpet_1.pdf
-  trumpet_2.pdf
-  ...
-  bundle-<timestamp>.zip
-
-## Phase 2 — Quality of Life
-
-### Importer Enhancements
-
-- Auto-detection of part labels (assist only)
-- --dry-run detection preview
-- Hybrid mode (--manual + --merge)
-
-### Booklet Builder Enhancements
-
-- Cleaner output naming
-- Optional output directories
-- Summary reports:
-  - fallback usage
-  - missing parts
-  - coverage
-
-## Phase 3 — Layered / Non-standard Parts
-
-### Problem
-
-Some pieces provide parts like:
-
-- Part 1 Bb
-- Part 2 Eb
-
-These do not map directly to instruments.
-
-### Solution (Planned)
-
-Add optional piece-level assignment:
-
-assignments:
-  trumpet_1: part_1_bb
-  trumpet_2: part_2_bb
-
-### Matching Logic (Future)
-
-1. Check explicit assignment
-2. Else try direct match
-3. Else try fallback
-4. Else warn and omit
-
-## Phase 4 — Naming & Alias System
-
-### Problem
-
-Publisher naming inconsistencies:
-
-- Bb Clarinet vs Clarinet in Bb
-- Drum Kit vs Drumset
-- Horn vs French Horn
-
-### Solution
-
-Alias mapping layer:
-
-aliases:
-  "Clarinet in Bb 1": bb_clarinet_1
-  "Bb Clarinet 1": bb_clarinet_1
-
-## Phase 5 — Ensemble Flexibility
-
-Features:
-
-- Multiple ensemble configs
-- Select ensemble per build
-- Optional setlist file
-
-Example usage:
-
-build_booklets.py --ensemble school.yaml --setlist concert.yaml
-
-## Phase 6 — Advanced Features (Optional)
-
-- Part duplication (e.g. multiple trumpet copies)
-- Booklet formatting (covers, layout)
-- Instrument grouping
-- Repertoire/setlist tracking
-- Library query tools
+- `add_part.py` — append additional part PDFs to existing pieces
+- Importer preview mode (`--dry-run`) showing labels and resolved IDs before committing
+- Alias feedback — report unmapped labels to help grow `aliases.yaml`
+- Assignment editor in the GUI — visual mapping without YAML editing
+- Library browser — browse pieces, inspect parts and assignments
+- Named repertoire files in `repertoire/` for version-controlled setlist tracking
+- Structured JSON output from the builder for GUI integration
+- Part duplication (e.g. multiple copies of trumpet parts)
 - Divider pages between pieces
-- When loading a piece, compare every pages entry against the source PDF page count.
+- Page rotation correction on import
+
+---
 
 ## Key Design Principles
 
 These should not be broken.
 
-1. Data is authoritative  
-   - YAML defines truth  
-   - Scripts do not silently guess  
+1. Data is authoritative — YAML defines truth; scripts do not silently guess
+2. Manual override always possible — automation must be bypassable
+3. No silent substitutions — fallback must be explicit or predictable
+4. Separation of concerns — piece metadata, ensemble config, and build logic are independent
+5. Incremental complexity — build only what is needed now
 
-2. Manual override always possible  
-   - Automation must be bypassable  
-
-3. No silent substitutions  
-   - Fallback must be explicit or predictable  
-
-4. Separation of concerns  
-   - Piece metadata ≠ ensemble config ≠ build logic  
-
-5. Incremental complexity  
-   - Build only what is needed now  
-
-## Current Status
-
-- Importer: implemented, tested
-- Ensemble schema: defined
-- Booklet builder: dry-run implemented
-
-## Immediate Next Steps
-
-1. Generate real booklet PDFs
-2. Extract page ranges from source PDFs
-3. Merge extracted parts per ensemble target
-4. Add zip output with timestamped archive name
+---
 
 ## Long-Term Goal
 
-A system that:
-
-- imports new music quickly
-- stores structured metadata
-- builds instrument booklets automatically
-- handles real-world edge cases without friction
+A system that imports new music quickly, stores structured metadata,
+builds instrument booklets automatically, and handles real-world
+edge cases without friction.

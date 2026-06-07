@@ -1,69 +1,146 @@
-# Importer
+# Booklet Builder
 
 ## Purpose
 
-The importer converts a PDF and a simple manual description into structured YAML metadata.
+The booklet builder reads ensemble and piece metadata and generates
+one PDF booklet per ensemble part, containing the relevant pages from
+each piece in the specified order.
+
+---
 
 ## Usage
 
-python tools/import_piece.py <pdf> --manual <manual.txt>
+```
+python3 tools/build_booklets.py \
+  --ensemble <ensemble.yaml> \
+  [--dry-run] \
+  [--edition <label>] \
+  [--piece-list <file>] \
+  <piece-slug> [<piece-slug> ...]
+```
 
-Optional:
+Pieces may be specified directly on the command line or via a piece list file.
 
---force     overwrite existing piece
+### Options
 
-## Manual File Format
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--ensemble <path>` | required | Ensemble definition file |
+| `--library <path>` | `library/` | Library directory |
+| `--output <path>` | `output/` | Output directory |
+| `--dry-run` | off | Report matches without generating files |
+| `--edition <label>` | none | Label to include in output filenames |
+| `--piece-list <file>` | none | Read piece slugs from a file |
 
-Each line describes a part:
+---
 
-Trumpet 1: 12  
-Trumpet 2: 13-14  
+## Piece List File
 
-Optional title:
+A plain text file listing one piece slug per line:
 
-Title: My Piece
+```
+# Spring concert
+hound-dog
+cast-in-blues
+modal-mixup
+```
 
-## Rules
+Blank lines and lines beginning with `#` are ignored.
+Slugs must match existing library entries exactly.
 
-- page numbers are PDF pages (1-based)
-- ranges are inclusive
-- blank lines and comments (#) are ignored
+---
+
+## Matching Logic
+
+For each ensemble part, the builder searches each piece in order:
+
+1. Check `assignments` in the piece YAML for an explicit mapping
+2. Try a direct match against piece part IDs
+3. Try each entry in the ensemble part's `fallback` list in order
+4. If nothing matches, emit a warning and omit the piece from that part's booklet
+
+---
 
 ## Output
 
-Creates:
+```
+output/
+  trumpet_1.pdf
+  trumpet_2.pdf
+  trombone.pdf
+  ...
+  bundle-<timestamp>.zip
+```
 
-library/<slug>/
-  <slug>.pdf
-  <slug>.manual.txt
-  <slug>.yaml
+With `--edition`:
 
-## YAML Structure
+```
+output/
+  trumpet_1.pdf
+  ...
+  bundle-spring-concert-20260605-221530.zip
+```
 
-schema_version: 1
+One PDF is generated per ensemble part.
+Parts with no matches across any piece produce no output file.
+All generated PDFs are bundled into a timestamped ZIP archive.
 
-piece:
-  id: tune-a
-  title: Tune A
-  source_pdf: tune-a.pdf
-  status: manual
+---
 
+## Dry Run Output
+
+```
+Trumpet 1:
+  hound-dog -> trumpet_1
+  cast-in-blues -> trumpet_1
+  modal-mixup -> trumpet_2 (fallback)
+
+Trombone:
+  hound-dog -> trombone
+WARNING: cast-in-blues has no matching part for Trombone
+WARNING: modal-mixup has no matching part for Trombone
+```
+
+Use dry run to verify matches, fallbacks, and assignments before building.
+
+---
+
+## Ensemble Definition
+
+```yaml
 parts:
   - id: trumpet_1
     label: Trumpet 1
-    pages: [12, 12]
 
-## Notes
+  - id: trumpet_2
+    label: Trumpet 2
 
-- filenames are slugified
-- part IDs are normalised from labels
-- validation catches:
-  - malformed lines
-  - invalid ranges
-  - duplicate IDs
+  - id: trumpet_3
+    label: Trumpet 3
+    fallback: [trumpet_2, trumpet_1]
 
-## Limitations (v1)
+  - id: trombone
+    label: Trombone
+```
 
-- no automatic detection
-- no alias handling
-- no layered part mapping
+Each part has an `id` and a `label`. An optional `fallback` list specifies
+alternative part IDs to try if a direct match is not found.
+
+---
+
+## Assignments
+
+Some pieces use generic part labels (e.g. `Part 1 Bb`) that do not map
+directly to instrument names. In these cases, add an `assignments` block
+to the piece YAML:
+
+```yaml
+assignments:
+  trumpet_1: part_1_bb
+  trumpet_2: part_2_bb
+  alto_sax: part_1_eb
+```
+
+Assignments are checked before direct matching and fallbacks.
+
+See `docs/data-model.md` for the full YAML schema.
