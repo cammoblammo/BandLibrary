@@ -180,14 +180,27 @@ def add_part(
         "pages": [start_page, end_page],
     }
 
+    # Locate manual file (optional — may not exist)
+    manual_path = piece_dir / f"{slug}.manual.txt"
+
+    # Page spec for manual file
+    if start_page == end_page:
+        page_spec = str(start_page)
+    else:
+        page_spec = f"{start_page}-{end_page}"
+    manual_line = f"{label}: {page_spec}\n"
+
     # --- Safe write with rollback ---
     backup_pdf = piece_pdf_path.with_suffix(".pdf.backup")
     backup_yaml = yaml_path.with_suffix(".yaml.backup")
+    backup_manual = manual_path.with_suffix(".manual.txt.backup") if manual_path.exists() else None
 
     try:
-        # Back up both files
+        # Back up files
         shutil.copy2(piece_pdf_path, backup_pdf)
         shutil.copy2(yaml_path, backup_yaml)
+        if manual_path.exists():
+            shutil.copy2(manual_path, backup_manual)
 
         # Merge PDFs
         writer = PdfWriter()
@@ -205,12 +218,20 @@ def add_part(
         with yaml_path.open("w", encoding="utf-8") as f:
             yaml.safe_dump(data, f, sort_keys=False)
 
+        # Append to manual file (warn if it didn't exist)
+        if not manual_path.exists():
+            print(f"WARNING: no manual file found for {slug} — creating {manual_path.name} (will contain the added part only)")
+        with manual_path.open("a", encoding="utf-8") as f:
+            f.write(manual_line)
+
         # Remove source PDF only after everything succeeded
         source_pdf.unlink()
 
         # Remove backups
         backup_pdf.unlink()
         backup_yaml.unlink()
+        if backup_manual and backup_manual.exists():
+            backup_manual.unlink()
 
         print(f"Added part '{label}' ({part_id}) to {slug}: pages {start_page}-{end_page}")
 
@@ -222,6 +243,9 @@ def add_part(
         if backup_yaml.exists():
             shutil.copy2(backup_yaml, yaml_path)
             backup_yaml.unlink()
+        if backup_manual and backup_manual.exists():
+            shutil.copy2(backup_manual, manual_path)
+            backup_manual.unlink()
         raise
 
 
