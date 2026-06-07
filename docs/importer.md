@@ -22,6 +22,7 @@ python3 tools/import_piece.py <pdf> --manual <manual.txt> [options]
 | `--library <path>` | `library/` | Path to the library directory |
 | `--aliases <path>` | `config/aliases.yaml` | Path to aliases file |
 | `--force` | off | Overwrite existing library entry |
+| `--test` | off | Write output to `test/` instead of `library/` |
 
 ---
 

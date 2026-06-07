@@ -31,6 +31,7 @@ Pieces may be specified directly on the command line or via a piece list file.
 | `--dry-run` | off | Report matches without generating files |
 | `--edition <label>` | none | Label to include in output filenames |
 | `--piece-list <file>` | none | Read piece slugs from a file |
+| `--test` | off | Write output to `test-output/` instead of `output/` |
 
 ---
 

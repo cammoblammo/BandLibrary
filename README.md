@@ -53,7 +53,14 @@ python3 tools/build_booklets.py \
   tune-a tune-b tune-c
 ```
 
-### add_part.py
+### validate_library.py
+
+Validates the integrity of all imported pieces, and optionally checks
+ensemble coverage.
+
+```
+python3 tools/validate_library.py [--ensemble config/ensembles/my-ensemble.yaml]
+```
 
 Appends an additional part PDF to an existing imported piece.
 The new pages are merged into the piece PDF and the YAML is updated automatically.
@@ -80,5 +87,6 @@ See `docs/quickstart.md` for a full walkthrough.
 - `docs/manual-editor.md` — graphical mapping editor
 - `docs/importer.md` — importer reference
 - `docs/booklet-builder.md` — booklet builder reference
+- `docs/validator.md` — library validation tool reference
 - `docs/data-model.md` — YAML schemas and data structures
 - `docs/roadmap.md` — project history and future plans

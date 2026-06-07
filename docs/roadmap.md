@@ -76,13 +76,13 @@ instrument-specific booklets automatically.
   merges PDFs, calculates page range, updates YAML, removes source PDF;
   full rollback on failure
 
+- `--test` flag for the importer — writes to `test/` instead of `library/`
+- `--test` flag for the booklet builder — writes to `test-output/` instead of `output/`
+- Library validation tool (`validate_library.py`)
+  Check PDFs exist, YAML is valid and well-formed, page ranges within bounds,
+  assignments reference real parts; optional ensemble coverage report via `--ensemble`
+
 ## Current Development
-
-### Validation
-
-- Library validation tool
-  Check PDFs exist, YAML is valid, page ranges are within bounds,
-  assignments reference real parts, no orphaned data
 
 ---
 
