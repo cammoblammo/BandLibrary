@@ -1,0 +1,8 @@
+flute: 1
+clarinet: 2
+trumpet: 3
+french horn: 4
+trombone: 5
+baritone tc: 6
+tuba: 7
+drum kit: 8

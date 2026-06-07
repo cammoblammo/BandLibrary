@@ -1,0 +1,57 @@
+schema_version: 1
+piece:
+  id: soundstorm
+  title: Soundstorm
+  source_pdf: soundstorm.pdf
+  status: manual
+parts:
+- label: flute
+  id: flute
+  pages:
+  - 1
+  - 1
+- label: clarinet
+  id: clarinet
+  pages:
+  - 2
+  - 2
+- label: alto sax
+  id: alto_sax
+  pages:
+  - 3
+  - 3
+- label: tenor sax
+  id: tenor_sax
+  pages:
+  - 4
+  - 4
+- label: trumpet 1
+  id: trumpet_1
+  pages:
+  - 5
+  - 5
+- label: trumpet 2
+  id: trumpet_2
+  pages:
+  - 6
+  - 6
+- label: trombone
+  id: trombone
+  pages:
+  - 7
+  - 8
+- label: euphonium tc
+  id: euphonium_tc
+  pages:
+  - 9
+  - 9
+- label: bass guitar
+  id: bass_guitar
+  pages:
+  - 10
+  - 12
+- label: drum kit
+  id: drum_kit
+  pages:
+  - 13
+  - 14

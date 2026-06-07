@@ -1,0 +1,96 @@
+schema_version: 1
+piece:
+  id: highway-to-hell
+  title: highway to hell
+  source_pdf: highway-to-hell.pdf
+  status: manual
+assignments:
+  trumpet_1: part_1_bb
+  trumpet_2: part_2_bb
+  trumpet_3: part_2_bb
+  clarinet_1: part_1_bb
+  clarinet_2: part_2_bb
+  clarinet_3: part_2_bb
+  tenor_horn: part_3_eb
+  baritone_tc: part_4_bb
+  euphonium_tc: part_4_bb
+  trombone: part_4_c
+  baritone: part_4_c
+  euphonium: part_4_c
+  tenor_sax: part_3_bb
+parts:
+- label: flute
+  id: flute
+  pages:
+  - 9
+  - 9
+- label: part 1 Bb
+  id: part_1_bb
+  pages:
+  - 10
+  - 10
+- label: part 2 Bb
+  id: part_2_bb
+  pages:
+  - 11
+  - 11
+- label: alto sax
+  id: alto_sax
+  pages:
+  - 12
+  - 12
+- label: part 3 C
+  id: part_3_c
+  pages:
+  - 13
+  - 13
+- label: part 3 Bb
+  id: part_3_bb
+  pages:
+  - 14
+  - 14
+- label: part 3 F
+  id: part_3_f
+  pages:
+  - 15
+  - 15
+- label: part 3 Eb
+  id: part_3_eb
+  pages:
+  - 16
+  - 16
+- label: part 4 C
+  id: part_4_c
+  pages:
+  - 17
+  - 17
+- label: part 4 Bb
+  id: part_4_bb
+  pages:
+  - 18
+  - 18
+- label: part 5 Bb
+  id: part_5_bb
+  pages:
+  - 20
+  - 20
+- label: Part 5 C
+  id: part_5_c
+  pages:
+  - 21
+  - 21
+- label: Part 5 Eb
+  id: part_5_eb
+  pages:
+  - 22
+  - 22
+- label: Drum kit
+  id: drum_kit
+  pages:
+  - 23
+  - 24
+- label: Bass guitar
+  id: bass_guitar
+  pages:
+  - 25
+  - 25

@@ -1,0 +1,87 @@
+schema_version: 1
+piece:
+  id: things-that-go-bump-in-the-night
+  title: Things that go bump in the night
+  source_pdf: things-that-go-bump-in-the-night.pdf
+  status: manual
+parts:
+- label: trumpet 1
+  id: trumpet_1
+  pages:
+  - 1
+  - 4
+- label: flute
+  id: flute
+  pages:
+  - 5
+  - 9
+- label: clarinet 1
+  id: clarinet_1
+  pages:
+  - 10
+  - 13
+- label: trumpet 2
+  id: trumpet_2
+  pages:
+  - 14
+  - 17
+- label: alto sax
+  id: alto_sax
+  pages:
+  - 18
+  - 21
+- label: clarinet 2
+  id: clarinet_2
+  pages:
+  - 22
+  - 25
+- label: trumpet 3
+  id: trumpet_3
+  pages:
+  - 22
+  - 25
+- label: tenor horn
+  id: tenor_horn
+  pages:
+  - 26
+  - 29
+- label: tenor sax
+  id: tenor_sax
+  pages:
+  - 30
+  - 33
+- label: french horn
+  id: french_horn
+  pages:
+  - 38
+  - 41
+- label: trombone
+  id: trombone
+  pages:
+  - 42
+  - 45
+- label: euphonium tc
+  id: euphonium_tc
+  pages:
+  - 50
+  - 53
+- label: tuba
+  id: tuba
+  pages:
+  - 58
+  - 61
+- label: aux perc
+  id: auxiliary_percussion
+  pages:
+  - 70
+  - 73
+- label: drum kit
+  id: drum_kit
+  pages:
+  - 74
+  - 77
+- label: mallets
+  id: mallets
+  pages:
+  - 78
+  - 80

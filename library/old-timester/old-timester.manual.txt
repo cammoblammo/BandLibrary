@@ -1,0 +1,10 @@
+flute: 2
+clarinet: 3
+alto sax: 4
+trumpet 1: 5
+trumpet 2: 6
+trombone: 8
+euphonium tc: 9
+electric bass: 10
+Drum kit: 11
+aux perc: 12

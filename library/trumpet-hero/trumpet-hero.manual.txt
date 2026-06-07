@@ -1,0 +1,12 @@
+flute: 1
+oboe: 2
+clarinet: 3
+alto sax: 4
+tenor sax: 5
+trumpet: 6
+trombone: 7
+baritone tc: 8
+tuba: 9
+mallets: 10
+drum kit: 11
+aux perc: 12

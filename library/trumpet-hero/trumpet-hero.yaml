@@ -1,0 +1,67 @@
+schema_version: 1
+piece:
+  id: trumpet-hero
+  title: Trumpet Hero
+  source_pdf: trumpet-hero.pdf
+  status: manual
+parts:
+- label: flute
+  id: flute
+  pages:
+  - 1
+  - 1
+- label: oboe
+  id: oboe
+  pages:
+  - 2
+  - 2
+- label: clarinet
+  id: clarinet
+  pages:
+  - 3
+  - 3
+- label: alto sax
+  id: alto_sax
+  pages:
+  - 4
+  - 4
+- label: tenor sax
+  id: tenor_sax
+  pages:
+  - 5
+  - 5
+- label: trumpet
+  id: trumpet
+  pages:
+  - 6
+  - 6
+- label: trombone
+  id: trombone
+  pages:
+  - 7
+  - 7
+- label: baritone tc
+  id: baritone_tc
+  pages:
+  - 8
+  - 8
+- label: tuba
+  id: tuba
+  pages:
+  - 9
+  - 9
+- label: mallets
+  id: mallets
+  pages:
+  - 10
+  - 10
+- label: drum kit
+  id: drum_kit
+  pages:
+  - 11
+  - 11
+- label: aux perc
+  id: auxiliary_percussion
+  pages:
+  - 12
+  - 12

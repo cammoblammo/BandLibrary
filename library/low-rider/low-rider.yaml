@@ -1,0 +1,82 @@
+schema_version: 1
+piece:
+  id: low-rider
+  title: low rider
+  source_pdf: low-rider.pdf
+  status: manual
+parts:
+- label: flute
+  id: flute
+  pages:
+  - 9
+  - 9
+- label: clarinet 1
+  id: clarinet_1
+  pages:
+  - 10
+  - 10
+- label: clarinet 2
+  id: clarinet_2
+  pages:
+  - 11
+  - 11
+- label: bass clarinet
+  id: bass_clarinet
+  pages:
+  - 12
+  - 12
+- label: alto sax
+  id: alto_sax
+  pages:
+  - 13
+  - 13
+- label: tenor sax
+  id: tenor_sax
+  pages:
+  - 14
+  - 14
+- label: baritone sax
+  id: baritone_sax
+  pages:
+  - 15
+  - 15
+- label: trumpet 1
+  id: trumpet_1
+  pages:
+  - 16
+  - 16
+- label: trumpet 2
+  id: trumpet_2
+  pages:
+  - 17
+  - 17
+- label: french horn
+  id: french_horn
+  pages:
+  - 18
+  - 18
+- label: trombone
+  id: trombone
+  pages:
+  - 19
+  - 19
+- label: tuba
+  id: tuba
+  pages:
+  - 20
+  - 20
+- label: aux percussion
+  id: auxiliary_percussion
+  pages:
+  - 21
+  - 21
+- label: mallets
+  id: mallets
+  pages:
+  - 23
+  - 23
+- label: drum kit
+  id: drum_kit
+  pages:
+  - 24
+  - 24

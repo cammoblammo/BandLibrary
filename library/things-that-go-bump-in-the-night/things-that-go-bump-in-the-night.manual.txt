@@ -1,0 +1,17 @@
+trumpet 1: 1-4
+flute: 5-9
+clarinet 1: 10-13
+trumpet 2: 14-17
+alto sax: 18-21
+clarinet 2: 22-25
+trumpet 3: 22-25
+tenor horn: 26-29
+tenor sax: 30-33
+french horn: 38-41
+trombone: 42-45
+euphonium tc: 50-53
+tuba: 58-61
+aux perc: 70-73
+drum kit: 74-77
+mallets: 78-80
+

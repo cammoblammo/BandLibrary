@@ -1,0 +1,11 @@
+flute: 1
+clarinet: 2
+alto sax: 3
+tenor sax: 4
+trumpet 1: 5
+trumpet 2: 6
+trombone: 7-8
+euphonium tc: 9
+bass guitar: 10-12
+drum kit: 13-14
+

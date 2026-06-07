@@ -1,0 +1,15 @@
+flute: 9
+clarinet 1: 10
+clarinet 2: 11
+bass clarinet: 12
+alto sax: 13
+tenor sax: 14
+baritone sax: 15
+trumpet 1: 16
+trumpet 2: 17
+french horn: 18
+trombone: 19
+tuba: 20
+aux percussion: 21
+mallets: 23
+drum kit: 24
