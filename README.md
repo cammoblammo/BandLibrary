@@ -87,6 +87,7 @@ See `docs/quickstart.md` for a full walkthrough.
 - `docs/manual-editor.md` — graphical mapping editor
 - `docs/importer.md` — importer reference
 - `docs/booklet-builder.md` — booklet builder reference
+- `docs/add-part.md` — adding parts to existing pieces
 - `docs/validator.md` — library validation tool reference
 - `docs/data-model.md` — YAML schemas and data structures
 - `docs/roadmap.md` — project history and future plans
