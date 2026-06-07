@@ -15,6 +15,7 @@ aliases:
   "Clarinet in Bb 1": clarinet_1
   "Clarinet in Bb 2": clarinet_2
   "Clarinet in Bb 3": clarinet_3
+  "Alto clarinet": alto_clarinet
 
   "Alto sax": alto_sax
   "Alto sax 1": alto_sax_1
@@ -36,6 +37,7 @@ aliases:
   "Trombone": trombone
   "Trombone 1": trombone_1
   "Trombone 2": trombone_2
+  "Tenor horn": tenor_horn
 
   "Euphonium": euphonium
   "Tuba": tuba
@@ -45,6 +47,7 @@ aliases:
 
   "Guitar": guitar
   "Electric guitar": guitar
+  "Electric bass": bass_guitar
   "Bass guitar": bass_guitar
   "Bass Guitar": bass_guitar
 
@@ -55,3 +58,4 @@ aliases:
   "Mallets": mallets
   "Auxiliary percussion": auxiliary_percussion
   "Aux Percussion": auxiliary_percussion
+  "Aux perc": auxiliary_percussion
