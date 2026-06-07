@@ -275,10 +275,14 @@ def main():
     parser.add_argument("--library", type=Path, default=Path("library"))
     parser.add_argument("--aliases", type=Path, default=Path("config/aliases.yaml"))
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--test", action="store_true", help='Write output to "test/" instead of the library directory')
 
     args = parser.parse_args()
 
     try:
+        if args.test:
+            args.library = Path("test")
+            print("Test mode — output will be written to test/")
         aliases = load_aliases(args.aliases)
         import_piece(args.pdf, args.manual, args.library, args.force, aliases)
     except Exception as e:

@@ -456,6 +456,11 @@ def build_argument_parser() -> argparse.ArgumentParser:
              "Combined with any slugs given on the command line.",
     )
     parser.add_argument(
+        "--test",
+        action="store_true",
+        help='Write output to "test-output/" instead of the normal output directory.',
+    )
+    parser.add_argument(
         "pieces",
         nargs="*",
         help="Piece slugs to include, in booklet order.",
@@ -483,6 +488,10 @@ def main() -> int:
                 file=sys.stderr,
             )
             return 1
+
+        if args.test:
+            args.output = Path("test-output")
+            print("Test mode — output will be written to test-output/")
 
         ensemble_name, ensemble_parts = load_ensemble(args.ensemble)
         pieces = [load_piece(args.library, slug) for slug in slugs]
