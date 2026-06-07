@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import zipfile
 from dataclasses import dataclass
@@ -230,6 +231,45 @@ def load_piece(library_dir: Path, slug: str) -> Piece:
     )
 
 
+def load_piece_list(path: Path) -> list[str]:
+    """
+    Load piece slugs from a plain text file.
+    Blank lines and lines beginning with # are ignored.
+    """
+    if not path.exists():
+        raise BookletBuildError(f"Piece list file not found: {path}")
+    if not path.is_file():
+        raise BookletBuildError(f"Piece list path is not a file: {path}")
+
+    slugs: list[str] = []
+
+    with path.open("r", encoding="utf-8") as f:
+        for lineno, raw in enumerate(f, start=1):
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            # Basic slug validation — no spaces or path separators
+            if re.search(r"[\s/\\]", line):
+                raise BookletBuildError(
+                    f"Piece list {path}, line {lineno}: "
+                    f"invalid slug {line!r} (slugs must not contain spaces or path separators)"
+                )
+            slugs.append(line)
+
+    if not slugs:
+        raise BookletBuildError(f"Piece list file contains no pieces: {path}")
+
+    return slugs
+
+
+def slugify_edition(edition: str) -> str:
+    """Convert an edition label to a safe filename component."""
+    text = edition.lower()
+    text = re.sub(r"[^a-z0-9]+", "-", text)
+    text = re.sub(r"-{2,}", "-", text)
+    return text.strip("-")
+
+
 def match_part(piece: Piece, ensemble_part: EnsemblePart) -> MatchResult:
     # 1. Piece-specific assignment override
     if ensemble_part.id in piece.assignments:
@@ -396,14 +436,29 @@ def build_argument_parser() -> argparse.ArgumentParser:
         help='Output directory for generated booklet PDFs (default: "output").',
     )
     parser.add_argument(
-        "pieces",
-        nargs="+",
-        help="Piece slugs to include, in booklet order.",
+        "--dry-run",
+        action="store_true",
+        help="Print match report only; do not generate PDFs or ZIP archive.",
     )
     parser.add_argument(
-    "--dry-run",
-    action="store_true",
-    help="Print match report only; do not generate PDFs or ZIP archive.",
+        "--edition",
+        type=str,
+        default=None,
+        metavar="LABEL",
+        help="Edition label to include in the ZIP archive filename (e.g. SpringConcert).",
+    )
+    parser.add_argument(
+        "--piece-list",
+        type=Path,
+        default=None,
+        metavar="FILE",
+        help="Plain text file listing piece slugs (one per line). "
+             "Combined with any slugs given on the command line.",
+    )
+    parser.add_argument(
+        "pieces",
+        nargs="*",
+        help="Piece slugs to include, in booklet order.",
     )
     return parser
 
@@ -413,8 +468,24 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
+        # Collect piece slugs from file and/or command line, in that order
+        slugs: list[str] = []
+
+        if args.piece_list is not None:
+            slugs.extend(load_piece_list(args.piece_list))
+
+        slugs.extend(args.pieces)
+
+        if not slugs:
+            print(
+                "ERROR: no pieces specified. "
+                "Provide piece slugs on the command line or via --piece-list.",
+                file=sys.stderr,
+            )
+            return 1
+
         ensemble_name, ensemble_parts = load_ensemble(args.ensemble)
-        pieces = [load_piece(args.library, slug) for slug in args.pieces]
+        pieces = [load_piece(args.library, slug) for slug in slugs]
         pieces_by_slug = {piece.slug: piece for piece in pieces}
 
         report_lines, warning_lines, grouped_matches = build_report(
@@ -425,6 +496,14 @@ def main() -> int:
 
         print("\n".join(report_lines))
 
+        if warning_lines:
+            for line in warning_lines:
+                print(line, file=sys.stderr)
+
+        if args.dry_run:
+            print("Dry run — no files generated.")
+            return 0
+
         generated_files = generate_booklets(
             output_dir=args.output,
             ensemble_parts=ensemble_parts,
@@ -432,8 +511,23 @@ def main() -> int:
             grouped_matches=grouped_matches,
         )
 
+        # Build archive stem: <ensemble-stem>[-<edition>]
         archive_stem = args.ensemble.stem
+        if args.edition:
+            edition_slug = slugify_edition(args.edition)
+            archive_stem = f"{archive_stem}-{edition_slug}"
+
         zip_path = create_zip_archive(args.output, generated_files, archive_stem)
+
+        print(f"Generated {len(generated_files)} booklet PDF(s) in {args.output}")
+        print(f"Created archive: {zip_path}")
+
+        print("Summary:")
+        for ensemble_part in ensemble_parts:
+            matches = grouped_matches[ensemble_part.id]
+            total = len(matches)
+            covered = sum(1 for match in matches if match.matched_id is not None)
+            print(f"  {ensemble_part.label}: {covered}/{total} pieces covered")
 
     except BookletBuildError as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -441,30 +535,6 @@ def main() -> int:
     except Exception as exc:
         print(f"ERROR: unexpected failure: {exc}", file=sys.stderr)
         return 1
-
-    if warning_lines:
-        print("Warnings:", file=sys.stderr)
-        for line in warning_lines:
-            print(line, file=sys.stderr)
-
-    print(f"Generated {len(generated_files)} booklet PDF(s) in {args.output}")
-    print(f"Created archive: {zip_path}")
-
-    print("Summary:")
-    for ensemble_part in ensemble_parts:
-        matches = grouped_matches[ensemble_part.id]
-        total = len(matches)
-        covered = sum(1 for match in matches if match.matched_id is not None)
-        print(f"  {ensemble_part.id}: {covered}/{total} pieces")
-
-    if args.dry_run:
-        if warning_lines:
-            print("Warnings:", file=sys.stderr)
-            for line in warning_lines:
-                print(line, file=sys.stderr)
-
-        print("Dry run only; no PDFs generated.")
-        return 0    
 
     return 0
 

@@ -56,9 +56,10 @@ python3 tools/build_booklets.py \
 ### add_part.py
 
 Appends an additional part PDF to an existing imported piece.
+The new pages are merged into the piece PDF and the YAML is updated automatically.
 
 ```
-python3 tools/add_part.py <piece-slug> "Part Label" part.pdf
+python3 tools/add_part.py <piece-slug> "<Part Label>" part.pdf
 ```
 
 ## Quick Start

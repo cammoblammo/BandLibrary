@@ -64,16 +64,19 @@ instrument-specific booklets automatically.
 
 ---
 
-## Current Development
-
 ### CLI Enhancements
 
 - `--piece-list <file>` for the booklet builder
-  Read repertoire from a text file rather than the command line
+  Read repertoire from a plain text file rather than the command line;
+  blank lines and `#` comments ignored; combinable with command-line slugs
 - `--edition <label>` for the booklet builder
-  Include a user-defined label in output filenames
+  Include a user-defined label in the ZIP archive filename
 - `add_part.py`
-  Append an additional part PDF to an existing imported piece
+  Append an additional part PDF to an existing imported piece;
+  merges PDFs, calculates page range, updates YAML, removes source PDF;
+  full rollback on failure
+
+## Current Development
 
 ### Validation
 
