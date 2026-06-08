@@ -1,5 +1,5 @@
 Flute: 17
-Clariminet: 18
+Bb Clarinet 1: 18
 Bb Clarinet 2: 19
 Bb Clarinet 3: 20
 Alto sax 1: 21

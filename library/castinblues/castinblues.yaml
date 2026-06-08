@@ -10,8 +10,8 @@ parts:
   pages:
   - 17
   - 17
-- label: Clariminet
-  id: clariminet
+- label: Bb Clarinet 1
+  id: clarinet_1
   pages:
   - 18
   - 18
