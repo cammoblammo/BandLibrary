@@ -89,7 +89,8 @@ library/<slug>/
   <slug>.yaml
 ```
 
-The source PDF and manual file are moved into the library (not copied).
+The source PDF and manual file are copied into the library.
+The originals are left in place — you can reimport after fixing labels without reloading the PDF.
 The slug is derived from the PDF filename.
 
 ### YAML structure
@@ -125,6 +126,27 @@ With `--force`:
 - the existing directory is backed up before the operation begins
 - the backup is removed only after a successful import
 - on failure, the original is restored
+
+---
+
+## Alias Feedback
+
+After a successful import, the importer reports any part labels that were
+normalised by slugification rather than matched by an explicit alias:
+
+```
+Imported: library/hound-dog
+
+Unaliased labels (consider adding to config/aliases.yaml):
+  'Bb Clarinet 1'                ->  bb_clarinet_1
+  'Gtr.'                         ->  gtr
+```
+
+These are candidates for adding to `config/aliases.yaml`. In the GUI, this
+report appears as a dialog with a Copy button for easy pasting.
+
+Labels already in `aliases.yaml` are silent — only new or unrecognised
+labels are reported.
 
 ---
 

@@ -129,6 +129,55 @@ alternative part IDs to try if a direct match is not found.
 
 ---
 
+## Cover Sheets
+
+Each generated booklet PDF has a cover sheet prepended as the first page.
+
+The cover sheet displays:
+
+- Band name (from `ensemble.band` in the ensemble YAML)
+- Instrument/part name (large, prominent)
+- Edition name (if specified)
+- Contents list (piece titles in build order)
+
+To enable cover sheets, add a `band` field to your ensemble YAML:
+
+```yaml
+ensemble:
+  id: serscb
+  name: SERSCB
+  band: South Eastern Region Schools Concert Band
+```
+
+If `band` is omitted, the cover sheet is still generated without a band name.
+
+---
+
+## Repertoire Files
+
+Piece lists can be saved to and loaded from plain text repertoire files,
+allowing named setlists to be version-controlled alongside the library.
+
+```
+repertoire/
+  spring-concert.txt
+  christmas-2026.txt
+```
+
+Repertoire files use the same format as `--piece-list`:
+
+```
+# Spring Concert 2026
+hound-dog
+cast-in-blues
+modal-mixup
+```
+
+In the GUI (Booklet Builder tab), use the Load and Save buttons in the
+Build List panel to manage repertoire files.
+
+---
+
 ## Assignments
 
 Some pieces use generic part labels (e.g. `Part 1 Bb`) that do not map

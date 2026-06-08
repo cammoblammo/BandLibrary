@@ -1,4 +1,4 @@
-# Manual Part Mapping Editor
+# Piece Importer (Manual Part Mapping Editor)
 
 ## Purpose
 
@@ -12,12 +12,14 @@ allowing parts to be mapped page by page without typing page numbers manually.
 
 ## Usage
 
+The editor is the **Piece Importer** tab in BandBook:
+
 ```
-python3 tools/manual_editor.py [--aliases config/aliases.yaml]
+python3 tools/bandbook_gui.py
 ```
 
-Run from the project root directory. The aliases file is optional but enables
-part name autocomplete if present.
+The aliases file (`config/aliases.yaml`) is loaded automatically from the project root
+and enables part name autocomplete if present.
 
 ---
 
@@ -183,7 +185,7 @@ The editor does not interact with the library, YAML files, or ensemble definitio
 
 ## Architecture
 
-The editor is deliberately isolated from the rest of BandLibrary.
+The editor is deliberately isolated from the rest of BandBook.
 It reads PDFs and writes `.manual.txt` files. Nothing else.
 
 This means it can be developed, tested, or replaced independently

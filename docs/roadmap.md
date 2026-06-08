@@ -73,7 +73,7 @@ instrument-specific booklets automatically.
   Include a user-defined label in the ZIP archive filename
 - `add_part.py`
   Append an additional part PDF to an existing imported piece;
-  merges PDFs, calculates page range, updates YAML, removes source PDF;
+  merges PDFs, calculates page range, updates YAML;
   full rollback on failure
 
 - `--test` flag for the importer — writes to `test/` instead of `library/`
@@ -82,7 +82,9 @@ instrument-specific booklets automatically.
   Check PDFs exist, YAML is valid and well-formed, page ranges within bounds,
   assignments reference real parts; optional ensemble coverage report via `--ensemble`
 
-## Current Development
+### Known issues
+
+- Desktop launcher icon not displaying — likely a path or PNG conversion issue in the `.desktop` file; to be resolved once `resources/icon.png` is confirmed in place
 
 ---
 

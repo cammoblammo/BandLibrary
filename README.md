@@ -34,14 +34,6 @@ builder in a single tabbed window.
 python3 tools/bandbook_gui.py
 ```
 
-### manual_editor.py
-
-A graphical tool for creating manual mapping files from PDF scores.
-This is the recommended starting point when importing a new piece.
-
-```
-python3 tools/manual_editor.py
-```
 
 ### import_piece.py
 
@@ -97,6 +89,7 @@ See `docs/quickstart.md` for a full walkthrough.
 - `docs/importer.md` — importer reference
 - `docs/booklet-builder.md` — booklet builder reference
 - `docs/add-part.md` — adding parts to existing pieces
+- `docs/assignment-editor.md` — setting piece-level part assignments
 - `docs/validator.md` — library validation tool reference
 - `docs/data-model.md` — YAML schemas and data structures
 - `docs/roadmap.md` — project history and future plans

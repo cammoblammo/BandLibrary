@@ -13,11 +13,6 @@ python3 tools/bandbook_gui.py
 ```
 
 This opens the tabbed interface. Use the Editor tab to map parts.
-The standalone editor is also available if needed:
-
-```
-python3 tools/manual_editor.py
-```
 
 See `docs/manual-editor.md` for full instructions.
 
