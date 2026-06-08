@@ -1,105 +1,22 @@
 #!/usr/bin/env python3
-"""
-add_part.py — Append an additional part PDF to an existing library piece.
-
-Usage:
-    python3 tools/add_part.py <piece-slug> <part-label> <part.pdf> [options]
-
-The source PDF is appended to the piece's existing PDF. The page range is
-calculated automatically. The piece YAML is updated with the new part.
-The source PDF is removed after a successful import.
-"""
 
 from __future__ import annotations
 
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import argparse
-import re
 import shutil
 import sys
-import unicodedata
 from pathlib import Path
 
-try:
-    import yaml
-except ImportError:
-    print("ERROR: PyYAML is required. Install it with: pip install pyyaml", file=sys.stderr)
-    sys.exit(1)
+import yaml
+from pypdf import PdfReader, PdfWriter
 
-try:
-    from pypdf import PdfReader, PdfWriter
-except ImportError:
-    print("ERROR: pypdf is required. Install it with: pip install pypdf", file=sys.stderr)
-    sys.exit(1)
+from lib.aliases import load_aliases, normalise_part_id
+from lib.utils import slugify
 
-
-# ---------------------------------------------------------------------------
-# Normalisation (mirrors import_piece.py)
-# ---------------------------------------------------------------------------
-
-def slugify(text: str) -> str:
-    text = unicodedata.normalize("NFKD", text)
-    text = text.encode("ascii", "ignore").decode("ascii")
-    text = text.lower()
-    text = re.sub(r"[^a-z0-9]+", "-", text)
-    text = re.sub(r"-{2,}", "-", text)
-    return text.strip("-")
-
-
-def default_normalise_part_id(label: str) -> str:
-    return slugify(label).replace("-", "_")
-
-
-def canonicalise_alias_key(label: str) -> str:
-    text = unicodedata.normalize("NFKD", label)
-    text = text.encode("ascii", "ignore").decode("ascii")
-    text = text.lower()
-    text = re.sub(r"[^a-z0-9]+", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
-
-
-def load_aliases(path: Path | None) -> dict[str, str]:
-    if path is None or not path.exists():
-        return {}
-    if not path.is_file():
-        raise ValueError(f"Alias path is not a file: {path}")
-
-    with path.open("r", encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-
-    if not isinstance(data, dict):
-        raise ValueError(f"Alias file must contain a top-level mapping: {path}")
-
-    aliases = data.get("aliases")
-    if aliases is None:
-        return {}
-    if not isinstance(aliases, dict):
-        raise ValueError(f"'aliases' in {path} must be a mapping")
-
-    loaded: dict[str, str] = {}
-    for raw_label, target_id in aliases.items():
-        if not isinstance(raw_label, str) or not raw_label.strip():
-            raise ValueError(f"Alias key must be a non-empty string in {path}")
-        if not isinstance(target_id, str) or not target_id.strip():
-            raise ValueError(f"Alias target must be a non-empty string in {path}")
-        key = canonicalise_alias_key(raw_label)
-        if key in loaded and loaded[key] != target_id:
-            raise ValueError(f"Conflicting alias entries for {raw_label!r} in {path}")
-        loaded[key] = target_id.strip()
-
-    return loaded
-
-
-def normalise_part_id(label: str, aliases: dict[str, str]) -> str:
-    key = canonicalise_alias_key(label)
-    if key in aliases:
-        return aliases[key]
-    return default_normalise_part_id(label)
-
-
-# ---------------------------------------------------------------------------
-# Core logic
-# ---------------------------------------------------------------------------
 
 def add_part(
     slug: str,
@@ -108,7 +25,6 @@ def add_part(
     library: Path,
     aliases: dict[str, str],
 ) -> None:
-    # Locate piece
     piece_dir = library / slug
     if not piece_dir.exists():
         raise FileNotFoundError(f"Piece not found in library: {slug}")
@@ -120,7 +36,6 @@ def add_part(
     if not source_pdf.exists():
         raise FileNotFoundError(f"Source PDF not found: {source_pdf}")
 
-    # Load existing YAML
     with yaml_path.open("r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
@@ -133,10 +48,8 @@ def add_part(
     if not isinstance(existing_parts, list):
         raise ValueError(f"'parts' in {yaml_path} must be a list")
 
-    # Normalise new part ID
     part_id = normalise_part_id(label, aliases)
 
-    # Check for duplicate
     existing_ids = {p["id"] for p in existing_parts if isinstance(p, dict)}
     existing_labels = {p.get("label", "") for p in existing_parts if isinstance(p, dict)}
 
@@ -147,11 +60,8 @@ def add_part(
             f"add an alias to give it a distinct canonical ID."
         )
     if label in existing_labels:
-        raise ValueError(
-            f"Part label {label!r} already exists in {slug}."
-        )
+        raise ValueError(f"Part label {label!r} already exists in {slug}.")
 
-    # Find the existing piece PDF
     source_pdf_name = piece_meta.get("source_pdf")
     if not source_pdf_name:
         raise ValueError(f"Missing source_pdf in piece metadata: {yaml_path}")
@@ -160,7 +70,6 @@ def add_part(
     if not piece_pdf_path.exists():
         raise FileNotFoundError(f"Piece PDF not found: {piece_pdf_path}")
 
-    # Calculate current page count (new part starts on next page)
     existing_reader = PdfReader(str(piece_pdf_path))
     existing_page_count = len(existing_reader.pages)
 
@@ -173,36 +82,30 @@ def add_part(
     start_page = existing_page_count + 1
     end_page = existing_page_count + new_page_count
 
-    # Prepare the new part stanza
     new_part = {
         "id": part_id,
         "label": label,
         "pages": [start_page, end_page],
     }
 
-    # Locate manual file (optional — may not exist)
-    manual_path = piece_dir / f"{slug}.manual.txt"
-
-    # Page spec for manual file
     if start_page == end_page:
         page_spec = str(start_page)
     else:
         page_spec = f"{start_page}-{end_page}"
     manual_line = f"{label}: {page_spec}\n"
 
-    # --- Safe write with rollback ---
+    manual_path = piece_dir / f"{slug}.manual.txt"
+
     backup_pdf = piece_pdf_path.with_suffix(".pdf.backup")
     backup_yaml = yaml_path.with_suffix(".yaml.backup")
     backup_manual = manual_path.with_suffix(".manual.txt.backup") if manual_path.exists() else None
 
     try:
-        # Back up files
         shutil.copy2(piece_pdf_path, backup_pdf)
         shutil.copy2(yaml_path, backup_yaml)
         if manual_path.exists():
             shutil.copy2(manual_path, backup_manual)
 
-        # Merge PDFs
         writer = PdfWriter()
         for page in existing_reader.pages:
             writer.add_page(page)
@@ -212,22 +115,20 @@ def add_part(
         with piece_pdf_path.open("wb") as f:
             writer.write(f)
 
-        # Update YAML
         data["parts"] = existing_parts + [new_part]
-
         with yaml_path.open("w", encoding="utf-8") as f:
             yaml.safe_dump(data, f, sort_keys=False)
 
-        # Append to manual file (warn if it didn't exist)
         if not manual_path.exists():
-            print(f"WARNING: no manual file found for {slug} — creating {manual_path.name} (will contain the added part only)")
+            print(
+                f"WARNING: no manual file found for {slug} — "
+                f"creating {manual_path.name} (will contain the added part only)"
+            )
         with manual_path.open("a", encoding="utf-8") as f:
             f.write(manual_line)
 
-        # Remove source PDF only after everything succeeded
         source_pdf.unlink()
 
-        # Remove backups
         backup_pdf.unlink()
         backup_yaml.unlink()
         if backup_manual and backup_manual.exists():
@@ -236,7 +137,6 @@ def add_part(
         print(f"Added part '{label}' ({part_id}) to {slug}: pages {start_page}-{end_page}")
 
     except Exception:
-        # Rollback: restore originals if backups exist
         if backup_pdf.exists():
             shutil.copy2(backup_pdf, piece_pdf_path)
             backup_pdf.unlink()
@@ -249,29 +149,15 @@ def add_part(
         raise
 
 
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
-
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Append an additional part PDF to an existing library piece."
     )
-    parser.add_argument("slug", help="Piece slug (must exist in the library)")
-    parser.add_argument("label", help="Part label (e.g. 'Tenor Horn')")
-    parser.add_argument("pdf", type=Path, help="Source PDF to append")
-    parser.add_argument(
-        "--library",
-        type=Path,
-        default=Path("library"),
-        help='Library root directory (default: "library")',
-    )
-    parser.add_argument(
-        "--aliases",
-        type=Path,
-        default=Path("config/aliases.yaml"),
-        help='Aliases file (default: "config/aliases.yaml")',
-    )
+    parser.add_argument("slug")
+    parser.add_argument("label")
+    parser.add_argument("pdf", type=Path)
+    parser.add_argument("--library", type=Path, default=Path("library"))
+    parser.add_argument("--aliases", type=Path, default=Path("config/aliases.yaml"))
 
     args = parser.parse_args()
 
