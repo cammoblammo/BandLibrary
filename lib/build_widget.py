@@ -43,7 +43,7 @@ class BuildThread(QThread):
 
     def run(self):
         try:
-            ensemble_name, ensemble_parts = load_ensemble(self.ensemble_path)
+            ensemble_name, band_name, ensemble_parts = load_ensemble(self.ensemble_path)
             pieces = [load_piece(self.library, slug) for slug in self.slugs]
             pieces_by_slug = {p.slug: p for p in pieces}
 
@@ -67,6 +67,8 @@ class BuildThread(QThread):
                 ensemble_parts=ensemble_parts,
                 pieces_by_slug=pieces_by_slug,
                 grouped_matches=grouped_matches,
+                band_name=band_name,
+                edition=self.edition or "",
             )
 
             for f in generated:

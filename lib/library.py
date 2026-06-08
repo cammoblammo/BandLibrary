@@ -32,10 +32,11 @@ def load_yaml_file(path: Path) -> dict:
     return data
 
 
-def load_ensemble(path: Path) -> tuple[str, list[EnsemblePart]]:
+def load_ensemble(path: Path) -> tuple[str, str, list[EnsemblePart]]:
     """
     Load and validate an ensemble YAML file.
-    Returns (ensemble_name, parts).
+    Returns (ensemble_name, band_name, parts).
+    band_name may be an empty string if not specified.
     """
     data = load_yaml_file(path)
 
@@ -50,6 +51,11 @@ def load_ensemble(path: Path) -> tuple[str, list[EnsemblePart]]:
     ensemble_name = ensemble_meta.get("name")
     if not isinstance(ensemble_name, str) or not ensemble_name.strip():
         raise LibraryError(f"Missing or invalid ensemble.name in {path}")
+
+    band_name = ensemble_meta.get("band", "")
+    if not isinstance(band_name, str):
+        band_name = ""
+    band_name = band_name.strip()
 
     parts: list[EnsemblePart] = []
     seen_ids: set[str] = set()
@@ -78,7 +84,7 @@ def load_ensemble(path: Path) -> tuple[str, list[EnsemblePart]]:
         seen_ids.add(part_id)
         parts.append(EnsemblePart(id=part_id, label=label, fallback=fallback))
 
-    return ensemble_name, parts
+    return ensemble_name, band_name, parts
 
 
 def load_piece(library_dir: Path, slug: str) -> Piece:

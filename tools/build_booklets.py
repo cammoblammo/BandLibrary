@@ -53,7 +53,7 @@ def main() -> int:
             )
             return 1
 
-        ensemble_name, ensemble_parts = load_ensemble(args.ensemble)
+        ensemble_name, band_name, ensemble_parts = load_ensemble(args.ensemble)
         pieces = [load_piece(args.library, slug) for slug in slugs]
         pieces_by_slug = {piece.slug: piece for piece in pieces}
 
@@ -77,6 +77,8 @@ def main() -> int:
             ensemble_parts=ensemble_parts,
             pieces_by_slug=pieces_by_slug,
             grouped_matches=grouped_matches,
+            band_name=band_name,
+            edition=args.edition or "",
         )
 
         archive_stem = args.ensemble.stem

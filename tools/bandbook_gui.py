@@ -18,11 +18,12 @@ from pathlib import Path
 import yaml
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QTabWidget, QStatusBar
+    QApplication, QMainWindow, QTabWidget, QStatusBar, QMenuBar
 )
 
 from lib.editor_widget import EditorWidget, load_alias_labels
 from lib.build_widget import BuildWidget
+from lib.help_window import HelpWindow
 
 
 # ---------------------------------------------------------------------------
@@ -97,12 +98,25 @@ class BandBookWindow(QMainWindow):
         tabs.addTab(self.build_widget, "Build")
 
         self.setCentralWidget(tabs)
+        self._build_menu()
         self._apply_style()
 
         # Restore last active tab
         last_tab = config.get("last_tab", 0)
         tabs.setCurrentIndex(last_tab)
         tabs.currentChanged.connect(self._on_tab_changed)
+
+    def _build_menu(self):
+        menubar = self.menuBar()
+        help_menu = menubar.addMenu("Help")
+        help_action = help_menu.addAction("BandBook Help…")
+        help_action.setShortcut("F1")
+        help_action.triggered.connect(self._show_help)
+
+    def _show_help(self):
+        docs_dir = Path(__file__).parent.parent / "docs"
+        dlg = HelpWindow(docs_dir, parent=self)
+        dlg.exec()
 
     def _on_tab_changed(self, index: int):
         self._config["last_tab"] = index
@@ -146,6 +160,33 @@ class BandBookWindow(QMainWindow):
                 border-bottom: 2px solid #89b4fa;
             }
             QTabBar::tab:hover { background: #313244; color: #cdd6f4; }
+            QMenuBar {
+                background: #11111b;
+                color: #cdd6f4;
+                border-bottom: 1px solid #313244;
+                font-size: 13px;
+            }
+            QMenuBar::item:selected { background: #313244; }
+            QMenu {
+                background: #313244;
+                color: #cdd6f4;
+                border: 1px solid #45475a;
+            }
+            QMenu::item:selected { background: #45475a; }
+            QListWidget#helpDocList {
+                background: #181825;
+                color: #cdd6f4;
+                border: none;
+                font-size: 12px;
+            }
+            QListWidget#helpDocList::item:hover { background: #313244; }
+            QListWidget#helpDocList::item:selected { background: #45475a; }
+            QTextEdit#helpContentView {
+                background: #181825;
+                color: #cdd6f4;
+                border: none;
+                padding: 12px;
+            }
             QWidget#pdfToolbar, QWidget#editorToolbar,
             QWidget#mainToolbar, QWidget#buildControls,
             QWidget#panelHeader {
