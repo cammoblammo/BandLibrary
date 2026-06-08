@@ -3,7 +3,7 @@ schema_version: 1
 aliases:
   "Flute": flute
 
-  "Clarinet": clarinet
+  "Clarinet": clarinet_1
   "Clarinet 1": clarinet_1
   "Clarinet 2": clarinet_2
   "Clarinet 3": clarinet_3
@@ -17,7 +17,7 @@ aliases:
   "Clarinet in Bb 3": clarinet_3
   "Alto clarinet": alto_clarinet
 
-  "Alto sax": alto_sax
+  "Alto sax": alto_sax_1
   "Alto sax 1": alto_sax_1
   "Alto sax 2": alto_sax_2
   "Alto saxophone": alto_sax
@@ -29,7 +29,7 @@ aliases:
   "Baritone sax": baritone_sax
   "Baritone saxophone": baritone_sax
 
-  "Trumpet": trumpet
+  "Trumpet": trumpet_1
   "Trumpet 1": trumpet_1
   "Trumpet 2": trumpet_2
   "Trumpet 3": trumpet_3
@@ -40,6 +40,7 @@ aliases:
   "Tenor horn": tenor_horn
 
   "Euphonium": euphonium
+  "Euphonium TC": euphonium_tc
   "Tuba": tuba
   "Bass Clarinet": bass_clarinet
   "Oboe": oboe
