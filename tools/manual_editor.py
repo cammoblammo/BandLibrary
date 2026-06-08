@@ -577,6 +577,9 @@ class MainWindow(QMainWindow):
         self.force_checkbox = QCheckBox("Force")
         self.force_checkbox.setChecked(True)
         self.force_checkbox.setToolTip("Pass --force to importer (overwrite existing piece)")
+        self.test_checkbox = QCheckBox("Test")
+        self.test_checkbox.setChecked(False)
+        self.test_checkbox.setToolTip("Pass --test to importer (import to test/ instead of library/)")
 
         for btn in (new_btn, open_btn, save_btn, save_as_btn, import_btn):
             btn.setFixedHeight(30)
@@ -589,6 +592,7 @@ class MainWindow(QMainWindow):
         et_layout.addWidget(save_as_btn)
         et_layout.addSpacing(8)
         et_layout.addWidget(self.force_checkbox)
+        et_layout.addWidget(self.test_checkbox)
         et_layout.addWidget(import_btn)
 
         right_layout.addWidget(editor_toolbar)
@@ -827,7 +831,8 @@ class MainWindow(QMainWindow):
         proc = QProcess(self)
         proc.start(sys.executable, [str(importer), str(pdf_file),
                                      "--manual", str(manual_path)]
-                   + (["--force"] if self.force_checkbox.isChecked() else []))
+                   + (["--force"] if self.force_checkbox.isChecked() else [])
+                   + (["--test"] if self.test_checkbox.isChecked() else []))
         proc.waitForFinished(15000)
 
         stdout = proc.readAllStandardOutput().data().decode(errors="replace").strip()
