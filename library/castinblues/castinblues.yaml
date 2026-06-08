@@ -1,0 +1,77 @@
+schema_version: 1
+piece:
+  id: castinblues
+  title: CastInBlues
+  source_pdf: castinblues.pdf
+  status: manual
+parts:
+- label: Flute
+  id: flute
+  pages:
+  - 17
+  - 17
+- label: Clarimanet
+  id: clarimanet
+  pages:
+  - 18
+  - 18
+- label: tootle stick
+  id: tootle_stick
+  pages:
+  - 19
+  - 19
+- label: Clarinet, the Third
+  id: clarinet_the_third
+  pages:
+  - 20
+  - 20
+- label: Alto
+  id: alto
+  pages:
+  - 21
+  - 21
+- label: Tenor sax
+  id: tenor_sax
+  pages:
+  - 22
+  - 22
+- label: Trumpet 1
+  id: trumpet_1
+  pages:
+  - 23
+  - 23
+- label: trumpet 2
+  id: trumpet_2
+  pages:
+  - 24
+  - 24
+- label: Trumpet 3
+  id: trumpet_3
+  pages:
+  - 25
+  - 25
+- label: Trombone
+  id: trombone
+  pages:
+  - 26
+  - 26
+- label: euphonium (the other one)
+  id: euphonium_the_other_one
+  pages:
+  - 27
+  - 27
+- label: leccy leccy
+  id: leccy_leccy
+  pages:
+  - 28
+  - 28
+- label: Bass Guitar
+  id: bass_guitar
+  pages:
+  - 29
+  - 30
+- label: Drumkit
+  id: drum_kit
+  pages:
+  - 31
+  - 31

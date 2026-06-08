@@ -1,0 +1,14 @@
+Flute: 17
+Clarimanet: 18
+tootle stick: 19
+Clarinet, the Third: 20
+Alto: 21
+Tenor sax: 22
+Trumpet 1: 23
+trumpet 2: 24
+Trumpet 3: 25
+Trombone: 26
+euphonium (the other one): 27
+leccy leccy: 28
+Bass Guitar: 29-30
+Drumkit: 31
