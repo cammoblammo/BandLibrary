@@ -35,7 +35,11 @@ def main() -> int:
             print("Test mode — output will be written to test/")
 
         aliases = load_aliases(args.aliases)
-        import_piece(args.pdf, args.manual, args.library, args.force, aliases)
+        unaliased = import_piece(args.pdf, args.manual, args.library, args.force, aliases)
+        if unaliased:
+            print("\nUnaliased labels (consider adding to config/aliases.yaml):")
+            for label, part_id in unaliased:
+                print(f'  {label!r:30s} ->  {part_id}')
 
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)

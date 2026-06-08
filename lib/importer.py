@@ -1,5 +1,5 @@
 """
-Piece import logic for BandLibrary.
+Piece import logic for BandBook.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ def import_piece(
     library: Path,
     force: bool,
     aliases: dict[str, str],
-) -> None:
+) -> list[tuple[str, str]]:
     """
     Import a PDF and manual mapping file into the library.
 
@@ -44,7 +44,7 @@ def import_piece(
         return
 
     # Parse manual file first — fail early before touching the library
-    title, parts = parse_manual_file(manual_path, aliases)
+    title, parts, unaliased = parse_manual_file(manual_path, aliases)
     if not title:
         title = infer_title_from_filename(pdf_path.stem)
 
@@ -83,14 +83,11 @@ def import_piece(
         with yaml_dest.open("w", encoding="utf-8") as f:
             yaml.safe_dump(yaml_data, f, sort_keys=False)
 
-        # Remove originals only after success
-        pdf_path.unlink()
-        manual_path.unlink()
-
         if backup_dir and backup_dir.exists():
             shutil.rmtree(backup_dir)
 
         print(f"Imported: {piece_dir}")
+        return unaliased
 
     except Exception:
         # Rollback
@@ -99,3 +96,5 @@ def import_piece(
         if backup_dir and backup_dir.exists():
             backup_dir.rename(piece_dir)
         raise
+
+    return []

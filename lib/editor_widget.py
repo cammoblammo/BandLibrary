@@ -514,6 +514,13 @@ class EditorWidget(QWidget):
         self.test_checkbox = QCheckBox("Test")
         self.test_checkbox.setChecked(False)
         self.test_checkbox.setToolTip("Pass --test to importer (imports to test/ instead of library/)")
+        self.git_checkbox = QCheckBox("Git push")
+        self.git_checkbox.setChecked(True)
+        self.git_checkbox.setToolTip("Commit and push new library entry to main after import")
+        # Disable git push when test mode is active
+        self.test_checkbox.stateChanged.connect(
+            lambda state: self.git_checkbox.setEnabled(state == 0)
+        )
 
         if alias_labels:
             alias_indicator = QLabel(f"✓ {len(alias_labels)} aliases")
@@ -536,6 +543,7 @@ class EditorWidget(QWidget):
         et_layout.addSpacing(8)
         et_layout.addWidget(self.force_checkbox)
         et_layout.addWidget(self.test_checkbox)
+        et_layout.addWidget(self.git_checkbox)
         et_layout.addWidget(import_btn)
 
         right_layout.addWidget(editor_toolbar)
@@ -689,12 +697,135 @@ class EditorWidget(QWidget):
 
         if exit_code == 0:
             self.editor._modified = False
-            self._status.showMessage(f"Import successful: {stdout or 'done'}", 6000)
+            self._status.showMessage(f"Import successful: {stdout or 'done'}", 4000)
+
+            # Parse unaliased labels from stdout
+            unaliased_lines = [
+                line for line in stdout.splitlines()
+                if "->" in line and not line.startswith("Imported")
+            ]
+            if unaliased_lines:
+                self._show_unaliased_dialog(stdout)
+
+            # Git commit and push if requested (skipped in test mode)
+            if self.git_checkbox.isChecked() and not self.test_checkbox.isChecked():
+                self._git_commit_push(pdf_file)
         else:
             detail = stderr or stdout or "No output."
             QMessageBox.critical(self, "Import Failed",
                 f"import_piece.py exited with code {exit_code}:\n\n{detail}")
             self._status.showMessage("Import failed.", 5000)
+
+    def _show_unaliased_dialog(self, output: str):
+        """Show a dialog listing unaliased labels from the import output."""
+        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel, QApplication
+        from PyQt6.QtGui import QFont
+
+        # Extract unaliased section from output
+        lines = output.splitlines()
+        unaliased_lines = []
+        in_section = False
+        for line in lines:
+            if line.startswith("Unaliased labels"):
+                in_section = True
+                continue
+            if in_section and line.strip():
+                unaliased_lines.append(line.strip())
+
+        if not unaliased_lines:
+            return
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Unaliased Labels")
+        dlg.resize(480, 300)
+        layout = QVBoxLayout(dlg)
+        layout.setSpacing(8)
+        layout.setContentsMargins(12, 12, 12, 12)
+
+        layout.addWidget(QLabel(
+            "These labels were normalised by slugification rather than an alias.\n"
+            "Consider adding them to config/aliases.yaml:"
+        ))
+
+        text = QTextEdit()
+        text.setReadOnly(True)
+        font = QFont("Monospace", 11)
+        font.setStyleHint(QFont.StyleHint.TypeWriter)
+        text.setFont(font)
+        text.setPlainText("\n".join(unaliased_lines))
+        layout.addWidget(text)
+
+        btn_row = QHBoxLayout()
+        copy_btn = QPushButton("Copy")
+        close_btn = QPushButton("Close")
+        copy_btn.setFixedHeight(30)
+        close_btn.setFixedHeight(30)
+        btn_row.addWidget(copy_btn)
+        btn_row.addStretch()
+        btn_row.addWidget(close_btn)
+        layout.addLayout(btn_row)
+
+        copy_btn.clicked.connect(
+            lambda: QApplication.clipboard().setText("\n".join(unaliased_lines))
+        )
+        close_btn.clicked.connect(dlg.accept)
+
+        dlg.exec()
+
+    def _git_commit_push(self, pdf_file: Path):
+        """Commit the new library entry and push to main."""
+        from .utils import slugify
+        slug = slugify(pdf_file.stem)
+        project_root = self._importer_path.parent.parent
+        piece_dir = project_root / "library" / slug
+
+        self._status.showMessage("Running git commit and push…")
+
+        import subprocess
+
+        try:
+            # Stage the new piece directory
+            result = subprocess.run(
+                ["git", "add", str(piece_dir)],
+                cwd=str(project_root),
+                capture_output=True, text=True, timeout=15
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"git add failed:\n{result.stderr.strip()}")
+
+            # Derive title from YAML for commit message
+            yaml_path = piece_dir / f"{slug}.yaml"
+            title = slug
+            if yaml_path.exists():
+                import yaml as _yaml
+                data = _yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
+                title = data.get("piece", {}).get("title", slug)
+
+            # Commit
+            result = subprocess.run(
+                ["git", "commit", "-m", f"Import: {title}"],
+                cwd=str(project_root),
+                capture_output=True, text=True, timeout=15
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"git commit failed:\n{result.stderr.strip()}")
+
+            # Push to main
+            result = subprocess.run(
+                ["git", "push", "origin", "main"],
+                cwd=str(project_root),
+                capture_output=True, text=True, timeout=30
+            )
+            if result.returncode != 0:
+                raise RuntimeError(f"git push failed:\n{result.stderr.strip()}")
+
+            self._status.showMessage(f"Imported and pushed '{title}' to main.", 6000)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Git Error",
+                f"Import succeeded but git operation failed:\n\n{e}\n\n"
+                f"The piece is in the library — use the CLI to commit and push manually.")
+            self._status.showMessage("Import succeeded, git push failed.", 5000)
 
     def has_unsaved_changes(self) -> bool:
         return self.editor.is_modified()

@@ -86,6 +86,7 @@ DOC_FILES = [
     ("Importer",         "importer.md"),
     ("Booklet Builder",  "booklet-builder.md"),
     ("Add Part",         "add-part.md"),
+    ("Assignment Editor", "assignment-editor.md"),
     ("Validator",        "validator.md"),
     ("Data Model",       "data-model.md"),
     ("Roadmap",          "roadmap.md"),

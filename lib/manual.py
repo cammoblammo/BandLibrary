@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 
 from .aliases import normalise_part_id
+from .utils import canonicalise_alias_key
 
 
 def parse_page_spec(text: str, line_number: int) -> tuple[int, int]:
@@ -37,15 +38,19 @@ def parse_page_spec(text: str, line_number: int) -> tuple[int, int]:
 def parse_manual_file(
     path: Path,
     aliases: dict[str, str],
-) -> tuple[str | None, list[dict]]:
+) -> tuple[str | None, list[dict], list[tuple[str, str]]]:
     """
     Parse a .manual.txt file.
 
-    Returns (title, parts) where title may be None if not specified,
-    and parts is a list of dicts with keys: label, id, pages.
+    Returns (title, parts, unaliased) where:
+    - title may be None if not specified
+    - parts is a list of dicts with keys: label, id, pages
+    - unaliased is a list of (label, id) tuples for labels resolved
+      by slugification rather than an explicit alias
     """
     title = None
     parts = []
+    unaliased: list[tuple[str, str]] = []
 
     with path.open("r", encoding="utf-8") as f:
         for i, raw in enumerate(f, start=1):
@@ -67,13 +72,19 @@ def parse_manual_file(
 
             start, end = parse_page_spec(value, i)
 
+            part_id = normalise_part_id(key, aliases)
+            # Track labels that fell through to slugification
+            alias_key = canonicalise_alias_key(key)
+            if alias_key not in aliases:
+                unaliased.append((key, part_id))
+
             parts.append({
                 "label": key,
-                "id": normalise_part_id(key, aliases),
+                "id": part_id,
                 "pages": [start, end],
             })
 
     if not parts:
         raise ValueError(f"Manual file contains no parts: {path}")
 
-    return title, parts
+    return title, parts, unaliased

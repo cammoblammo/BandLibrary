@@ -87,7 +87,7 @@ class BandBookWindow(QMainWindow):
         self.editor_widget.set_window_title_callback(
             lambda t: self.setWindowTitle(t)
         )
-        tabs.addTab(self.editor_widget, "Editor")
+        tabs.addTab(self.editor_widget, "Piece Importer")
 
         # Build tab
         self.build_widget = BuildWidget(
@@ -95,7 +95,7 @@ class BandBookWindow(QMainWindow):
             config=config,
             save_config_callback=save_config,
         )
-        tabs.addTab(self.build_widget, "Build")
+        tabs.addTab(self.build_widget, "Booklet Builder")
 
         self.setCentralWidget(tabs)
         self._build_menu()
@@ -274,6 +274,8 @@ class BandBookWindow(QMainWindow):
                 border: 1px solid #45475a; border-radius: 3px; background: #313244;
             }
             QCheckBox::indicator:checked { background: #40a060; border-color: #50c070; }
+            QCheckBox:disabled { color: #585b70; }
+            QCheckBox::indicator:disabled { background: #1e1e2e; border-color: #313244; }
             QFrame#separator { color: #313244; background: #313244; max-height: 1px; }
             QSplitter::handle { background: #313244; }
             QSplitter::handle:hover { background: #585b70; }
