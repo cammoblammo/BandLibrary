@@ -1,10 +1,10 @@
-# BandLibrary
+# BandBook
 
 A toolchain for managing a band music library.
 
 ## Overview
 
-BandLibrary provides a set of tools to:
+BandBook provides a set of tools to:
 
 - create structured metadata for PDF scores and parts
 - import pieces into a organised library
@@ -24,6 +24,15 @@ output/                     Generated files (not version-controlled)
 ```
 
 ## Tools
+
+### bandbook_gui.py
+
+The main graphical interface. Combines the manual mapping editor and booklet
+builder in a single tabbed window.
+
+```
+python3 tools/bandbook_gui.py
+```
 
 ### manual_editor.py
 

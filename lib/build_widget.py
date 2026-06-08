@@ -1,5 +1,5 @@
 """
-BandLibrary Build Widget — embeddable booklet builder UI.
+BandBook Build Widget — embeddable booklet builder UI.
 """
 
 from __future__ import annotations
@@ -505,7 +505,7 @@ class BuildWidget(QWidget):
             path += ".txt"
         try:
             with open(path, "w", encoding="utf-8") as f:
-                f.write(f"# BandLibrary repertoire\n")
+                f.write(f"# BandBook repertoire\n")
                 for slug in slugs:
                     f.write(f"{slug}\n")
             if self._status:

@@ -1,4 +1,4 @@
-# BandLibrary Quickstart
+# BandBook Quickstart
 
 A complete walkthrough of the normal import-and-build workflow.
 
@@ -6,7 +6,14 @@ A complete walkthrough of the normal import-and-build workflow.
 
 ## 1. Create a manual mapping file
 
-The recommended way to create a manual mapping file is with the graphical editor:
+The recommended way to create a manual mapping file is with the BandBook GUI:
+
+```
+python3 tools/bandbook_gui.py
+```
+
+This opens the tabbed interface. Use the Editor tab to map parts.
+The standalone editor is also available if needed:
 
 ```
 python3 tools/manual_editor.py

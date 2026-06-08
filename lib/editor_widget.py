@@ -1,5 +1,5 @@
 """
-BandLibrary Manual Part Mapping Editor — reusable widget.
+BandBook Manual Part Mapping Editor — reusable widget.
 
 Provides EditorWidget (a QWidget) that can be embedded in a tab or
 used standalone. Also exports PdfViewer and ManualEditor for testing.
@@ -599,7 +599,7 @@ class EditorWidget(QWidget):
             self.editor._modified = False
             self.file_label.setText("New file")
             if hasattr(self, "_title_callback"):
-                self._title_callback(f"BandLibrary — {p.name}")
+                self._title_callback(f"BandBook — {p.name}")
             self._status.showMessage(
                 f"Loaded: {p.name} ({self.pdf_viewer.page_count()} pages) — "
                 f"navigate to first part and press Enter.")

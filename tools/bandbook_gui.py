@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-BandLibrary GUI — tabbed application combining the manual editor and booklet builder.
+BandBook GUI — tabbed application combining the manual editor and booklet builder.
 
 Usage:
-  python3 tools/bandlibrary_gui.py [--aliases config/aliases.yaml]
+  python3 tools/bandbook_gui.py [--aliases config/aliases.yaml]
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pathlib import Path
 
 import yaml
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QStatusBar
 )
@@ -25,10 +26,10 @@ from lib.build_widget import BuildWidget
 
 
 # ---------------------------------------------------------------------------
-# User config (~/.config/bandlibrary/gui.yaml)
+# User config (~/.config/bandbook/gui.yaml)
 # ---------------------------------------------------------------------------
 
-CONFIG_PATH = Path.home() / ".config" / "bandlibrary" / "gui.yaml"
+CONFIG_PATH = Path.home() / ".config" / "bandbook" / "gui.yaml"
 
 
 def load_config() -> dict:
@@ -55,15 +56,18 @@ def save_config(config: dict) -> None:
 # Main Window
 # ---------------------------------------------------------------------------
 
-class BandLibraryWindow(QMainWindow):
+class BandBookWindow(QMainWindow):
     def __init__(self, alias_labels: list[str], config: dict):
         super().__init__()
         self._config = config
-        self.setWindowTitle("BandLibrary")
+        self.setWindowTitle("BandBook")
         self.resize(
             config.get("window_width", 1400),
             config.get("window_height", 900),
         )
+        icon_path = Path(__file__).parent.parent / "resources" / "icon.png"
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
 
         status = QStatusBar()
         self.setStatusBar(status)
@@ -256,7 +260,7 @@ class BandLibraryWindow(QMainWindow):
 # ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="BandLibrary GUI")
+    parser = argparse.ArgumentParser(description="BandBook GUI")
     parser.add_argument(
         "--aliases",
         type=Path,
@@ -269,8 +273,8 @@ def main():
     config = load_config()
 
     app = QApplication(sys.argv)
-    app.setApplicationName("BandLibrary")
-    window = BandLibraryWindow(alias_labels, config)
+    app.setApplicationName("BandBook")
+    window = BandBookWindow(alias_labels, config)
     window.show()
     sys.exit(app.exec())
 

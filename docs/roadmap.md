@@ -1,8 +1,8 @@
-# BandLibrary Roadmap
+# BandBook Roadmap
 
 ## Overview
 
-BandLibrary is a toolchain for managing a band music library. It provides
+BandBook is a toolchain for managing a band music library. It provides
 tools to import PDF scores, store structured metadata, and generate
 instrument-specific booklets automatically.
 
@@ -93,7 +93,7 @@ instrument-specific booklets automatically.
 Extract core logic from CLI scripts into reusable modules:
 
 ```
-bandlibrary/
+bandbook/
   importer.py
   builder.py
   models.py
