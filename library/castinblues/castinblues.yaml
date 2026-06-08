@@ -10,23 +10,23 @@ parts:
   pages:
   - 17
   - 17
-- label: Clarimanet
-  id: clarimanet
+- label: Clariminet
+  id: clariminet
   pages:
   - 18
   - 18
-- label: tootle stick
-  id: tootle_stick
+- label: Bb Clarinet 2
+  id: clarinet_2
   pages:
   - 19
   - 19
-- label: Clarinet, the Third
-  id: clarinet_the_third
+- label: Bb Clarinet 3
+  id: clarinet_3
   pages:
   - 20
   - 20
-- label: Alto
-  id: alto
+- label: Alto sax 1
+  id: alto_sax_1
   pages:
   - 21
   - 21
@@ -40,7 +40,7 @@ parts:
   pages:
   - 23
   - 23
-- label: trumpet 2
+- label: Trumpet 2
   id: trumpet_2
   pages:
   - 24
@@ -55,22 +55,22 @@ parts:
   pages:
   - 26
   - 26
-- label: euphonium (the other one)
-  id: euphonium_the_other_one
+- label: Euphonium
+  id: euphonium
   pages:
   - 27
   - 27
-- label: leccy leccy
-  id: leccy_leccy
+- label: Electric guitar
+  id: guitar
   pages:
   - 28
   - 28
-- label: Bass Guitar
+- label: Electric bass
   id: bass_guitar
   pages:
   - 29
   - 30
-- label: Drumkit
+- label: Drum Kit
   id: drum_kit
   pages:
   - 31
