@@ -8,7 +8,7 @@ Trumpet 1: 23
 Trumpet 2: 24
 Trumpet 3: 25
 Trombone: 26
-Euphonium: 27
+Euphonium TC: 27
 Electric guitar: 28
 Bass guitar: 29-30
 Drum kit: 31
