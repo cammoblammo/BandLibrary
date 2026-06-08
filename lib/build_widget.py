@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 )
 
 from .library import list_pieces, load_piece, load_ensemble
+from .assignment_editor import open_assignment_editor
 from .matcher import build_match_plan, build_report
 from .builder import generate_booklets, create_zip_archive
 from .utils import slugify_edition
@@ -193,6 +194,11 @@ class BuildWidget(QWidget):
         refresh_btn = QPushButton("Refresh")
         refresh_btn.setFixedHeight(26)
         refresh_btn.setToolTip("Refresh library")
+        self.assign_btn = QPushButton("Assignments…")
+        self.assign_btn.setFixedHeight(26)
+        self.assign_btn.setToolTip("Edit assignments for selected piece")
+        self.assign_btn.setEnabled(False)
+        bh_layout.addWidget(self.assign_btn)
         bh_layout.addWidget(refresh_btn)
         browser_layout.addWidget(browser_header)
 
@@ -303,6 +309,8 @@ class BuildWidget(QWidget):
 
         # Connections
         refresh_btn.clicked.connect(self.refresh_library)
+        self.assign_btn.clicked.connect(self._edit_assignments)
+        self.library_tree.itemSelectionChanged.connect(self._on_library_selection_changed)
         add_piece_btn.clicked.connect(self.add_selected_piece)
         self.library_tree.itemDoubleClicked.connect(self._on_library_double_click)
         self.up_btn.clicked.connect(self.move_up)
@@ -352,6 +360,29 @@ class BuildWidget(QWidget):
     # -----------------------------------------------------------------------
     # Library browser
     # -----------------------------------------------------------------------
+
+    def _on_library_selection_changed(self):
+        items = self.library_tree.selectedItems()
+        has_slug = bool(items and items[0].data(0, Qt.ItemDataRole.UserRole))
+        self.assign_btn.setEnabled(has_slug and self._get_ensemble_path() is not None)
+
+    def _edit_assignments(self):
+        items = self.library_tree.selectedItems()
+        if not items:
+            return
+        slug = items[0].data(0, Qt.ItemDataRole.UserRole)
+        if not slug:
+            return
+        ensemble_path = self._get_ensemble_path()
+        if ensemble_path is None:
+            QMessageBox.warning(self, "Assignments", "Select an ensemble first.")
+            return
+        library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
+        saved = open_assignment_editor(slug, library, ensemble_path, parent=self)
+        if saved:
+            self.refresh_library()
+            if self._status:
+                self._status.showMessage(f"Assignments saved for {slug}.", 4000)
 
     def refresh_library(self):
         self.library_tree.clear()
