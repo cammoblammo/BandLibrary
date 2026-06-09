@@ -11,3 +11,4 @@ Baritone TC: 10
 Electric guitar: 11
 Bass guitar: 12-13
 Drum kit: 14
+Tenor Horn: 16

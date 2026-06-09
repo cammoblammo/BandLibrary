@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: things-that-go-bump-in-the-night
-  title: Things that go bump in the night
+  title: things that go bump in the night
   source_pdf: things-that-go-bump-in-the-night.pdf
   status: manual
 parts:
@@ -26,7 +26,7 @@ parts:
   - 14
   - 17
 - label: alto sax
-  id: alto_sax
+  id: alto_sax_1
   pages:
   - 18
   - 21

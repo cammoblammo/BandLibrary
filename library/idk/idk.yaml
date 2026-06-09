@@ -36,7 +36,7 @@ parts:
   - 6
   - 6
 - label: trumpet
-  id: trumpet
+  id: trumpet_1
   pages:
   - 7
   - 7
@@ -46,12 +46,12 @@ parts:
   - 8
   - 8
 - label: alto sax
-  id: alto_sax
+  id: alto_sax_1
   pages:
   - 9
   - 9
 - label: clarinet
-  id: clarinet
+  id: clarinet_1
   pages:
   - 10
   - 10

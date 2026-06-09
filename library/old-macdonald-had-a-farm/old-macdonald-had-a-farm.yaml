@@ -11,12 +11,12 @@ parts:
   - 1
   - 1
 - label: Clarinet
-  id: clarinet
+  id: clarinet_1
   pages:
   - 2
   - 2
 - label: Clarinet in Eb
-  id: clarinet_in_eb
+  id: alto_clarinet
   pages:
   - 3
   - 3
@@ -26,7 +26,7 @@ parts:
   - 4
   - 4
 - label: Alto sax
-  id: alto_sax
+  id: alto_sax_1
   pages:
   - 5
   - 5
@@ -41,7 +41,7 @@ parts:
   - 7
   - 7
 - label: Trumpet
-  id: trumpet
+  id: trumpet_1
   pages:
   - 8
   - 8

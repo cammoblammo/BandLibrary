@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: when-the-saints-go-marching-in
-  title: When The Saints Go Marching In
+  title: when the saints go marching in
   source_pdf: when-the-saints-go-marching-in.pdf
   status: manual
 parts:
@@ -11,12 +11,12 @@ parts:
   - 1
   - 1
 - label: clarinet
-  id: clarinet
+  id: clarinet_1
   pages:
   - 2
   - 2
 - label: trumpet
-  id: trumpet
+  id: trumpet_1
   pages:
   - 3
   - 3

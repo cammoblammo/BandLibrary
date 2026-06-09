@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: soundstorm
-  title: Soundstorm
+  title: soundstorm
   source_pdf: soundstorm.pdf
   status: manual
 parts:
@@ -11,12 +11,12 @@ parts:
   - 1
   - 1
 - label: clarinet
-  id: clarinet
+  id: clarinet_1
   pages:
   - 2
   - 2
 - label: alto sax
-  id: alto_sax
+  id: alto_sax_1
   pages:
   - 3
   - 3
