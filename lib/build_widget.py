@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 
 from .library import list_pieces, load_piece, load_ensemble
 from .assignment_editor import open_assignment_editor
+from .importer import regenerate_yaml
 from .matcher import build_match_plan, build_report
 from .builder import generate_booklets, create_zip_archive
 from .utils import slugify_edition
@@ -198,7 +199,12 @@ class BuildWidget(QWidget):
         self.assign_btn.setFixedHeight(26)
         self.assign_btn.setToolTip("Edit assignments for selected piece")
         self.assign_btn.setEnabled(False)
+        self.regen_btn = QPushButton("Regen YAML")
+        self.regen_btn.setFixedHeight(26)
+        self.regen_btn.setToolTip("Regenerate YAML from manual file using current aliases")
+        self.regen_btn.setEnabled(False)
         bh_layout.addWidget(self.assign_btn)
+        bh_layout.addWidget(self.regen_btn)
         bh_layout.addWidget(refresh_btn)
         browser_layout.addWidget(browser_header)
 
@@ -310,6 +316,7 @@ class BuildWidget(QWidget):
         # Connections
         refresh_btn.clicked.connect(self.refresh_library)
         self.assign_btn.clicked.connect(self._edit_assignments)
+        self.regen_btn.clicked.connect(self._regen_yaml)
         self.library_tree.itemSelectionChanged.connect(self._on_library_selection_changed)
         add_piece_btn.clicked.connect(self.add_selected_piece)
         self.library_tree.itemDoubleClicked.connect(self._on_library_double_click)
@@ -365,6 +372,7 @@ class BuildWidget(QWidget):
         items = self.library_tree.selectedItems()
         has_slug = bool(items and items[0].data(0, Qt.ItemDataRole.UserRole))
         self.assign_btn.setEnabled(has_slug and self._get_ensemble_path() is not None)
+        self.regen_btn.setEnabled(has_slug)
 
     def _edit_assignments(self):
         items = self.library_tree.selectedItems()
@@ -383,6 +391,39 @@ class BuildWidget(QWidget):
             self.refresh_library()
             if self._status:
                 self._status.showMessage(f"Assignments saved for {slug}.", 4000)
+
+    def _regen_yaml(self):
+        items = self.library_tree.selectedItems()
+        if not items:
+            return
+        slug = items[0].data(0, Qt.ItemDataRole.UserRole)
+        if not slug:
+            return
+
+        library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
+        manual_path = library / slug / f"{slug}.manual.txt"
+
+        if not manual_path.exists():
+            QMessageBox.warning(self, "Regen YAML",
+                f"No manual file found for {slug}:\n{manual_path}")
+            return
+
+        aliases_path = self._project_root / "config" / "aliases.yaml"
+        try:
+            from .aliases import load_aliases
+            aliases = load_aliases(aliases_path)
+            unaliased = regenerate_yaml(slug, manual_path, library, aliases)
+            self.refresh_library()
+            if self._status:
+                self._status.showMessage(f"YAML regenerated for {slug}.", 4000)
+            if unaliased:
+                msg = "Unaliased labels:\n" + "\n".join(
+                    f"  {label!r:30s} ->  {part_id}"
+                    for label, part_id in unaliased
+                )
+                QMessageBox.information(self, "Unaliased Labels", msg)
+        except Exception as e:
+            QMessageBox.critical(self, "Regen YAML Failed", str(e))
 
     def refresh_library(self):
         self.library_tree.clear()

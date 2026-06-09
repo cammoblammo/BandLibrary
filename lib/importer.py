@@ -98,3 +98,82 @@ def import_piece(
         raise
 
     return []
+
+
+def regenerate_yaml(
+    slug: str,
+    manual_path: Path,
+    library: Path,
+    aliases: dict[str, str],
+) -> list[tuple[str, str]]:
+    """
+    Regenerate the YAML for an existing library piece from its manual file.
+    The PDF is not touched. Preserves existing assignments block if present.
+    """
+    piece_dir = library / slug
+    if not piece_dir.exists():
+        raise FileNotFoundError(f"Piece not found in library: {slug}")
+
+    if not manual_path.exists():
+        raise FileNotFoundError(f"Manual file not found: {manual_path}")
+
+    yaml_path = piece_dir / f"{slug}.yaml"
+    if not yaml_path.exists():
+        raise FileNotFoundError(f"YAML not found: {yaml_path}")
+
+    # Parse manual file with current aliases
+    title, parts, unaliased = parse_manual_file(manual_path, aliases)
+    if not title:
+        title = infer_title_from_filename(slug)
+
+    # Validate duplicate IDs
+    seen: set[str] = set()
+    for p in parts:
+        if p["id"] in seen:
+            raise ValueError(f"Duplicate part id: {p['id']}")
+        seen.add(p["id"])
+
+    # Load existing YAML to preserve assignments and other metadata
+    with yaml_path.open("r", encoding="utf-8") as f:
+        existing = yaml.safe_load(f)
+
+    existing_assignments = existing.get("assignments", {})
+
+    yaml_data = {
+        "schema_version": 1,
+        "piece": {
+            "id": slug,
+            "title": title,
+            "source_pdf": f"{slug}.pdf",
+            "status": "manual",
+        },
+        "parts": parts,
+    }
+
+    # Validate existing assignments against new part ids
+    new_ids = {p["id"] for p in parts}
+    valid_assignments = {
+        k: v for k, v in existing_assignments.items()
+        if v in new_ids
+    }
+    invalid = set(existing_assignments) - set(valid_assignments)
+    if invalid:
+        print(f"WARNING: removed invalid assignments: {', '.join(invalid)}")
+
+    if valid_assignments:
+        yaml_data["assignments"] = valid_assignments
+
+    # Backup and write
+    backup = yaml_path.with_suffix(".yaml.backup")
+    shutil.copy2(yaml_path, backup)
+
+    try:
+        with yaml_path.open("w", encoding="utf-8") as f:
+            yaml.safe_dump(yaml_data, f, sort_keys=False)
+        backup.unlink()
+        print(f"Regenerated YAML: {yaml_path}")
+        return unaliased
+    except Exception:
+        shutil.copy2(backup, yaml_path)
+        backup.unlink()
+        raise

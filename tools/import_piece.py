@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from lib.aliases import load_aliases
-from lib.importer import import_piece
+from lib.importer import import_piece, regenerate_yaml
 
 
 def main() -> int:
@@ -21,6 +21,11 @@ def main() -> int:
     parser.add_argument("--library", type=Path, default=Path("library"))
     parser.add_argument("--aliases", type=Path, default=Path("config/aliases.yaml"))
     parser.add_argument("--force", action="store_true")
+    parser.add_argument(
+        "--yaml-only",
+        action="store_true",
+        help="Regenerate YAML from manual file without touching the PDF",
+    )
     parser.add_argument(
         "--test",
         action="store_true",
@@ -35,7 +40,14 @@ def main() -> int:
             print("Test mode — output will be written to test/")
 
         aliases = load_aliases(args.aliases)
-        unaliased = import_piece(args.pdf, args.manual, args.library, args.force, aliases)
+
+        if args.yaml_only:
+            from lib.utils import slugify
+            slug = slugify(args.pdf.stem)
+            unaliased = regenerate_yaml(slug, args.manual, args.library, aliases)
+        else:
+            unaliased = import_piece(args.pdf, args.manual, args.library, args.force, aliases)
+
         if unaliased:
             print("\nUnaliased labels (consider adding to config/aliases.yaml):")
             for label, part_id in unaliased:

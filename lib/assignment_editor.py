@@ -111,13 +111,7 @@ class AssignmentEditor(QDialog):
                     if value == current:
                         combo.setCurrentIndex(i)
                         break
-            else:
-                # Check for a direct match and pre-select it
-                if ep.id in piece.parts_by_id:
-                    for i, (_, value) in enumerate(self._part_options):
-                        if value == ep.id:
-                            combo.setCurrentIndex(i)
-                            break
+            # Direct matches are not pre-selected — only explicit assignments are shown
 
             self._combos[ep.id] = combo
             self._grid.addWidget(combo, row, 1)
@@ -161,11 +155,11 @@ class AssignmentEditor(QDialog):
             combo.setCurrentIndex(0)
 
     def _save(self):
-        # Build new assignments dict (only non-None selections)
+        # Only save genuine overrides — skip if selection matches direct match or is none
         assignments = {}
         for ep_id, combo in self._combos.items():
             value = combo.currentData()
-            if value is not None:
+            if value is not None and value != ep_id:
                 assignments[ep_id] = value
 
         try:

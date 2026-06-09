@@ -7,20 +7,21 @@ aliases:
   "Clarinet 1": clarinet_1
   "Clarinet 2": clarinet_2
   "Clarinet 3": clarinet_3
-  "Bb Clarinet": clarinet
+  "Bb Clarinet": clarinet_1
   "Bb Clarinet 1": clarinet_1
   "Bb Clarinet 2": clarinet_2
   "Bb Clarinet 3": clarinet_3
-  "Clarinet in Bb": clarinet
+  "Clarinet in Bb": clarinet_1
   "Clarinet in Bb 1": clarinet_1
   "Clarinet in Bb 2": clarinet_2
   "Clarinet in Bb 3": clarinet_3
   "Alto clarinet": alto_clarinet
+  "Clarinet in Eb": alto_clarinet
 
   "Alto sax": alto_sax_1
   "Alto sax 1": alto_sax_1
   "Alto sax 2": alto_sax_2
-  "Alto saxophone": alto_sax
+  "Alto saxophone": alto_sax_1
   "Alto saxophone 1": alto_sax_1
   "Alto saxophone 2": alto_sax_2
 
@@ -45,6 +46,8 @@ aliases:
   "Bass Clarinet": bass_clarinet
   "Oboe": oboe
   "Baritone TC": baritone_tc
+  "Baritone": baritone
+  "French Horn": french_horn
 
   "Guitar": guitar
   "Electric guitar": guitar

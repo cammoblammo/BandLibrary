@@ -12,31 +12,27 @@ parts:
 
   - id: clarinet_1
     label: Clarinet 1
-    fallback: [clarinet]
+    fallback: []
 
   - id: clarinet_2
     label: Clarinet 2
-    fallback: [clarinet_1, clarinet]
+    fallback: [clarinet_1]
 
   - id: clarinet_3
     label: Clarinet 3
-    fallback: [clarinet_2, clarinet_1, clarinet]
+    fallback: [clarinet_2, clarinet_1]
 
   - id: alto_sax_1
     label: Alto Sax 1
-    fallback: [alto_sax]
+    fallback: []
 
   - id: alto_sax_2
     label: Alto Sax 2
-    fallback: [alto_sax_1, alto_sax]
+    fallback: [alto_sax_1]
 
   - id: alto_sax_3
     label: Alto Sax 3
-    fallback: [alto_sax_2, alto_sax_1, alto_sax]
-
-  - id: alto_sax
-    label: Alto Sax
-    fallback: [alto_sax_1]
+    fallback: [alto_sax_2, alto_sax_1]
 
   - id: tenor_sax
     label: Tenor Sax
@@ -56,7 +52,7 @@ parts:
 
   - id: tenor_horn
     label: Tenor Horn
-    fallback: [alto_clarinet,alto_sax_1]
+    fallback: [alto_clarinet, alto_sax_1]
 
   - id: trombone
     label: Trombone
