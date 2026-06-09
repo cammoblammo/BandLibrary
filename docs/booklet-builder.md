@@ -35,6 +35,24 @@ Pieces may be specified directly on the command line or via a piece list file.
 
 ---
 
+## Library Browser
+
+The Booklet Builder tab includes a library browser showing all imported pieces.
+Each piece can be expanded to show its slug and available parts.
+
+Double-clicking a piece (or selecting it and clicking `Add to Build`) adds it
+to the build list.
+
+When a piece is selected, three additional buttons become active:
+
+| Button | Action |
+|--------|--------|
+| `Assignments…` | Open the assignment editor for the selected piece (requires an ensemble to be selected) |
+| `Regen YAML` | Regenerate the piece YAML from its manual file using current aliases |
+| `Add Part…` | Append an additional part PDF to the piece |
+
+---
+
 ## Piece List File
 
 A plain text file listing one piece slug per line:

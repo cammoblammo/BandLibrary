@@ -23,6 +23,7 @@ python3 tools/import_piece.py <pdf> --manual <manual.txt> [options]
 | `--aliases <path>` | `config/aliases.yaml` | Path to aliases file |
 | `--force` | off | Overwrite existing library entry |
 | `--test` | off | Write output to `test/` instead of `library/` |
+| `--yaml-only` | off | Regenerate YAML from manual file without touching the PDF |
 
 ---
 
@@ -126,6 +127,26 @@ With `--force`:
 - the existing directory is backed up before the operation begins
 - the backup is removed only after a successful import
 - on failure, the original is restored
+
+---
+
+## Regenerating YAML
+
+If you need to update a piece's YAML after changing aliases or fixing labels
+in the manual file — without reimporting the PDF — use `--yaml-only`:
+
+```
+python3 tools/import_piece.py <pdf> --manual <manual.txt> --yaml-only
+```
+
+This reads the manual file with the current aliases and rewrites the YAML.
+The PDF is not touched. Existing valid assignments are preserved; any
+assignments that reference part ids that no longer exist are removed with
+a warning.
+
+In the GUI, the equivalent is the `Regen YAML` button in the library browser
+of the Booklet Builder tab. It finds the manual file automatically from the
+library entry — no need to locate it manually.
 
 ---
 

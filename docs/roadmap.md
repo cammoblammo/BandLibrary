@@ -127,16 +127,12 @@ In-application help drawn from the `docs/` directory.
 
 ### Phase 6 — Advanced Features (Future)
 
-- `add_part.py` — append additional part PDFs to existing pieces
-- Importer preview mode (`--dry-run`) showing labels and resolved IDs before committing
-- Alias feedback — report unmapped labels to help grow `aliases.yaml`
-- Assignment editor in the GUI — visual mapping without YAML editing
-- Library browser — browse pieces, inspect parts and assignments
-- Named repertoire files in `repertoire/` for version-controlled setlist tracking
-- Structured JSON output from the builder for GUI integration
+- Add Part in the GUI — implemented in the library browser alongside Assignments and Regen YAML ✓
+- Page rotation correction on import
+- Library browser filter/search
 - Part duplication (e.g. multiple copies of trumpet parts)
 - Divider pages between pieces
-- Page rotation correction on import
+- Structured JSON output from the builder for GUI integration
 
 ---
 

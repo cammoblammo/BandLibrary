@@ -50,7 +50,7 @@ python3 tools/add_part.py hound-dog "Tenor Horn" tenor-horn.pdf --library test/
 3. Appends the new PDF's pages to the existing piece PDF
 4. Calculates the page range automatically
 5. Adds the new part stanza to the piece YAML
-6. Removes the source PDF after a successful import
+6. Leaves the source PDF in place
 
 The source PDF is always appended at the end. Page order within the combined
 PDF does not affect booklet building, since the builder selects pages by range.
@@ -92,7 +92,22 @@ give it a distinct canonical ID.
 
 If anything fails after the operation has begun, both the piece PDF and
 the piece YAML are restored to their original state from backups.
-The source PDF is only removed after a fully successful import.
+The source PDF is left in place after a successful import.
+
+---
+
+## GUI
+
+In the BandBook GUI, Booklet Builder tab:
+
+1. Select a piece in the library browser
+2. Click `Add Part…`
+3. Enter the part label in the dialog
+4. Click `Choose PDF…` and select the source PDF
+
+The part label is processed through the alias system — you can type the
+label as it appears on the score and the correct canonical id will be used.
+The library browser refreshes automatically after a successful add.
 
 ---
 
