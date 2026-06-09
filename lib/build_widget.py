@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
 from .library import list_pieces, load_piece, load_ensemble
 from .assignment_editor import open_assignment_editor
 from .importer import regenerate_yaml
+from .aliases import load_aliases
 from .matcher import build_match_plan, build_report
 from .builder import generate_booklets, create_zip_archive
 from .utils import slugify_edition
@@ -203,8 +204,13 @@ class BuildWidget(QWidget):
         self.regen_btn.setFixedHeight(26)
         self.regen_btn.setToolTip("Regenerate YAML from manual file using current aliases")
         self.regen_btn.setEnabled(False)
+        self.add_part_btn = QPushButton("Add Part…")
+        self.add_part_btn.setFixedHeight(26)
+        self.add_part_btn.setToolTip("Append an additional part PDF to this piece")
+        self.add_part_btn.setEnabled(False)
         bh_layout.addWidget(self.assign_btn)
         bh_layout.addWidget(self.regen_btn)
+        bh_layout.addWidget(self.add_part_btn)
         bh_layout.addWidget(refresh_btn)
         browser_layout.addWidget(browser_header)
 
@@ -317,6 +323,7 @@ class BuildWidget(QWidget):
         refresh_btn.clicked.connect(self.refresh_library)
         self.assign_btn.clicked.connect(self._edit_assignments)
         self.regen_btn.clicked.connect(self._regen_yaml)
+        self.add_part_btn.clicked.connect(self._add_part)
         self.library_tree.itemSelectionChanged.connect(self._on_library_selection_changed)
         add_piece_btn.clicked.connect(self.add_selected_piece)
         self.library_tree.itemDoubleClicked.connect(self._on_library_double_click)
@@ -373,6 +380,7 @@ class BuildWidget(QWidget):
         has_slug = bool(items and items[0].data(0, Qt.ItemDataRole.UserRole))
         self.assign_btn.setEnabled(has_slug and self._get_ensemble_path() is not None)
         self.regen_btn.setEnabled(has_slug)
+        self.add_part_btn.setEnabled(has_slug)
 
     def _edit_assignments(self):
         items = self.library_tree.selectedItems()
@@ -424,6 +432,164 @@ class BuildWidget(QWidget):
                 QMessageBox.information(self, "Unaliased Labels", msg)
         except Exception as e:
             QMessageBox.critical(self, "Regen YAML Failed", str(e))
+
+    def _add_part(self):
+        items = self.library_tree.selectedItems()
+        if not items:
+            return
+        slug = items[0].data(0, Qt.ItemDataRole.UserRole)
+        if not slug:
+            return
+
+        library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
+
+        # Ask for part label
+        from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Add Part")
+        dlg.resize(400, 140)
+        layout = QVBoxLayout(dlg)
+        layout.setSpacing(8)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.addWidget(QLabel("Part label (e.g. 'Tenor Horn'):"))
+        label_edit = QLineEdit()
+        label_edit.setPlaceholderText("Part label")
+        layout.addWidget(label_edit)
+
+        btn_row = QHBoxLayout()
+        ok_btn = QPushButton("Choose PDF…")
+        ok_btn.setFixedHeight(30)
+        cancel_btn = QPushButton("Cancel")
+        cancel_btn.setFixedHeight(30)
+        btn_row.addStretch()
+        btn_row.addWidget(cancel_btn)
+        btn_row.addWidget(ok_btn)
+        layout.addLayout(btn_row)
+
+        ok_btn.clicked.connect(dlg.accept)
+        cancel_btn.clicked.connect(dlg.reject)
+
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        label = label_edit.text().strip()
+        if not label:
+            QMessageBox.warning(self, "Add Part", "Part label cannot be empty.")
+            return
+
+        # Pick PDF
+        pdf_path, _ = QFileDialog.getOpenFileName(
+            self, f"Select PDF for '{label}'", "",
+            "PDF files (*.pdf);;All files (*)"
+        )
+        if not pdf_path:
+            return
+
+        aliases_path = self._project_root / "config" / "aliases.yaml"
+        try:
+            aliases = load_aliases(aliases_path)
+            # Import add_part logic
+            import sys as _sys
+            import shutil as _shutil
+            import yaml as _yaml
+            from pypdf import PdfReader as _PdfReader, PdfWriter as _PdfWriter
+            from .aliases import normalise_part_id
+
+            source_pdf = Path(pdf_path)
+            piece_dir = library / slug
+            yaml_path = piece_dir / f"{slug}.yaml"
+
+            with yaml_path.open("r", encoding="utf-8") as f:
+                data = _yaml.safe_load(f)
+
+            piece_meta = data.get("piece", {})
+            existing_parts = data.get("parts", [])
+            part_id = normalise_part_id(label, aliases)
+
+            existing_ids = {p["id"] for p in existing_parts if isinstance(p, dict)}
+            existing_labels = {p.get("label", "") for p in existing_parts if isinstance(p, dict)}
+
+            if part_id in existing_ids:
+                QMessageBox.critical(self, "Add Part",
+                    f"Part id '{part_id}' already exists in {slug}.")
+                return
+            if label in existing_labels:
+                QMessageBox.critical(self, "Add Part",
+                    f"Part label '{label}' already exists in {slug}.")
+                return
+
+            piece_pdf_path = piece_dir / piece_meta.get("source_pdf", f"{slug}.pdf")
+            existing_reader = _PdfReader(str(piece_pdf_path))
+            existing_page_count = len(existing_reader.pages)
+            new_reader = _PdfReader(str(source_pdf))
+            new_page_count = len(new_reader.pages)
+
+            if new_page_count == 0:
+                QMessageBox.critical(self, "Add Part", "Source PDF has no pages.")
+                return
+
+            start_page = existing_page_count + 1
+            end_page = existing_page_count + new_page_count
+            new_part = {"id": part_id, "label": label, "pages": [start_page, end_page]}
+
+            if start_page == end_page:
+                page_spec = str(start_page)
+            else:
+                page_spec = f"{start_page}-{end_page}"
+            manual_line = f"{label}: {page_spec}\n"
+            manual_path = piece_dir / f"{slug}.manual.txt"
+
+            backup_pdf = piece_pdf_path.with_suffix(".pdf.backup")
+            backup_yaml = yaml_path.with_suffix(".yaml.backup")
+            backup_manual = manual_path.with_suffix(".manual.txt.backup") if manual_path.exists() else None
+
+            _shutil.copy2(piece_pdf_path, backup_pdf)
+            _shutil.copy2(yaml_path, backup_yaml)
+            if manual_path.exists():
+                _shutil.copy2(manual_path, backup_manual)
+
+            try:
+                writer = _PdfWriter()
+                for page in existing_reader.pages:
+                    writer.add_page(page)
+                for page in new_reader.pages:
+                    writer.add_page(page)
+                with piece_pdf_path.open("wb") as f:
+                    writer.write(f)
+
+                data["parts"] = existing_parts + [new_part]
+                with yaml_path.open("w", encoding="utf-8") as f:
+                    _yaml.safe_dump(data, f, sort_keys=False)
+
+                if not manual_path.exists():
+                    print(f"WARNING: no manual file found for {slug} — creating {manual_path.name}")
+                with manual_path.open("a", encoding="utf-8") as f:
+                    f.write(manual_line)
+
+                backup_pdf.unlink()
+                backup_yaml.unlink()
+                if backup_manual and backup_manual.exists():
+                    backup_manual.unlink()
+
+                self.refresh_library()
+                if self._status:
+                    self._status.showMessage(
+                        f"Added '{label}' ({part_id}) to {slug}: pages {start_page}-{end_page}.", 5000)
+
+            except Exception as e:
+                if backup_pdf.exists():
+                    _shutil.copy2(backup_pdf, piece_pdf_path)
+                    backup_pdf.unlink()
+                if backup_yaml.exists():
+                    _shutil.copy2(backup_yaml, yaml_path)
+                    backup_yaml.unlink()
+                if backup_manual and backup_manual.exists():
+                    _shutil.copy2(backup_manual, manual_path)
+                    backup_manual.unlink()
+                raise
+
+        except Exception as e:
+            QMessageBox.critical(self, "Add Part Failed", str(e))
 
     def refresh_library(self):
         self.library_tree.clear()
