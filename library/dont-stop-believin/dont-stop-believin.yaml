@@ -1,0 +1,92 @@
+schema_version: 1
+piece:
+  id: dont-stop-believin
+  title: Dont Stop Believin
+  source_pdf: dont-stop-believin.pdf
+  status: manual
+parts:
+- label: Part 1 in C
+  id: part_1_in_c
+  pages:
+  - 1
+  - 1
+- label: Part 1 in Bb
+  id: part_1_in_bb
+  pages:
+  - 2
+  - 2
+- label: Part 2 in C
+  id: part_2_in_c
+  pages:
+  - 3
+  - 3
+- label: Part 2 in Bb
+  id: part_2_in_bb
+  pages:
+  - 4
+  - 4
+- label: Part 3 in C
+  id: part_3_in_c
+  pages:
+  - 5
+  - 5
+- label: Part 3 in Eb
+  id: part_3_in_eb
+  pages:
+  - 6
+  - 6
+- label: Part 3 in F
+  id: part_3_in_f
+  pages:
+  - 7
+  - 7
+- label: Part 4 in Bb TC
+  id: part_4_in_bb_tc
+  pages:
+  - 8
+  - 8
+- label: Party 4 in C BC
+  id: party_4_in_c_bc
+  pages:
+  - 9
+  - 9
+- label: Violin 1
+  id: violin_1
+  pages:
+  - 10
+  - 10
+- label: Violin 2
+  id: violin_2
+  pages:
+  - 11
+  - 11
+- label: Viola
+  id: viola
+  pages:
+  - 12
+  - 12
+- label: Cello
+  id: cello
+  pages:
+  - 13
+  - 13
+- label: Mallets
+  id: mallets
+  pages:
+  - 14
+  - 14
+- label: Drums
+  id: drums
+  pages:
+  - 15
+  - 15
+- label: Aux perc
+  id: auxiliary_percussion
+  pages:
+  - 16
+  - 16
+- label: Guitar
+  id: guitar
+  pages:
+  - 17
+  - 17
