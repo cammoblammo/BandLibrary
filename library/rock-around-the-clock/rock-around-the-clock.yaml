@@ -1,0 +1,102 @@
+schema_version: 1
+piece:
+  id: rock-around-the-clock
+  title: Rock Around The Clock
+  source_pdf: rock-around-the-clock.pdf
+  status: manual
+parts:
+- label: Part 1 in C
+  id: part_1_in_c
+  pages:
+  - 1
+  - 1
+- label: Part 1 in Bb
+  id: part_1_in_bb
+  pages:
+  - 2
+  - 2
+- label: Part 2 in C
+  id: part_2_in_c
+  pages:
+  - 3
+  - 3
+- label: Part 2 in Bb
+  id: part_2_in_bb
+  pages:
+  - 4
+  - 4
+- label: Part 3 in C TC
+  id: part_3_in_c_tc
+  pages:
+  - 5
+  - 5
+- label: Part 3 in Bb TC
+  id: part_3_in_bb_tc
+  pages:
+  - 6
+  - 6
+- label: Part 3 in Eb TC
+  id: part_3_in_eb_tc
+  pages:
+  - 7
+  - 7
+- label: Part 3 in F
+  id: part_3_in_f
+  pages:
+  - 8
+  - 8
+- label: Part 3 in C BC
+  id: part_3_in_c_bc
+  pages:
+  - 9
+  - 9
+- label: Part 4 in Bb TC
+  id: part_4_in_bb_tc
+  pages:
+  - 10
+  - 10
+- label: Part 4 in C BC
+  id: part_4_in_c_bc
+  pages:
+  - 11
+  - 11
+- label: Violin 1
+  id: violin_1
+  pages:
+  - 12
+  - 12
+- label: Violin 2
+  id: violin_2
+  pages:
+  - 13
+  - 13
+- label: Viola
+  id: viola
+  pages:
+  - 14
+  - 14
+- label: Cello
+  id: cello
+  pages:
+  - 15
+  - 15
+- label: Mallets
+  id: mallets
+  pages:
+  - 16
+  - 16
+- label: Aux perc
+  id: auxiliary_percussion
+  pages:
+  - 17
+  - 18
+- label: Chimes
+  id: chimes
+  pages:
+  - 19
+  - 19
+- label: Guitar
+  id: guitar
+  pages:
+  - 20
+  - 20
