@@ -1,0 +1,13 @@
+Flute: 17
+Clarinet 1: 18
+Clarinet 2: 19
+Alto 1: 20
+Trumpet 1: 21
+Trumpet 2: 22
+Trumpet 3: 23
+French horn: 24
+Trombone: 25
+Euphonium TC: 26
+Electric guitar: 27
+Bass guitar: 28-29
+Drum kit: 30

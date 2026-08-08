@@ -1,0 +1,72 @@
+schema_version: 1
+piece:
+  id: cast-in-blues-workshop
+  title: Cast in Blues Workshop
+  source_pdf: cast-in-blues-workshop.pdf
+  status: manual
+parts:
+- label: Flute
+  id: flute
+  pages:
+  - 17
+  - 17
+- label: Clarinet 1
+  id: clarinet_1
+  pages:
+  - 18
+  - 18
+- label: Clarinet 2
+  id: clarinet_2
+  pages:
+  - 19
+  - 19
+- label: Alto 1
+  id: alto_1
+  pages:
+  - 20
+  - 20
+- label: Trumpet 1
+  id: trumpet_1
+  pages:
+  - 21
+  - 21
+- label: Trumpet 2
+  id: trumpet_2
+  pages:
+  - 22
+  - 22
+- label: Trumpet 3
+  id: trumpet_3
+  pages:
+  - 23
+  - 23
+- label: French horn
+  id: french_horn
+  pages:
+  - 24
+  - 24
+- label: Trombone
+  id: trombone
+  pages:
+  - 25
+  - 25
+- label: Euphonium TC
+  id: euphonium_tc
+  pages:
+  - 26
+  - 26
+- label: Electric guitar
+  id: guitar
+  pages:
+  - 27
+  - 27
+- label: Bass guitar
+  id: bass_guitar
+  pages:
+  - 28
+  - 29
+- label: Drum kit
+  id: drum_kit
+  pages:
+  - 30
+  - 30
