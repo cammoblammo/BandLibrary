@@ -1,0 +1,97 @@
+schema_version: 1
+piece:
+  id: going-quackers
+  title: Going Quackers
+  source_pdf: going-quackers.pdf
+  status: manual
+parts:
+- label: Flute 1
+  id: flute_1
+  pages:
+  - 7
+  - 7
+- label: Flute 2
+  id: flute_2
+  pages:
+  - 8
+  - 8
+- label: Clarinet 1
+  id: clarinet_1
+  pages:
+  - 9
+  - 9
+- label: Clarinet 2
+  id: clarinet_2
+  pages:
+  - 10
+  - 10
+- label: Clarinet 3
+  id: clarinet_3
+  pages:
+  - 11
+  - 11
+- label: Alto sax 1
+  id: alto_sax_1
+  pages:
+  - 12
+  - 12
+- label: Alto sax 2
+  id: alto_sax_2
+  pages:
+  - 13
+  - 13
+- label: Tenor sax
+  id: tenor_sax
+  pages:
+  - 14
+  - 14
+- label: French Horn
+  id: french_horn
+  pages:
+  - 15
+  - 15
+- label: Trumpet 1
+  id: trumpet_1
+  pages:
+  - 16
+  - 16
+- label: Trumpet 2
+  id: trumpet_2
+  pages:
+  - 17
+  - 17
+- label: Trumpet 3
+  id: trumpet_3
+  pages:
+  - 18
+  - 18
+- label: Trombone 1
+  id: trombone_1
+  pages:
+  - 19
+  - 19
+- label: Trombone 2
+  id: trombone_2
+  pages:
+  - 20
+  - 20
+- label: Euphonium
+  id: euphonium
+  pages:
+  - 21
+  - 21
+- label: Bass Guitar
+  id: bass_guitar
+  pages:
+  - 22
+  - 22
+- label: Snare drum
+  id: snare_drum
+  pages:
+  - 23
+  - 23
+- label: Claves
+  id: claves
+  pages:
+  - 24
+  - 24

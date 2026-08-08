@@ -1,0 +1,18 @@
+Flute 1: 7
+Flute 2: 8
+Clarinet 1: 9
+Clarinet 2: 10
+Clarinet 3: 11
+Alto sax 1: 12
+Alto sax 2: 13
+Tenor sax: 14
+French Horn: 15
+Trumpet 1: 16
+Trumpet 2: 17
+Trumpet 3: 18
+Trombone 1: 19
+Trombone 2: 20
+Euphonium: 21
+Bass Guitar: 22
+Snare drum: 23
+Claves: 24
