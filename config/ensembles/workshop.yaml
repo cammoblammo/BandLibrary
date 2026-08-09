@@ -1,0 +1,87 @@
+schema_version: 1
+
+ensemble:
+  id: workshp
+  name: WORKSHOP
+  band: South-East Sounds Workshop
+
+parts:
+  - id: flute_1
+    label: Flute 1
+    fallback: []
+
+  - id: flute_2
+    label: Flute 2
+    fallback: [flute_1]
+
+  - id: clarinet_1
+    label: Clarinet 1
+    fallback: []
+
+  - id: clarinet_2
+    label: Clarinet 2
+    fallback: [clarinet_1]
+
+  - id: clarinet_3
+    label: Clarinet 3
+    fallback: [clarinet_2, clarinet_1]
+
+  - id: alto_sax_1
+    label: Alto Sax 1
+    fallback: []
+
+  - id: alto_sax_2
+    label: Alto Sax 2
+    fallback: [alto_sax_1]
+
+  - id: tenor_sax
+    label: Tenor Sax
+    fallback: []
+
+  - id: trumpet_1
+    label: Trumpet 1
+    fallback: []
+
+  - id: trumpet_2
+    label: Trumpet 2
+    fallback: [trumpet_1]
+
+  - id: trumpet_3
+    label: Trumpet 3
+    fallback: [trumpet_2, trumpet_1]
+
+  - id: trombone_1
+    label: Trombone 1
+    fallback: [baritone, euphonium]
+
+  - id: trombone_2
+    label: Trombone 2
+    fallback: [trombone_1, baritone, euphonium]
+
+  - id: euphonium_tc
+    label: Euphonium TC
+    fallback: [baritone_tc, bass_clarinet]
+
+  - id: baritone_tc
+    label: Baritone TC
+    fallback: [euphonium_tc, bass_clarinet]
+
+  - id: bass_guitar
+    label: Bass Guitar
+    fallback: [tuba]
+
+  - id: guitar
+    label: Guitar
+    fallback: [flute]
+
+  - id: piano
+    label: Piano
+    fallback: [mallets, flute]
+
+  - id: drum_kit
+    label: Drum Kit
+    fallback: []
+
+  - id: auxiliary_percussion
+    label: Auxiliary Percussion
+    fallback: [drum_kit]

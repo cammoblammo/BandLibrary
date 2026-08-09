@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: yellow-submarine
-  title: Yellow Submarine
+  title: yellow submarine
   source_pdf: yellow-submarine.pdf
   status: manual
 parts:
@@ -105,3 +105,22 @@ parts:
   pages:
   - 22
   - 24
+assignments:
+  flute_1: part_1_in_c
+  flute_2: part_2_in_c
+  clarinet_1: part_1_in_bb
+  clarinet_2: part_2_in_bb
+  clarinet_3: part_2_in_bb
+  alto_sax_1: part_3_in_eb_tc
+  alto_sax_2: part_3_in_eb_tc
+  tenor_sax: part_4_in_bb_tc
+  trumpet_1: part_1_in_bb
+  trumpet_2: part_2_in_bb
+  trumpet_3: part_2_in_bb
+  trombone_1: part_4_in_c_bc
+  trombone_2: part_4_in_c_bc
+  euphonium_tc: part_4_in_bb_tc
+  baritone_tc: part_4_in_bb_tc
+  bass_guitar: cello
+  piano: keyboard
+  drum_kit: auxiliary_percussion

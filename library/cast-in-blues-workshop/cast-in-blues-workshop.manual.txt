@@ -1,4 +1,4 @@
-Flute: 17
+Flute 1: 17
 Clarinet 1: 18
 Clarinet 2: 19
 Alto sax 1: 20

@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: going-quackers
-  title: Going Quackers
+  title: going quackers
   source_pdf: going-quackers.pdf
   status: manual
 parts:
@@ -95,3 +95,8 @@ parts:
   pages:
   - 24
   - 24
+assignments:
+  euphonium_tc: euphonium
+  baritone_tc: euphonium
+  drum_kit: snare_drum
+  auxiliary_percussion: claves

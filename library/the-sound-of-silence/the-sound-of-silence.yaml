@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: the-sound-of-silence
-  title: The Sound Of Silence
+  title: the sound of silence
   source_pdf: the-sound-of-silence.pdf
   status: manual
 parts:
@@ -90,3 +90,22 @@ parts:
   pages:
   - 17
   - 18
+assignments:
+  flute_1: part_1_in_c
+  flute_2: part_2_in_c
+  clarinet_1: part_1_in_bb
+  clarinet_2: part_2_in_bb
+  clarinet_3: part_2_in_bb
+  alto_sax_1: part_3_in_eb
+  alto_sax_2: part_3_in_eb
+  tenor_sax: part_3_in_bb
+  trumpet_1: part_1_in_bb
+  trumpet_2: part_2_in_bb
+  trumpet_3: part_2_in_bb
+  trombone_1: part_3_in_c_bc
+  trombone_2: part_3_in_c_bc
+  euphonium_tc: part_3_in_bb
+  baritone_tc: part_3_in_bb
+  bass_guitar: part_4_in_c
+  piano: keyboard
+  drum_kit: auxiliary_percussion

@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: cast-in-blues-workshop
-  title: Cast in Blues Workshop
+  title: cast in blues workshop
   source_pdf: cast-in-blues-workshop.pdf
   status: manual
 parts:
@@ -70,3 +70,13 @@ parts:
   pages:
   - 30
   - 30
+- id: tenor_sax
+  label: Tenor Sax
+  pages:
+  - 31
+  - 31
+assignments:
+  flute_1: flute
+  flute_2: flute
+  trombone_1: trombone
+  trombone_2: trombone
