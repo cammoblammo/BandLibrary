@@ -49,6 +49,11 @@ list (flagged in builds) → missing.
   source PDFs and manual files; `tests/` is the test suite.
 - Piece slugs come from the PDF file name, not the `Title:` line.
 
+## Planned work
+
+- Automatic part detection on import: design and owner decisions in
+  `docs/design/part-detection.md` (not built yet).
+
 ## Commands
 
 ```
