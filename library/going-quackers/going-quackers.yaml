@@ -96,5 +96,7 @@ parts:
   - 24
   - 24
 assignments:
+  guitar: flute_1
+  piano: flute_1
   drum_kit: snare_drum
   auxiliary_percussion: claves
