@@ -4,6 +4,8 @@ Library and ensemble validation for BandLibrary.
 
 from __future__ import annotations
 
+import io
+from contextlib import redirect_stdout
 from pathlib import Path
 
 import yaml
@@ -246,3 +248,69 @@ def validate_ensemble(
             print(f"  {label_col} {status}  [no matches]")
         else:
             print(f"  {label_col} {status}  [missing: {', '.join(missing)}]")
+
+
+def check_library(
+    library: Path,
+    ensemble_paths: list[Path] | None = None,
+    slugs: list[str] | None = None,
+) -> tuple[bool, str]:
+    """
+    Validate pieces (all, or the given slugs) and optionally ensembles.
+    Returns (ok, report text). Used by the CLI validator and the GUI.
+    """
+    out: list[str] = []
+    if not library.exists():
+        return False, f"ERROR: library directory not found: {library}"
+
+    slugs = slugs or sorted(
+        d.name for d in library.iterdir()
+        if d.is_dir() and not d.name.startswith(".")
+    )
+    if not slugs:
+        return True, "Library is empty — nothing to validate."
+
+    result = ValidationResult()
+    pieces_data: dict[str, dict] = {}
+    out.append(f"Validating {len(slugs)} piece(s)...\n")
+    for slug in slugs:
+        data = validate_piece(slug, library, result)
+        if data is not None:
+            pieces_data[slug] = data
+
+    if result.errors:
+        out.append(f"Errors ({len(result.errors)}):")
+        out.extend(f"  ERROR: {e}" for e in result.errors)
+        out.append("")
+    if result.warnings:
+        out.append(f"Warnings ({len(result.warnings)}):")
+        out.extend(f"  WARNING: {w}" for w in result.warnings)
+        out.append("")
+
+    if result.ok and not result.warnings:
+        out.append(f"All {len(slugs)} piece(s) valid.")
+    elif result.ok:
+        out.append(f"All {len(slugs)} piece(s) valid (with warnings).")
+    else:
+        out.append(f"{len(result.errors)} error(s) found in {len(slugs)} piece(s).")
+
+    ok = result.ok
+    for ensemble_path in ensemble_paths or []:
+        out.append("")
+        ensemble_result = ValidationResult()
+        captured = io.StringIO()
+        with redirect_stdout(captured):
+            validate_ensemble(ensemble_path, pieces_data, ensemble_result)
+        out.append(captured.getvalue().rstrip("\n"))
+
+        if ensemble_result.errors:
+            out.append(f"\nEnsemble errors ({len(ensemble_result.errors)}):")
+            out.extend(f"  ERROR: {e}" for e in ensemble_result.errors)
+        if ensemble_result.warnings:
+            out.append(f"\nEnsemble warnings ({len(ensemble_result.warnings)}):")
+            out.extend(f"  WARNING: {w}" for w in ensemble_result.warnings)
+        if not ensemble_result.errors and not ensemble_result.warnings:
+            out.append(f"Ensemble definition valid: {ensemble_path.name}")
+        ok = ok and ensemble_result.ok
+
+    return ok, "\n".join(out)

@@ -11,7 +11,7 @@ from tests.helpers import CONFIG, GROUPS_PATH, ROOT, TEST_LIBRARY
 from lib.library import list_pieces, load_ensemble, load_piece, load_piece_list
 from lib.models import ValidationResult
 from lib.reading_groups import load_reading_groups
-from lib.validator import check_readability, validate_ensemble, validate_piece
+from lib.validator import check_library, check_readability, validate_ensemble, validate_piece
 
 ENSEMBLES = sorted((CONFIG / "ensembles").glob("*.yaml"))
 LIBRARY = ROOT / "library"
@@ -51,6 +51,17 @@ class LibraryTests(unittest.TestCase):
 
     def test_test_library_validates(self):
         self.check_library(TEST_LIBRARY)
+
+    def test_check_library_matches_the_gui_and_cli(self):
+        ok, text = check_library(LIBRARY, ENSEMBLES)
+        self.assertTrue(ok, text)
+        for path in ENSEMBLES:
+            self.assertIn(f"Ensemble definition valid: {path.name}", text)
+
+    def test_check_library_reports_a_missing_library(self):
+        ok, text = check_library(ROOT / "no-such-library")
+        self.assertFalse(ok)
+        self.assertIn("not found", text)
 
     def test_repertoire_files_name_real_pieces(self):
         for path in sorted((ROOT / "repertoire").glob("*.txt")):

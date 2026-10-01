@@ -379,6 +379,14 @@ class BuildWidget(QWidget):
     # Library browser
     # -----------------------------------------------------------------------
 
+    def current_library(self) -> Path:
+        """The library in use: test/ in test mode, otherwise library/."""
+        return self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
+
+    def current_output(self) -> Path:
+        """Where builds go: test-output/ in test mode, otherwise output/."""
+        return self._project_root / ("test-output" if self.test_checkbox.isChecked() else "output")
+
     def _on_library_selection_changed(self):
         items = self.library_tree.selectedItems()
         has_slug = bool(items and items[0].data(0, Qt.ItemDataRole.UserRole))
@@ -397,7 +405,7 @@ class BuildWidget(QWidget):
         if ensemble_path is None:
             QMessageBox.warning(self, "Assignments", "Select an ensemble first.")
             return
-        library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
+        library = self.current_library()
         saved = open_assignment_editor(slug, library, ensemble_path, parent=self)
         if saved:
             self.refresh_library()
@@ -412,7 +420,7 @@ class BuildWidget(QWidget):
         if not slug:
             return
 
-        library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
+        library = self.current_library()
         manual_path = library / slug / f"{slug}.manual.txt"
 
         if not manual_path.exists():
@@ -455,7 +463,7 @@ class BuildWidget(QWidget):
         if not slug:
             return
 
-        library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
+        library = self.current_library()
 
         # Ask for part label
         from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
@@ -520,7 +528,7 @@ class BuildWidget(QWidget):
 
     def refresh_library(self):
         self.library_tree.clear()
-        library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
+        library = self.current_library()
         slugs = list_pieces(library)
 
         for slug in slugs:
@@ -570,7 +578,7 @@ class BuildWidget(QWidget):
                 if self._status:
                     self._status.showMessage(f"{slug} is already in the build list.", 3000)
                 return
-        library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
+        library = self.current_library()
         try:
             piece = load_piece(library, slug)
             item = QListWidgetItem(f"{piece.title}  [{slug}]")
@@ -627,7 +635,7 @@ class BuildWidget(QWidget):
             slugs = load_piece_list(Path(path))
             self.piece_list.clear()
             errors = []
-            library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
+            library = self.current_library()
             for slug in slugs:
                 try:
                     piece = load_piece(library, slug)

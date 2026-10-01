@@ -16,14 +16,19 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from pathlib import Path
 
 import yaml
-from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtGui import QDesktopServices, QFont, QIcon
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QTabWidget, QStatusBar, QMenuBar
+    QApplication, QDialog, QHBoxLayout, QMainWindow, QMessageBox, QPushButton,
+    QStatusBar, QTabWidget, QTextEdit, QVBoxLayout,
 )
 
 from lib.editor_widget import EditorWidget, load_alias_labels
 from lib.build_widget import BuildWidget
 from lib.help_window import HelpWindow
+from lib.report import build_report
+from lib.report_html import render_html
+from lib.validator import check_library
 
 
 # ---------------------------------------------------------------------------
@@ -108,10 +113,60 @@ class BandBookWindow(QMainWindow):
 
     def _build_menu(self):
         menubar = self.menuBar()
+
+        tools_menu = menubar.addMenu("Tools")
+        check_action = tools_menu.addAction("Check Library…")
+        check_action.setToolTip("Validate every piece and ensemble")
+        check_action.triggered.connect(self._check_library)
+        report_action = tools_menu.addAction("Consistency Report…")
+        report_action.setToolTip("Open a report of what every chair gets, in your browser")
+        report_action.triggered.connect(self._consistency_report)
+
         help_menu = menubar.addMenu("Help")
         help_action = help_menu.addAction("BandBook Help…")
         help_action.setShortcut("F1")
         help_action.triggered.connect(self._show_help)
+
+    def _ensemble_paths(self) -> list[Path]:
+        return sorted((Path(__file__).parent.parent / "config" / "ensembles").glob("*.yaml"))
+
+    def _check_library(self):
+        library = self.build_widget.current_library()
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            ok, text = check_library(library, self._ensemble_paths())
+        except Exception as e:
+            ok, text = False, f"ERROR: {e}"
+        finally:
+            QApplication.restoreOverrideCursor()
+
+        title = "Library Check — no problems found" if ok else "Library Check — problems found"
+        TextReportDialog(title, f"Library: {library}\n\n{text}", parent=self).exec()
+
+    def _consistency_report(self):
+        library = self.build_widget.current_library()
+        output = self.build_widget.current_output()
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            report = build_report(library, self._ensemble_paths())
+            output.mkdir(parents=True, exist_ok=True)
+            path = output / "consistency-report.html"
+            path.write_text(render_html(report), encoding="utf-8")
+        except Exception as e:
+            QApplication.restoreOverrideCursor()
+            QMessageBox.critical(self, "Consistency Report", f"Could not build the report:\n{e}")
+            return
+        QApplication.restoreOverrideCursor()
+
+        warnings = sum(1 for f in report.findings if f.severity == "warning")
+        self.statusBar().showMessage(
+            f"Consistency report: {warnings} warning(s) — saved to {path}", 8000
+        )
+        if not QDesktopServices.openUrl(QUrl.fromLocalFile(str(path))):
+            QMessageBox.information(
+                self, "Consistency Report",
+                f"The report was saved but could not be opened automatically:\n{path}",
+            )
 
     def _show_help(self):
         docs_dir = Path(__file__).parent.parent / "docs"
@@ -296,6 +351,45 @@ class BandBookWindow(QMainWindow):
             QScrollBar::handle:horizontal:hover { background: #585b70; }
             QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; }
         """)
+
+
+# ---------------------------------------------------------------------------
+# Text report dialog
+# ---------------------------------------------------------------------------
+
+class TextReportDialog(QDialog):
+    """A read-only, copyable text report."""
+
+    def __init__(self, title: str, text: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.resize(820, 620)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+
+        view = QTextEdit()
+        view.setReadOnly(True)
+        view.setObjectName("outputView")
+        font = QFont("Monospace", 11)
+        font.setStyleHint(QFont.StyleHint.TypeWriter)
+        view.setFont(font)
+        view.setPlainText(text)
+        layout.addWidget(view, stretch=1)
+
+        buttons = QHBoxLayout()
+        copy_btn = QPushButton("Copy")
+        close_btn = QPushButton("Close")
+        for btn in (copy_btn, close_btn):
+            btn.setFixedHeight(30)
+        buttons.addWidget(copy_btn)
+        buttons.addStretch()
+        buttons.addWidget(close_btn)
+        layout.addLayout(buttons)
+
+        copy_btn.clicked.connect(lambda: QApplication.clipboard().setText(text))
+        close_btn.clicked.connect(self.accept)
 
 
 # ---------------------------------------------------------------------------
