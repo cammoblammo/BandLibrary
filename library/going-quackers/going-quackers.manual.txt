@@ -12,7 +12,7 @@ Trumpet 2: 17
 Trumpet 3: 18
 Trombone 1: 19
 Trombone 2: 20
-Euphonium: 21
+Euphonium TC: 21
 Bass Guitar: 22
 Snare drum: 23
 Claves: 24

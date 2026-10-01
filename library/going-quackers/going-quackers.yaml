@@ -75,8 +75,8 @@ parts:
   pages:
   - 20
   - 20
-- label: Euphonium
-  id: euphonium
+- label: Euphonium TC
+  id: euphonium_tc
   pages:
   - 21
   - 21
@@ -96,7 +96,5 @@ parts:
   - 24
   - 24
 assignments:
-  euphonium_tc: euphonium
-  baritone_tc: euphonium
   drum_kit: snare_drum
   auxiliary_percussion: claves

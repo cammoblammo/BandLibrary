@@ -5,8 +5,8 @@ piece:
   source_pdf: dont-stop-believin.pdf
   status: manual
 parts:
-- label: Part 1 in C
-  id: part_1_in_c
+- label: Part 1 in C TC
+  id: part_1_in_c_tc
   pages:
   - 1
   - 1
@@ -15,8 +15,8 @@ parts:
   pages:
   - 2
   - 2
-- label: Part 2 in C
-  id: part_2_in_c
+- label: Part 2 in C TC
+  id: part_2_in_c_tc
   pages:
   - 3
   - 3
@@ -25,8 +25,8 @@ parts:
   pages:
   - 4
   - 4
-- label: Part 3 in C
-  id: part_3_in_c
+- label: Part 3 in C BC
+  id: part_3_in_c_bc
   pages:
   - 5
   - 5
@@ -91,5 +91,4 @@ parts:
   - 17
   - 17
 assignments:
-  flute_1: part_1_in_c
-  flute_2: part_2_in_c
+  trombone_1: part_4_in_c_bc

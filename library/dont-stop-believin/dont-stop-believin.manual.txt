@@ -1,8 +1,8 @@
-Part 1 in C: 1
+Part 1 in C TC: 1
 Part 1 in Bb: 2
-Part 2 in C: 3
+Part 2 in C TC: 3
 Part 2 in Bb: 4
-Part 3 in C: 5
+Part 3 in C BC: 5
 Part 3 in Eb: 6
 Part 3 in F: 7
 Part 4 in Bb TC: 8

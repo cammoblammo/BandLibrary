@@ -5,8 +5,8 @@ piece:
   source_pdf: rock-around-the-clock.pdf
   status: manual
 parts:
-- label: Part 1 in C
-  id: part_1_in_c
+- label: Part 1 in C TC
+  id: part_1_in_c_tc
   pages:
   - 1
   - 1
@@ -15,8 +15,8 @@ parts:
   pages:
   - 2
   - 2
-- label: Part 2 in C
-  id: part_2_in_c
+- label: Part 2 in C TC
+  id: part_2_in_c_tc
   pages:
   - 3
   - 3
@@ -101,8 +101,6 @@ parts:
   - 20
   - 20
 assignments:
-  flute_1: part_1_in_c
-  flute_2: part_2_in_c
   tenor_sax: part_4_in_bb_tc
   trombone_2: part_3_in_c_bc
   drum_kit: auxiliary_percussion

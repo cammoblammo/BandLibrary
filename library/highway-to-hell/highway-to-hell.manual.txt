@@ -2,14 +2,14 @@ flute: 9
 Part 1 in Bb: 10
 Part 2 in Bb: 11
 alto sax: 12
-Part 3 in C: 13
+Part 3 in C BC: 13
 Part 3 in Bb: 14
 Part 3 in F: 15
 Part 3 in Eb: 16
-Part 4 in C: 17
+Part 4 in C BC: 17
 Part 4 in Bb: 18
 Part 5 in Bb: 20
-Part 5 in C: 21
+Part 5 in C BC: 21
 Part 5 in Eb: 22
 Drum kit: 23-24
 Bass guitar: 25

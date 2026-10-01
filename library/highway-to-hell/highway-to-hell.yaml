@@ -25,8 +25,8 @@ parts:
   pages:
   - 12
   - 12
-- label: Part 3 in C
-  id: part_3_in_c
+- label: Part 3 in C BC
+  id: part_3_in_c_bc
   pages:
   - 13
   - 13
@@ -45,8 +45,8 @@ parts:
   pages:
   - 16
   - 16
-- label: Part 4 in C
-  id: part_4_in_c
+- label: Part 4 in C BC
+  id: part_4_in_c_bc
   pages:
   - 17
   - 17
@@ -60,8 +60,8 @@ parts:
   pages:
   - 20
   - 20
-- label: Part 5 in C
-  id: part_5_in_c
+- label: Part 5 in C BC
+  id: part_5_in_c_bc
   pages:
   - 21
   - 21
@@ -81,6 +81,4 @@ parts:
   - 25
   - 25
 assignments:
-  trombone: part_4_in_c
-  baritone: part_4_in_c
-  euphonium: part_4_in_c
+  trombone: part_4_in_c_bc

@@ -78,12 +78,6 @@ parts:
     reads: [c_bass]
     prefer: [trombone_1, trombone, baritone, euphonium, flex 4, flex 3]
 
-  - id: trombone_tc
-    label: Trombone TC
-    reads: [bb_treble]
-    prefer: [euphonium_tc, baritone_tc, bass_clarinet, flex 4, flex 3]
-    compromise: [tenor_sax]
-
   - id: euphonium_tc
     label: Euphonium TC
     reads: [bb_treble]
