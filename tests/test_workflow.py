@@ -75,6 +75,18 @@ class ImportTests(unittest.TestCase):
         # --force replaces it
         quiet(import_piece, self.pdf, self.manual, self.library, True, {})
 
+    def test_forced_reimport_keeps_valid_assignments_only(self):
+        quiet(import_piece, self.pdf, self.manual, self.library, False, {})
+        yaml_path = self.library / "cast-in-blues" / "cast-in-blues.yaml"
+        data = yaml.safe_load(yaml_path.read_text())
+        data["assignments"] = {"tenor_horn": "alto_sax_1", "oboe": "no_such_part"}
+        yaml_path.write_text(yaml.safe_dump(data, sort_keys=False))
+
+        quiet(import_piece, self.pdf, self.manual, self.library, True, {})
+        self.assertEqual(
+            yaml.safe_load(yaml_path.read_text())["assignments"], {"tenor_horn": "alto_sax_1"}
+        )
+
     def test_regenerate_keeps_valid_assignments_only(self):
         quiet(import_piece, self.pdf, self.manual, self.library, False, {})
         yaml_path = self.library / "cast-in-blues" / "cast-in-blues.yaml"

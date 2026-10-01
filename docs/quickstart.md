@@ -48,7 +48,7 @@ Check the boxes beside **Import…**:
 
 | Box | Default | Meaning |
 |-----|---------|---------|
-| Force | on | Replace the piece if it is already in the library. **This also removes the piece's assignments** |
+| Force | on | Replace the piece if it is already in the library. Its assignments are kept where the parts still exist |
 | Test | off | Import into the test library (`test/`) instead of the real one |
 | Git push | on | After importing, commit the piece and push it to GitHub |
 

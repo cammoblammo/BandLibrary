@@ -124,9 +124,12 @@ What happens:
 ### Re-importing a piece
 
 With **Force** ticked, importing a piece that is already in the library
-replaces it completely, **including its assignments**. To change a piece's
-page mapping but keep its assignments, edit its part list and use
-**Regen YAML** in the Booklet Builder tab instead.
+replaces its PDF and page mapping. Its assignments are kept as long as the
+part they point to still exists; any that don't are removed, and the import
+output says which.
+
+To change only the page mapping without re-importing the PDF, edit the
+piece's part list and use **Regen YAML** in the Booklet Builder tab.
 
 ---
 

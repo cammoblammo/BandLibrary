@@ -69,6 +69,12 @@ def import_piece(
         "parts": parts,
     }
 
+    # On re-import, keep assignments that still point at a part
+    if piece_dir.exists() and yaml_dest.exists():
+        kept = _surviving_assignments(yaml_dest, {p["id"] for p in parts})
+        if kept:
+            yaml_data["assignments"] = kept
+
     # Handle overwrite safely
     backup_dir = None
     if piece_dir.exists() and force:
@@ -155,16 +161,7 @@ def regenerate_yaml(
         "parts": parts,
     }
 
-    # Validate existing assignments against new part ids
-    new_ids = {p["id"] for p in parts}
-    valid_assignments = {
-        k: v for k, v in existing_assignments.items()
-        if v in new_ids
-    }
-    invalid = set(existing_assignments) - set(valid_assignments)
-    if invalid:
-        print(f"WARNING: removed invalid assignments: {', '.join(invalid)}")
-
+    valid_assignments = _filter_assignments(existing_assignments, {p["id"] for p in parts})
     if valid_assignments:
         yaml_data["assignments"] = valid_assignments
 
@@ -182,3 +179,32 @@ def regenerate_yaml(
         shutil.copy2(backup, yaml_path)
         backup.unlink()
         raise
+
+
+def _filter_assignments(assignments: dict, part_ids: set[str]) -> dict[str, str]:
+    """Keep assignments whose part still exists; warn about the rest."""
+    kept = {k: v for k, v in assignments.items() if v in part_ids}
+    dropped = sorted(f"{k} ({v})" for k, v in assignments.items() if k not in kept)
+    if dropped:
+        print(
+            "WARNING: removed assignments whose part no longer exists: "
+            + ", ".join(dropped)
+        )
+    return kept
+
+
+def _surviving_assignments(yaml_path: Path, part_ids: set[str]) -> dict[str, str]:
+    """Assignments from an existing piece YAML that still match part_ids."""
+    try:
+        with yaml_path.open("r", encoding="utf-8") as f:
+            existing = yaml.safe_load(f)
+    except (OSError, yaml.YAMLError):
+        print(f"WARNING: could not read existing assignments from {yaml_path}")
+        return {}
+    assignments = existing.get("assignments") if isinstance(existing, dict) else None
+    if not isinstance(assignments, dict):
+        return {}
+    kept = _filter_assignments(assignments, part_ids)
+    if kept:
+        print(f"Kept {len(kept)} assignment(s) from the previous import")
+    return kept

@@ -127,9 +127,10 @@ parts:
 If a piece with the same slug already exists, the importer stops with an error
 (exit code 1) unless `--force` is given.
 
-`--force` replaces the piece's YAML completely, so **its assignments are lost**.
-To change a piece's mapping and keep its assignments, use `--yaml-only`
-(Regen YAML in the app) instead.
+`--force` replaces the piece's PDF, manual file and YAML. Assignments in the
+old YAML are kept when the part they point to still exists, and the others
+are removed with a warning. To rebuild only the YAML from the stored manual
+file, use `--yaml-only` (Regen YAML in the app).
 
 With `--force`:
 

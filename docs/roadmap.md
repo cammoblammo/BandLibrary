@@ -110,13 +110,12 @@ instrument-specific booklets automatically.
 - Import notes for parts outside every reading group
 - Contents pages bracket pieces a booklet has no part for
 - Automated test suite (`tests/`)
+- Re-importing a piece keeps its assignments where the parts still exist
 
 ---
 
 ## Known Issues
 
-- Re-importing a piece with Force replaces its assignments; use Regen YAML
-  to change a mapping and keep them
 - Desktop launcher icon not displaying — likely a path or PNG conversion
   issue in the `.desktop` file
 
@@ -126,7 +125,6 @@ instrument-specific booklets automatically.
 
 ### Ideas
 
-- Keep assignments when a piece is re-imported
 - Mark pieces as reviewed for an ensemble, and warn about unreviewed ones
 - Page rotation correction on import
 - Library browser filter/search
