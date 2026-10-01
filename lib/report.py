@@ -15,7 +15,7 @@ from pathlib import Path
 from .library import list_pieces, load_ensemble, load_piece
 from .matcher import match_part
 from .models import EnsemblePart, MatchResult, Piece
-from .reading_groups import default_groups_path, is_flex, load_reading_groups
+from .reading_groups import can_read, default_groups_path, is_flex, load_reading_groups
 from .validator import check_readability
 
 CLEF_TOKENS = {"tc", "bc"}
@@ -134,6 +134,7 @@ def build_report(library: Path, ensemble_paths: list[Path]) -> Report:
 
     findings.extend(_library_findings(library_ids))
     findings.extend(_assignment_findings(pieces, ensembles))
+    findings.extend(_assignment_reading_findings(pieces, ensembles, ensemble_paths))
     findings.extend(_cross_ensemble_findings(ensembles))
 
     return Report(pieces, load_errors, ensembles, findings)
@@ -265,7 +266,10 @@ def _assignment_findings(
                     if ep.id == chair_id:
                         auto_results.append((e.key, match_part(unassigned, ep)))
 
-            if all(r.matched_id == source_id for _, r in auto_results):
+            if all(
+                r.matched_id == source_id and r.match_reason in ("direct", "fallback")
+                for _, r in auto_results
+            ):
                 out.append(Finding(
                     "info", "Redundant assignment",
                     f"{piece.slug}: '{chair_id}' ← '{source_id}' matches what the "
@@ -306,5 +310,33 @@ def _cross_ensemble_findings(ensembles: list[EnsembleReport]) -> list[Finding]:
                     "warning", "Same chair, different name",
                     f"{a.name} calls it '{x}', {b.name} calls it '{y}' — assignments "
                     f"made for one band don't carry over to the other",
+                ))
+    return out
+
+
+def _assignment_reading_findings(
+    pieces: list[Piece],
+    ensembles: list[EnsembleReport],
+    ensemble_paths: list[Path],
+) -> list[Finding]:
+    """Assignments that give a chair a part outside the groups it reads."""
+    out: list[Finding] = []
+    seen: set[tuple[str, str, str]] = set()
+    for e, path in zip(ensembles, ensemble_paths):
+        groups = load_reading_groups(default_groups_path(path))
+        for ep in e.parts:
+            if not ep.reads:
+                continue
+            for piece in pieces:
+                source = piece.assignments.get(ep.id)
+                if source is None or can_read(source, ep.reads, groups):
+                    continue
+                if (piece.slug, ep.id, source) in seen:
+                    continue
+                seen.add((piece.slug, ep.id, source))
+                out.append(Finding(
+                    "warning", "Assignment outside what the chair reads",
+                    f"{piece.slug}: {ep.label} is assigned '{source}', which isn't in "
+                    f"the groups it reads ({', '.join(ep.reads)})",
                 ))
     return out
