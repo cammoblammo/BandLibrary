@@ -18,6 +18,7 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib import colors
 
 from .models import EnsemblePart, MatchResult, Piece
+from .utils import display_title
 
 
 class BuildError(Exception):
@@ -189,7 +190,7 @@ def generate_booklets(
                 ordered_slugs.append(result.piece_slug)
 
     piece_titles = [
-        pieces_by_slug[slug].title.title()
+        display_title(pieces_by_slug[slug].title)
         for slug in ordered_slugs
         if slug in pieces_by_slug
     ]

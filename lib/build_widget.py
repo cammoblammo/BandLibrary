@@ -18,10 +18,11 @@ from PyQt6.QtWidgets import (
     QCheckBox, QSizePolicy,
 )
 
-from .library import list_pieces, load_piece, load_ensemble
+from .library import list_pieces, load_piece, load_ensemble, load_piece_list
 from .assignment_editor import open_assignment_editor
 from .importer import regenerate_yaml
 from .aliases import load_aliases
+from .parts import add_part
 from .matcher import build_match_plan, build_report
 from .builder import generate_booklets, create_zip_archive
 from .utils import slugify_edition
@@ -33,7 +34,7 @@ from .utils import slugify_edition
 
 class BuildThread(QThread):
     log = pyqtSignal(str)
-    finished = pyqtSignal(bool, str)  # success, message
+    done = pyqtSignal(bool, str)  # success, message
 
     def __init__(self, ensemble_path, slugs, library, output_dir, edition, dry_run):
         super().__init__()
@@ -62,7 +63,7 @@ class BuildThread(QThread):
 
             if self.dry_run:
                 self.log.emit("\nDry run — no files generated.")
-                self.finished.emit(True, "Dry run complete.")
+                self.done.emit(True, "Dry run complete.")
                 return
 
             generated = generate_booklets(
@@ -92,11 +93,11 @@ class BuildThread(QThread):
                 covered = sum(1 for m in matches if m.matched_id is not None)
                 self.log.emit(f"  {ep.label}: {covered}/{len(matches)} pieces covered")
 
-            self.finished.emit(True, f"Build complete — {len(generated)} PDF(s) generated.")
+            self.done.emit(True, f"Build complete — {len(generated)} PDF(s) generated.")
 
         except Exception as e:
             self.log.emit(f"\nERROR: {e}")
-            self.finished.emit(False, str(e))
+            self.done.emit(False, str(e))
 
 
 # ---------------------------------------------------------------------------
@@ -356,6 +357,7 @@ class BuildWidget(QWidget):
             self.ensemble_combo.addItem(path.stem, userData=path)
 
     def _on_ensemble_changed(self, index):
+        self._on_library_selection_changed()
         if self._save_config and index >= 0:
             path = self.ensemble_combo.itemData(index)
             if path:
@@ -418,7 +420,6 @@ class BuildWidget(QWidget):
 
         aliases_path = self._project_root / "config" / "aliases.yaml"
         try:
-            from .aliases import load_aliases
             aliases = load_aliases(aliases_path)
             unaliased = regenerate_yaml(slug, manual_path, library, aliases)
             self.refresh_library()
@@ -488,108 +489,21 @@ class BuildWidget(QWidget):
         aliases_path = self._project_root / "config" / "aliases.yaml"
         try:
             aliases = load_aliases(aliases_path)
-            # Import add_part logic
-            import sys as _sys
-            import shutil as _shutil
-            import yaml as _yaml
-            from pypdf import PdfReader as _PdfReader, PdfWriter as _PdfWriter
-            from .aliases import normalise_part_id
-
-            source_pdf = Path(pdf_path)
-            piece_dir = library / slug
-            yaml_path = piece_dir / f"{slug}.yaml"
-
-            with yaml_path.open("r", encoding="utf-8") as f:
-                data = _yaml.safe_load(f)
-
-            piece_meta = data.get("piece", {})
-            existing_parts = data.get("parts", [])
-            part_id = normalise_part_id(label, aliases)
-
-            existing_ids = {p["id"] for p in existing_parts if isinstance(p, dict)}
-            existing_labels = {p.get("label", "") for p in existing_parts if isinstance(p, dict)}
-
-            if part_id in existing_ids:
-                QMessageBox.critical(self, "Add Part",
-                    f"Part id '{part_id}' already exists in {slug}.")
-                return
-            if label in existing_labels:
-                QMessageBox.critical(self, "Add Part",
-                    f"Part label '{label}' already exists in {slug}.")
-                return
-
-            piece_pdf_path = piece_dir / piece_meta.get("source_pdf", f"{slug}.pdf")
-            existing_reader = _PdfReader(str(piece_pdf_path))
-            existing_page_count = len(existing_reader.pages)
-            new_reader = _PdfReader(str(source_pdf))
-            new_page_count = len(new_reader.pages)
-
-            if new_page_count == 0:
-                QMessageBox.critical(self, "Add Part", "Source PDF has no pages.")
-                return
-
-            start_page = existing_page_count + 1
-            end_page = existing_page_count + new_page_count
-            new_part = {"id": part_id, "label": label, "pages": [start_page, end_page]}
-
-            if start_page == end_page:
-                page_spec = str(start_page)
-            else:
-                page_spec = f"{start_page}-{end_page}"
-            manual_line = f"{label}: {page_spec}\n"
-            manual_path = piece_dir / f"{slug}.manual.txt"
-
-            backup_pdf = piece_pdf_path.with_suffix(".pdf.backup")
-            backup_yaml = yaml_path.with_suffix(".yaml.backup")
-            backup_manual = manual_path.with_suffix(".manual.txt.backup") if manual_path.exists() else None
-
-            _shutil.copy2(piece_pdf_path, backup_pdf)
-            _shutil.copy2(yaml_path, backup_yaml)
-            if manual_path.exists():
-                _shutil.copy2(manual_path, backup_manual)
-
-            try:
-                writer = _PdfWriter()
-                for page in existing_reader.pages:
-                    writer.add_page(page)
-                for page in new_reader.pages:
-                    writer.add_page(page)
-                with piece_pdf_path.open("wb") as f:
-                    writer.write(f)
-
-                data["parts"] = existing_parts + [new_part]
-                with yaml_path.open("w", encoding="utf-8") as f:
-                    _yaml.safe_dump(data, f, sort_keys=False)
-
-                if not manual_path.exists():
-                    print(f"WARNING: no manual file found for {slug} — creating {manual_path.name}")
-                with manual_path.open("a", encoding="utf-8") as f:
-                    f.write(manual_line)
-
-                backup_pdf.unlink()
-                backup_yaml.unlink()
-                if backup_manual and backup_manual.exists():
-                    backup_manual.unlink()
-
-                self.refresh_library()
-                if self._status:
-                    self._status.showMessage(
-                        f"Added '{label}' ({part_id}) to {slug}: pages {start_page}-{end_page}.", 5000)
-
-            except Exception as e:
-                if backup_pdf.exists():
-                    _shutil.copy2(backup_pdf, piece_pdf_path)
-                    backup_pdf.unlink()
-                if backup_yaml.exists():
-                    _shutil.copy2(backup_yaml, yaml_path)
-                    backup_yaml.unlink()
-                if backup_manual and backup_manual.exists():
-                    _shutil.copy2(backup_manual, manual_path)
-                    backup_manual.unlink()
-                raise
-
+            part_id, start_page, end_page = add_part(
+                slug=slug,
+                label=label,
+                source_pdf=Path(pdf_path),
+                library=library,
+                aliases=aliases,
+            )
         except Exception as e:
             QMessageBox.critical(self, "Add Part Failed", str(e))
+            return
+
+        self.refresh_library()
+        if self._status:
+            self._status.showMessage(
+                f"Added '{label}' ({part_id}) to {slug}: pages {start_page}-{end_page}.", 5000)
 
     def refresh_library(self):
         self.library_tree.clear()
@@ -697,21 +611,12 @@ class BuildWidget(QWidget):
         if not path:
             return
         try:
-            slugs = []
-            with open(path, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith("#"):
-                        continue
-                    slugs.append(line)
-            if not slugs:
-                QMessageBox.warning(self, "Load Repertoire", "No pieces found in file.")
-                return
+            slugs = load_piece_list(Path(path))
             self.piece_list.clear()
             errors = []
+            library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
             for slug in slugs:
                 try:
-                    library = self._project_root / ("test" if self.test_checkbox.isChecked() else "library")
                     piece = load_piece(library, slug)
                     item = QListWidgetItem(f"{piece.title}  [{slug}]")
                     item.setData(Qt.ItemDataRole.UserRole, slug)
@@ -810,7 +715,7 @@ class BuildWidget(QWidget):
             dry_run=dry_run,
         )
         self._build_thread.log.connect(self._log)
-        self._build_thread.finished.connect(self._on_build_finished)
+        self._build_thread.done.connect(self._on_build_finished)
         self._build_thread.start()
 
     def _log(self, message: str):

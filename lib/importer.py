@@ -24,7 +24,9 @@ def import_piece(
     Import a PDF and manual mapping file into the library.
 
     Creates library/<slug>/ containing the PDF, manual file, and YAML metadata.
-    Raises FileNotFoundError or ValueError on bad input.
+    Returns a list of (label, id) tuples for unaliased labels.
+    Raises FileNotFoundError or ValueError on bad input, and
+    FileExistsError if the piece exists and force is False.
     On failure, rolls back any partial changes.
     """
     if not pdf_path.exists():
@@ -40,8 +42,9 @@ def import_piece(
     yaml_dest = piece_dir / f"{slug}.yaml"
 
     if piece_dir.exists() and not force:
-        print(f"WARNING: {slug} already exists — skipping (use --force to overwrite)")
-        return
+        raise FileExistsError(
+            f"{slug} already exists in the library (use --force to overwrite)"
+        )
 
     # Parse manual file first — fail early before touching the library
     title, parts, unaliased = parse_manual_file(manual_path, aliases)
@@ -97,8 +100,6 @@ def import_piece(
             backup_dir.rename(piece_dir)
         raise
 
-    return []
-
 
 def regenerate_yaml(
     slug: str,
@@ -137,7 +138,11 @@ def regenerate_yaml(
     with yaml_path.open("r", encoding="utf-8") as f:
         existing = yaml.safe_load(f)
 
-    existing_assignments = existing.get("assignments", {})
+    if not isinstance(existing, dict):
+        raise ValueError(f"Malformed YAML in {yaml_path}")
+    existing_assignments = existing.get("assignments") or {}
+    if not isinstance(existing_assignments, dict):
+        raise ValueError(f"'assignments' in {yaml_path} must be a mapping")
 
     yaml_data = {
         "schema_version": 1,

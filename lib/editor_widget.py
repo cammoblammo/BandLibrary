@@ -133,7 +133,10 @@ class PdfViewer(QWidget):
         self._update_buttons()
 
     def load(self, path: Path):
-        self._doc = pymupdf.open(str(path))
+        doc = pymupdf.open(str(path))
+        if self._doc is not None:
+            self._doc.close()
+        self._doc = doc
         self._page_index = 0
         self._rotation = 0
         self._fit_on_load = True
@@ -505,6 +508,7 @@ class EditorWidget(QWidget):
         save_btn = QPushButton("Save")
         save_as_btn = QPushButton("Save As…")
         import_btn = QPushButton("Import…")
+        self.import_btn = import_btn
         import_btn.setObjectName("importBtn")
         import_btn.setToolTip("Save and run import_piece.py")
 
@@ -516,7 +520,7 @@ class EditorWidget(QWidget):
         self.test_checkbox.setToolTip("Pass --test to importer (imports to test/ instead of library/)")
         self.git_checkbox = QCheckBox("Git push")
         self.git_checkbox.setChecked(True)
-        self.git_checkbox.setToolTip("Commit and push new library entry to main after import")
+        self.git_checkbox.setToolTip("Commit the new library entry and push the current branch after import")
         # Disable git push when test mode is active
         self.test_checkbox.stateChanged.connect(
             lambda state: self.git_checkbox.setEnabled(state == 0)
@@ -678,17 +682,46 @@ class EditorWidget(QWidget):
             manual_path = temp_manual
 
         self._status.showMessage("Running importer…")
+        self.import_btn.setEnabled(False)
 
+        # Run asynchronously so the UI stays responsive and large imports
+        # are not cut off by a timeout.
         proc = QProcess(self)
+        self._import_proc = proc
+        proc.finished.connect(
+            lambda exit_code, exit_status: self._on_importer_finished(
+                proc, exit_code, exit_status, pdf_file, temp_manual)
+        )
+        proc.errorOccurred.connect(
+            lambda error: self._on_importer_error(proc, error, temp_manual)
+        )
         proc.start(sys.executable, [str(self._importer_path), str(pdf_file),
                                      "--manual", str(manual_path)]
                    + (["--force"] if self.force_checkbox.isChecked() else [])
                    + (["--test"] if self.test_checkbox.isChecked() else []))
-        proc.waitForFinished(15000)
+
+    def _on_importer_error(self, proc: QProcess, error, temp_manual: Path | None):
+        # Only startup failures need handling here; crashes also emit finished()
+        if error != QProcess.ProcessError.FailedToStart:
+            return
+        if temp_manual and temp_manual.exists():
+            temp_manual.unlink(missing_ok=True)
+        self.import_btn.setEnabled(True)
+        self._import_proc = None
+        QMessageBox.critical(self, "Import Failed",
+            f"Could not start import_piece.py:\n\n{proc.errorString()}")
+        self._status.showMessage("Import failed.", 5000)
+
+    def _on_importer_finished(self, proc: QProcess, exit_code: int, exit_status,
+                              pdf_file: Path, temp_manual: Path | None):
+        self.import_btn.setEnabled(True)
+        self._import_proc = None
 
         stdout = proc.readAllStandardOutput().data().decode(errors="replace").strip()
         stderr = proc.readAllStandardError().data().decode(errors="replace").strip()
-        exit_code = proc.exitCode()
+        if exit_status != QProcess.ExitStatus.NormalExit:
+            exit_code = -1
+            stderr = stderr or "The importer crashed."
 
         # Clean up temp file if it wasn't consumed by the importer
         # (importer deletes manual file on success, so only clean up on failure)
@@ -794,6 +827,17 @@ class EditorWidget(QWidget):
                 raise RuntimeError(f"git add failed:\n{result.stderr.strip()}")
 
             # Derive title from YAML for commit message
+            # Nothing to commit if the re-import produced identical files
+            result = subprocess.run(
+                ["git", "diff", "--cached", "--quiet", "--", str(piece_dir)],
+                cwd=str(project_root),
+                capture_output=True, text=True, timeout=15
+            )
+            if result.returncode == 0:
+                self._status.showMessage(
+                    f"No changes to commit for {slug}.", 6000)
+                return
+
             yaml_path = piece_dir / f"{slug}.yaml"
             title = slug
             if yaml_path.exists():
@@ -803,7 +847,9 @@ class EditorWidget(QWidget):
 
             # Commit
             result = subprocess.run(
-                ["git", "commit", "-m", f"Import: {title}"],
+                # Pathspec limits the commit to this piece, ignoring
+                # anything else that happens to be staged
+                ["git", "commit", "-m", f"Import: {title}", "--", str(piece_dir)],
                 cwd=str(project_root),
                 capture_output=True, text=True, timeout=15
             )
@@ -812,14 +858,14 @@ class EditorWidget(QWidget):
 
             # Push to main
             result = subprocess.run(
-                ["git", "push", "origin", "main"],
+                ["git", "push", "origin", "HEAD"],
                 cwd=str(project_root),
                 capture_output=True, text=True, timeout=30
             )
             if result.returncode != 0:
                 raise RuntimeError(f"git push failed:\n{result.stderr.strip()}")
 
-            self._status.showMessage(f"Imported and pushed '{title}' to main.", 6000)
+            self._status.showMessage(f"Imported and pushed '{title}'.", 6000)
 
         except Exception as e:
             QMessageBox.critical(self, "Git Error",

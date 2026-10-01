@@ -41,6 +41,14 @@ def infer_title_from_filename(stem: str) -> str:
     return re.sub(r"[_\-]+", " ", stem).strip()
 
 
+def display_title(title: str) -> str:
+    """
+    Capitalise the first letter of each word, leaving the rest unchanged.
+    Unlike str.title(), this keeps "Don't" and "AC/DC" intact.
+    """
+    return " ".join(w[:1].upper() + w[1:] for w in title.split(" "))
+
+
 def slugify_edition(edition: str) -> str:
     """Convert an edition label to a safe filename component."""
     text = edition.lower()

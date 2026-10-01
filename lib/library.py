@@ -96,7 +96,9 @@ def load_piece(library_dir: Path, slug: str) -> Piece:
 
     piece_meta = data.get("piece")
     parts_raw = data.get("parts")
-    assignments_raw = data.get("assignments", {})
+    assignments_raw = data.get("assignments")
+    if assignments_raw is None:
+        assignments_raw = {}
 
     if not isinstance(piece_meta, dict):
         raise LibraryError(f"Missing or invalid 'piece' section in {piece_yaml}")

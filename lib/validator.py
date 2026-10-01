@@ -178,7 +178,6 @@ def validate_ensemble(
         return
 
     ensemble_name = ensemble_meta.get("name", "(unnamed)")
-    ensemble_part_ids: set[str] = set()
     valid_parts: list[dict] = []
     seen_ids: set[str] = set()
 
@@ -203,28 +202,22 @@ def validate_ensemble(
             result.error(f"Ensemble: duplicate part id {part_id!r}")
         else:
             seen_ids.add(part_id)
-            ensemble_part_ids.add(part_id)
             valid_parts.append(part)
 
         if part_id in fallback:
             result.error(f"Ensemble part {part_id!r}: includes itself in fallback")
 
-    for part in valid_parts:
-        for fb_id in part.get("fallback", []):
-            if fb_id not in ensemble_part_ids:
-                result.warning(
-                    f"Ensemble part {part['id']!r}: fallback {fb_id!r} "
-                    f"is not a known ensemble part ID"
-                )
+    # Note: fallback ids refer to piece part ids, not ensemble part ids,
+    # so they are not checked against the ensemble here.
 
-    if not pieces_data:
+    if not pieces_data or not valid_parts:
         return
 
     # Coverage report
     print(f"\nCoverage report: {ensemble_name} vs {len(pieces_data)} piece(s)\n")
 
     col_width = max(
-        len(p.get("label", p.get("id", ""))) for p in valid_parts
+        len(str(p.get("label") or p["id"])) for p in valid_parts
     ) + 2
 
     for part in valid_parts:

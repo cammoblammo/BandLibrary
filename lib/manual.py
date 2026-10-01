@@ -70,6 +70,12 @@ def parse_manual_file(
                 title = value
                 continue
 
+            if not key:
+                raise ValueError(
+                    f"Line {i}: missing part label before ':' "
+                    "(remove the line or add a label)"
+                )
+
             start, end = parse_page_spec(value, i)
 
             part_id = normalise_part_id(key, aliases)

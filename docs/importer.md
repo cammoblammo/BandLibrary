@@ -119,8 +119,8 @@ parts:
 
 ## Force Overwrite
 
-If a piece with the same slug already exists, the importer skips it with a warning
-unless `--force` is given.
+If a piece with the same slug already exists, the importer stops with an error
+(exit code 1) unless `--force` is given.
 
 With `--force`:
 

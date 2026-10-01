@@ -166,6 +166,12 @@ class AssignmentEditor(QDialog):
             with self._yaml_path.open("r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
+            # Keep assignments for parts not shown here (e.g. other ensembles)
+            existing = data.get("assignments") or {}
+            for ep_id, value in existing.items():
+                if ep_id not in self._combos:
+                    assignments[ep_id] = value
+
             if assignments:
                 data["assignments"] = assignments
             elif "assignments" in data:
