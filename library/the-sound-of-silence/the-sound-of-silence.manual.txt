@@ -6,7 +6,7 @@ Part 3 in Bb: 5
 Part 3 in F: 6
 Part 3 in Eb: 7
 Part 3 in C BC: 8
-Part 3a in C BC: 9
+Part 3a in C TC: 9
 Part 4 in C BC: 10
 Violin 1: 11
 Violin 2: 12
