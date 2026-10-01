@@ -1,0 +1,15 @@
+Title: Hound Dog
+Auxiliary percussion: 1-2
+Drum kit: 3
+Tuba: 4
+Trombone: 5
+Trumpet 2: 6
+Trumpet 1: 7
+Baritone sax: 8
+Tenor sax: 9
+Alto sax: 10
+Bass Clarinet: 11
+Clarinet 2: 12
+Clarinet 1: 13
+Oboe: 14
+Flute: 15
