@@ -180,33 +180,18 @@ def generate_booklets(
     output_dir.mkdir(parents=True, exist_ok=True)
     generated_files: list[Path] = []
 
-    # Collect piece titles in build order (deduplicated, order preserved)
-    seen_slugs: set[str] = set()
-    ordered_slugs: list[str] = []
-    for ep in ensemble_parts:
-        for result in grouped_matches[ep.id]:
-            if result.piece_slug not in seen_slugs:
-                seen_slugs.add(result.piece_slug)
-                ordered_slugs.append(result.piece_slug)
-
-    piece_titles = [
-        display_title(pieces_by_slug[slug].title)
-        for slug in ordered_slugs
-        if slug in pieces_by_slug
-    ]
-
     for ep in ensemble_parts:
         writer = PdfWriter()
-        matched_any = False
+        piece_titles: list[str] = []
 
         for result in grouped_matches[ep.id]:
             if result.matched_id is None:
                 continue
             piece = pieces_by_slug[result.piece_slug]
             append_part_pages(writer, piece, result.matched_id)
-            matched_any = True
+            piece_titles.append(display_title(piece.title))
 
-        if matched_any:
+        if piece_titles:
             # Prepend cover sheet
             cover_writer = generate_cover_page(
                 band_name=band_name,
