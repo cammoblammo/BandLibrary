@@ -81,16 +81,6 @@ parts:
   - 25
   - 25
 assignments:
-  trumpet_1: part_1_in_bb
-  trumpet_2: part_2_in_bb
-  trumpet_3: part_2_in_bb
-  clarinet_1: part_1_in_bb
-  clarinet_2: part_2_in_bb
-  clarinet_3: part_2_in_bb
-  tenor_horn: part_3_in_eb
-  baritone_tc: part_4_in_bb
-  euphonium_tc: part_4_in_bb
   trombone: part_4_in_c
   baritone: part_4_in_c
   euphonium: part_4_in_c
-  tenor_sax: part_3_in_bb

@@ -75,18 +75,3 @@ parts:
   pages:
   - 16
   - 16
-assignments:
-  flute: flute
-  clarinet_1: clarinet_1
-  clarinet_2: clarinet_2
-  tenor_sax: tenor_sax
-  trumpet_1: trumpet_1
-  trumpet_2: trumpet_2
-  trumpet_3: trumpet_3
-  tenor_horn: tenor_horn
-  trombone: trombone
-  euphonium_tc: baritone_tc
-  baritone_tc: baritone_tc
-  bass_guitar: bass_guitar
-  guitar: guitar
-  drum_kit: drum_kit
