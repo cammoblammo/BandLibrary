@@ -45,8 +45,8 @@ parts:
   pages:
   - 8
   - 8
-- label: Party 4 in C BC
-  id: party_4_in_c_bc
+- label: Part 4 in C BC
+  id: part_4_in_c_bc
   pages:
   - 9
   - 9
@@ -102,8 +102,8 @@ assignments:
   trumpet_1: part_1_in_bb
   trumpet_2: part_2_in_bb
   trumpet_3: part_2_in_bb
-  trombone_1: party_4_in_c_bc
-  trombone_2: party_4_in_c_bc
+  trombone_1: part_4_in_c_bc
+  trombone_2: part_4_in_c_bc
   euphonium_tc: part_4_in_bb_tc
   baritone_tc: part_4_in_bb_tc
   bass_guitar: cello

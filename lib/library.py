@@ -11,6 +11,7 @@ import yaml
 from pypdf import PdfReader
 
 from .models import EnsemblePart, Piece, PiecePart
+from .reading_groups import default_groups_path, expand_entry, load_reading_groups
 
 
 class LibraryError(Exception):
@@ -32,13 +33,32 @@ def load_yaml_file(path: Path) -> dict:
     return data
 
 
-def load_ensemble(path: Path) -> tuple[str, str, list[EnsemblePart]]:
+def _string_list(value, what: str) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list) or not all(isinstance(x, str) and x.strip() for x in value):
+        raise LibraryError(f"{what} must be a list of non-empty strings")
+    return [x.strip() for x in value]
+
+
+def load_ensemble(
+    path: Path,
+    groups_path: Path | None = None,
+) -> tuple[str, str, list[EnsemblePart]]:
     """
     Load and validate an ensemble YAML file.
     Returns (ensemble_name, band_name, parts).
     band_name may be an empty string if not specified.
+
+    Each part lists `prefer` and `compromise` substitutes (schema 2), or a
+    single `fallback` list (schema 1, treated as `prefer`). Entries such as
+    "flex 3" are expanded using the reading groups in config/reading_groups.yaml.
     """
     data = load_yaml_file(path)
+    try:
+        groups = load_reading_groups(groups_path or default_groups_path(path))
+    except ValueError as exc:
+        raise LibraryError(str(exc)) from exc
 
     ensemble_meta = data.get("ensemble")
     parts_raw = data.get("parts")
@@ -66,25 +86,55 @@ def load_ensemble(path: Path) -> tuple[str, str, list[EnsemblePart]]:
 
         part_id = item.get("id")
         label = item.get("label")
-        fallback = item.get("fallback", [])
 
         if not isinstance(part_id, str) or not part_id.strip():
             raise LibraryError(f"parts[{i}].id in {path} must be a non-empty string")
         if not isinstance(label, str) or not label.strip():
             raise LibraryError(f"parts[{i}].label in {path} must be a non-empty string")
-        if not isinstance(fallback, list) or not all(isinstance(x, str) for x in fallback):
-            raise LibraryError(f"parts[{i}].fallback in {path} must be a list of strings")
         if part_id in seen_ids:
             raise LibraryError(f"Duplicate ensemble part id {part_id!r} in {path}")
-        if part_id in fallback:
-            raise LibraryError(
-                f"Ensemble part {part_id!r} in {path} includes itself in fallback"
-            )
+
+        where = f"Ensemble part {part_id!r} in {path}"
+        if "fallback" in item and ("prefer" in item or "compromise" in item):
+            raise LibraryError(f"{where}: use either 'fallback' or 'prefer'/'compromise', not both")
+        prefer_spec = _string_list(item.get("prefer", item.get("fallback")), f"{where}: prefer")
+        compromise_spec = _string_list(item.get("compromise"), f"{where}: compromise")
+        reads = _string_list(item.get("reads"), f"{where}: reads")
+        for name in reads:
+            if name not in groups:
+                raise LibraryError(f"{where}: unknown reading group {name!r}")
+
+        try:
+            prefer = _expand(prefer_spec, reads, groups, where)
+            compromise = _expand(compromise_spec, reads, groups, where)
+        except ValueError as exc:
+            raise LibraryError(str(exc)) from exc
+        compromise = [x for x in compromise if x not in prefer]
+
+        if part_id in prefer or part_id in compromise:
+            raise LibraryError(f"{where} includes itself in its substitutes")
 
         seen_ids.add(part_id)
-        parts.append(EnsemblePart(id=part_id, label=label, fallback=fallback))
+        parts.append(EnsemblePart(
+            id=part_id,
+            label=label,
+            prefer=prefer,
+            compromise=compromise,
+            reads=reads,
+            prefer_spec=prefer_spec,
+            compromise_spec=compromise_spec,
+        ))
 
     return ensemble_name, band_name, parts
+
+
+def _expand(specs: list[str], reads: list[str], groups, where: str) -> list[str]:
+    ids: list[str] = []
+    for spec in specs:
+        for part_id in expand_entry(spec, reads, groups, where):
+            if part_id not in ids:
+                ids.append(part_id)
+    return ids
 
 
 def load_piece(library_dir: Path, slug: str) -> Piece:

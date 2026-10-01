@@ -9,7 +9,12 @@ from pathlib import Path
 import yaml
 from pypdf import PdfReader
 
-from .models import ValidationResult
+from .library import LibraryError, load_ensemble
+from .matcher import match_part
+from .models import EnsemblePart, Piece, PiecePart, ValidationResult
+from .reading_groups import (
+    ReadingGroup, can_read, default_groups_path, is_flex, load_reading_groups,
+)
 
 
 def validate_piece(
@@ -146,115 +151,98 @@ def validate_piece(
     return data
 
 
+def check_readability(
+    ensemble_parts: list[EnsemblePart],
+    groups: dict[str, ReadingGroup],
+) -> list[str]:
+    """
+    Return problems where a chair lists a part outside the groups it reads.
+    Chairs with no `reads` are not checked.
+    """
+    problems: list[str] = []
+    for ep in ensemble_parts:
+        if not ep.reads:
+            continue
+        if not can_read(ep.id, ep.reads, groups):
+            problems.append(
+                f"{ep.label}: its own part {ep.id!r} is not in the groups it reads "
+                f"({', '.join(ep.reads)})"
+            )
+        for kind, specs in (("prefer", ep.prefer_spec), ("compromise", ep.compromise_spec)):
+            for spec in specs:
+                if is_flex(spec):
+                    continue
+                if not can_read(spec, ep.reads, groups):
+                    problems.append(
+                        f"{ep.label}: {kind} entry {spec!r} is not in the groups it "
+                        f"reads ({', '.join(ep.reads)})"
+                    )
+    return problems
+
+
+def _piece_from_data(slug: str, data: dict) -> Piece:
+    """Build a Piece from already-validated YAML data (no PDF access needed)."""
+    parts_by_id = {}
+    for p in data.get("parts") or []:
+        if isinstance(p, dict) and isinstance(p.get("id"), str):
+            pages = p.get("pages") or [0, 0]
+            parts_by_id[p["id"]] = PiecePart(
+                id=p["id"], label=str(p.get("label", p["id"])),
+                start_page=pages[0], end_page=pages[-1],
+            )
+    assignments = data.get("assignments")
+    if not isinstance(assignments, dict):
+        assignments = {}
+    return Piece(
+        slug=slug,
+        title=str((data.get("piece") or {}).get("title", slug)),
+        pdf_path=Path(),
+        parts_by_id=parts_by_id,
+        assignments={k: v for k, v in assignments.items() if isinstance(v, str)},
+    )
+
+
 def validate_ensemble(
     ensemble_path: Path,
     pieces_data: dict[str, dict],
     result: ValidationResult,
 ) -> None:
     """Validate ensemble YAML and report coverage against loaded pieces."""
-    if not ensemble_path.exists():
-        result.error(f"Ensemble file not found: {ensemble_path}")
-        return
-
     try:
-        with ensemble_path.open("r", encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-    except yaml.YAMLError as e:
-        result.error(f"Ensemble YAML parse error: {e}")
+        ensemble_name, _, ensemble_parts = load_ensemble(ensemble_path)
+        groups = load_reading_groups(default_groups_path(ensemble_path))
+    except (LibraryError, ValueError) as e:
+        result.error(str(e))
         return
 
-    if not isinstance(data, dict):
-        result.error("Ensemble YAML must be a mapping at top level")
+    for problem in check_readability(ensemble_parts, groups):
+        result.error(f"Ensemble part {problem}")
+
+    if not pieces_data:
         return
 
-    ensemble_meta = data.get("ensemble")
-    parts = data.get("parts")
-
-    if not isinstance(ensemble_meta, dict):
-        result.error("Ensemble YAML: missing or invalid 'ensemble' section")
-        return
-    if not isinstance(parts, list) or not parts:
-        result.error("Ensemble YAML: missing or empty 'parts' list")
-        return
-
-    ensemble_name = ensemble_meta.get("name", "(unnamed)")
-    valid_parts: list[dict] = []
-    seen_ids: set[str] = set()
-
-    for i, part in enumerate(parts):
-        if not isinstance(part, dict):
-            result.error(f"Ensemble parts[{i}] must be a mapping")
-            continue
-
-        part_id = part.get("id")
-        label = part.get("label")
-        fallback = part.get("fallback", [])
-
-        if not isinstance(part_id, str) or not part_id.strip():
-            result.error(f"Ensemble parts[{i}].id must be a non-empty string")
-            continue
-        if not isinstance(label, str) or not label.strip():
-            result.error(f"Ensemble part {part_id!r}: label must be a non-empty string")
-        if not isinstance(fallback, list) or not all(isinstance(x, str) for x in fallback):
-            result.error(f"Ensemble part {part_id!r}: fallback must be a list of strings")
-            fallback = []
-        if part_id in seen_ids:
-            result.error(f"Ensemble: duplicate part id {part_id!r}")
-        else:
-            seen_ids.add(part_id)
-            valid_parts.append(part)
-
-        if part_id in fallback:
-            result.error(f"Ensemble part {part_id!r}: includes itself in fallback")
-
-    # Note: fallback ids refer to piece part ids, not ensemble part ids,
-    # so they are not checked against the ensemble here.
-
-    if not pieces_data or not valid_parts:
-        return
+    pieces = [_piece_from_data(slug, data) for slug, data in pieces_data.items()]
 
     # Coverage report
-    print(f"\nCoverage report: {ensemble_name} vs {len(pieces_data)} piece(s)\n")
+    print(f"\nCoverage report: {ensemble_name} vs {len(pieces)} piece(s)\n")
 
-    col_width = max(
-        len(str(p.get("label") or p["id"])) for p in valid_parts
-    ) + 2
+    col_width = max(len(ep.label) for ep in ensemble_parts) + 2
+    total = len(pieces)
 
-    for part in valid_parts:
-        part_id = part["id"]
-        label = part.get("label", part_id)
-        fallback_ids = set(part.get("fallback", []))
+    for ep in ensemble_parts:
+        results = [match_part(piece, ep) for piece in pieces]
+        matched = sum(1 for r in results if r.matched_id is not None)
+        compromises = sum(1 for r in results if r.match_reason == "compromise")
+        missing = [r.piece_slug for r in results if r.matched_id is None]
 
-        matched = 0
-        missing = []
-
-        for slug, piece_data in pieces_data.items():
-            piece_parts = {
-                p["id"] for p in piece_data.get("parts", [])
-                if isinstance(p, dict) and "id" in p
-            }
-            assignments = piece_data.get("assignments", {})
-            if not isinstance(assignments, dict):
-                assignments = {}
-
-            if (
-                part_id in assignments
-                or part_id in piece_parts
-                or fallback_ids & piece_parts
-            ):
-                matched += 1
-            else:
-                missing.append(slug)
-
-        total = len(pieces_data)
         status = f"{matched}/{total}"
-        label_col = f"{label}:".ljust(col_width)
+        if compromises:
+            status += f" ({compromises} compromise)"
+        label_col = f"{ep.label}:".ljust(col_width)
 
         if matched == total:
             print(f"  {label_col} {status}")
         elif matched == 0:
             print(f"  {label_col} {status}  [no matches]")
-            for slug in missing:
-                print(f"               missing: {slug}")
         else:
             print(f"  {label_col} {status}  [missing: {', '.join(missing)}]")

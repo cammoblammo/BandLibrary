@@ -22,9 +22,11 @@ from pathlib import Path
 from lib.report import EnsembleReport, Finding, Report, build_report
 from lib.utils import display_title
 
+REASONS = ("direct", "fallback", "compromise", "assignment", "missing")
 REASON_LABELS = {
     "direct": "Direct",
     "fallback": "Fallback",
+    "compromise": "Compromise",
     "assignment": "Assigned",
     "missing": "Missing",
 }
@@ -44,7 +46,7 @@ def print_text(report: Report) -> None:
         total = sum(e.counts.values())
         summary = ", ".join(
             f"{REASON_LABELS[k]} {e.counts.get(k, 0)}"
-            for k in ("direct", "fallback", "assignment", "missing")
+            for k in REASONS
         )
         print(f"{e.name} ({e.key}): {len(e.parts)} chairs × {len(report.pieces)} pieces "
               f"= {total} — {summary}")
@@ -83,6 +85,8 @@ CSS = """
   --accent: #2c4f8f;
   --fallback-bg: #fbecc9;
   --fallback-fg: #6b4a05;
+  --compromise-bg: #f6dcc4;
+  --compromise-fg: #7a3a06;
   --assigned-bg: #dfe7f7;
   --assigned-fg: #23407a;
   --missing-bg: #f8d9d6;
@@ -98,6 +102,7 @@ CSS = """
     --paper: #12161d; --ink: #e3e8ef; --muted: #98a3b3; --rule: #2c3442;
     --panel: #181e27; --accent: #8fb0ea;
     --fallback-bg: #3d3115; --fallback-fg: #f2d38a;
+    --compromise-bg: #4a2a12; --compromise-fg: #f5bf8e;
     --assigned-bg: #1f2d48; --assigned-fg: #b3c8f0;
     --missing-bg: #4a1f1c; --missing-fg: #f4b4ad;
     --warn: #e8a35c; --info: #a7b4c8;
@@ -108,6 +113,7 @@ CSS = """
   --paper: #12161d; --ink: #e3e8ef; --muted: #98a3b3; --rule: #2c3442;
   --panel: #181e27; --accent: #8fb0ea;
   --fallback-bg: #3d3115; --fallback-fg: #f2d38a;
+  --compromise-bg: #4a2a12; --compromise-fg: #f5bf8e;
   --assigned-bg: #1f2d48; --assigned-fg: #b3c8f0;
   --missing-bg: #4a1f1c; --missing-fg: #f4b4ad;
   --warn: #e8a35c; --info: #a7b4c8;
@@ -140,6 +146,7 @@ code, .id { font-family: var(--font-mono); font-size: 0.85em; }
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 .c-direct { background: var(--rule); }
 .c-fallback { background: var(--fallback-fg); }
+.c-compromise { background: var(--compromise-fg); }
 .c-assignment { background: var(--accent); }
 .c-missing { background: var(--missing-fg); }
 
@@ -173,6 +180,7 @@ table.grid tbody th .fb { display: block; font-weight: 400; color: var(--muted);
 td.cell { font-family: var(--font-mono); }
 td.direct { color: var(--muted); text-align: center; }
 td.fallback { background: var(--fallback-bg); color: var(--fallback-fg); }
+td.compromise { background: var(--compromise-bg); color: var(--compromise-fg); font-style: italic; }
 td.assignment { background: var(--assigned-bg); color: var(--assigned-fg); }
 td.missing { background: var(--missing-bg); color: var(--missing-fg); text-align: center; font-weight: 700; }
 .foot { margin-top: 48px; color: var(--muted); font-size: 0.85rem; }
@@ -213,12 +221,12 @@ def render_html(report: Report, standalone: bool = True) -> str:
         total = sum(e.counts.values()) or 1
         bar = "".join(
             f'<span class="c-{k}" style="width:{100 * e.counts.get(k, 0) / total:.2f}%"></span>'
-            for k in ("direct", "fallback", "assignment", "missing")
+            for k in REASONS
         )
         legend = "".join(
             f'<div><span><span class="sw c-{k}"></span>{REASON_LABELS[k]}</span>'
             f'<span>{e.counts.get(k, 0)}</span></div>'
-            for k in ("direct", "fallback", "assignment", "missing")
+            for k in REASONS
         )
         parts.append(
             f'<section class="ens"><h3>{_e(e.name)}</h3>'
@@ -253,8 +261,9 @@ def render_html(report: Report, standalone: bool = True) -> str:
         parts.append(
             '<p class="gridnote">Each row is a chair, each column a piece. '
             "A dot means the piece has that chair's own part. Shaded cells show "
-            "the part the chair reads instead: amber from a fallback, blue from "
-            "an assignment, red where the chair gets nothing.</p>"
+            "the part the chair reads instead: amber from a preferred fallback "
+            "(→), orange italic from a compromise (≈), blue from an assignment, "
+            "red where the chair gets nothing.</p>"
         )
         parts.append(_render_grid(e, report))
 
@@ -284,7 +293,14 @@ def _render_grid(e: EnsembleReport, report: Report) -> str:
     rows.append(f'<thead><tr><th class="corner" scope="col">Chair</th>{heads}</tr></thead>')
     rows.append("<tbody>")
     for ep in e.parts:
-        fb = f'<span class="fb">→ {_e(", ".join(ep.fallback))}</span>' if ep.fallback else ""
+        fb = ""
+        if ep.reads:
+            fb += f'<span class="fb">reads {_e(", ".join(ep.reads))}</span>'
+        if ep.prefer_spec:
+            fb += f'<span class="fb">→ {_e(", ".join(ep.prefer_spec))}</span>'
+        if ep.compromise_spec:
+            fb += f'<span class="fb">≈ {_e(", ".join(ep.compromise_spec))}</span>'
+
         cells = []
         for p in report.pieces:
             r = e.grid[ep.id][p.slug]
@@ -296,7 +312,7 @@ def _render_grid(e: EnsembleReport, report: Report) -> str:
             else:
                 text = _e(r.matched_id)
             label = f"{ep.label} in {p.title}: {REASON_LABELS[reason]}"
-            if reason in ("fallback", "assignment"):
+            if reason in ("fallback", "compromise", "assignment"):
                 label += f" ({r.matched_id})"
             cells.append(f'<td class="cell {reason}" title="{_e(label)}">{text}</td>')
         rows.append(f'<tr><th scope="row">{_e(ep.label)}{fb}</th>{"".join(cells)}</tr>')

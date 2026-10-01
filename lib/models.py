@@ -12,7 +12,16 @@ from pathlib import Path
 class EnsemblePart:
     id: str
     label: str
-    fallback: list[str]
+    prefer: list[str]                       # expanded part ids, best first
+    compromise: list[str] = field(default_factory=list)
+    reads: list[str] = field(default_factory=list)
+    prefer_spec: list[str] = field(default_factory=list)      # as written,
+    compromise_spec: list[str] = field(default_factory=list)  # e.g. "flex 3"
+
+    @property
+    def fallback(self) -> list[str]:
+        """Every substitute in matching order: preferred, then compromises."""
+        return self.prefer + self.compromise
 
 
 @dataclass(frozen=True)
@@ -39,7 +48,7 @@ class MatchResult:
     piece_slug: str
     piece_title: str
     matched_id: str | None
-    match_reason: str | None  # "assignment", "direct", "fallback", or None
+    match_reason: str | None  # "assignment", "direct", "fallback", "compromise", or None
 
 
 @dataclass

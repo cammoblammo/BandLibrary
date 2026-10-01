@@ -10,13 +10,13 @@ parts:
   pages:
   - 9
   - 9
-- label: part 1 Bb
-  id: part_1_bb
+- label: Part 1 in Bb
+  id: part_1_in_bb
   pages:
   - 10
   - 10
-- label: part 2 Bb
-  id: part_2_bb
+- label: Part 2 in Bb
+  id: part_2_in_bb
   pages:
   - 11
   - 11
@@ -25,48 +25,48 @@ parts:
   pages:
   - 12
   - 12
-- label: part 3 C
-  id: part_3_c
+- label: Part 3 in C
+  id: part_3_in_c
   pages:
   - 13
   - 13
-- label: part 3 Bb
-  id: part_3_bb
+- label: Part 3 in Bb
+  id: part_3_in_bb
   pages:
   - 14
   - 14
-- label: part 3 F
-  id: part_3_f
+- label: Part 3 in F
+  id: part_3_in_f
   pages:
   - 15
   - 15
-- label: part 3 Eb
-  id: part_3_eb
+- label: Part 3 in Eb
+  id: part_3_in_eb
   pages:
   - 16
   - 16
-- label: part 4 C
-  id: part_4_c
+- label: Part 4 in C
+  id: part_4_in_c
   pages:
   - 17
   - 17
-- label: part 4 Bb
-  id: part_4_bb
+- label: Part 4 in Bb
+  id: part_4_in_bb
   pages:
   - 18
   - 18
-- label: part 5 Bb
-  id: part_5_bb
+- label: Part 5 in Bb
+  id: part_5_in_bb
   pages:
   - 20
   - 20
-- label: Part 5 C
-  id: part_5_c
+- label: Part 5 in C
+  id: part_5_in_c
   pages:
   - 21
   - 21
-- label: Part 5 Eb
-  id: part_5_eb
+- label: Part 5 in Eb
+  id: part_5_in_eb
   pages:
   - 22
   - 22
@@ -81,16 +81,16 @@ parts:
   - 25
   - 25
 assignments:
-  trumpet_1: part_1_bb
-  trumpet_2: part_2_bb
-  trumpet_3: part_2_bb
-  clarinet_1: part_1_bb
-  clarinet_2: part_2_bb
-  clarinet_3: part_2_bb
-  tenor_horn: part_3_eb
-  baritone_tc: part_4_bb
-  euphonium_tc: part_4_bb
-  trombone: part_4_c
-  baritone: part_4_c
-  euphonium: part_4_c
-  tenor_sax: part_3_bb
+  trumpet_1: part_1_in_bb
+  trumpet_2: part_2_in_bb
+  trumpet_3: part_2_in_bb
+  clarinet_1: part_1_in_bb
+  clarinet_2: part_2_in_bb
+  clarinet_3: part_2_in_bb
+  tenor_horn: part_3_in_eb
+  baritone_tc: part_4_in_bb
+  euphonium_tc: part_4_in_bb
+  trombone: part_4_in_c
+  baritone: part_4_in_c
+  euphonium: part_4_in_c
+  tenor_sax: part_3_in_bb

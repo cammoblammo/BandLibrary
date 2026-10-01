@@ -1,0 +1,90 @@
+schema_version: 1
+
+# Reading groups: written parts that share a transposition and clef.
+#
+# A chair lists the groups it can read (`reads:` in the ensemble file).
+# Reading a group means the notes make sense, not that the range suits:
+# range preferences belong in each chair's `prefer` / `compromise` lists.
+#
+#   parts: part ids (or globs) in this group
+#   flex:  how flexible-arrangement parts are named in this group;
+#          "flex 3" in a chair's list becomes part 3 in each template
+#
+# Bare "part_N_in_c" (no TC/BC) is deliberately left out of every group,
+# because the clef isn't known. Name C parts with _tc or _bc to include them.
+
+groups:
+  bb_treble:
+    label: B♭ treble clef
+    parts:
+      - clarinet
+      - clarinet_*
+      - bass_clarinet
+      - soprano_sax
+      - tenor_sax
+      - trumpet
+      - trumpet_*
+      - euphonium_tc
+      - baritone_tc
+      - trombone_tc
+    flex: ["part_{n}_in_bb", "part_{n}_in_bb_tc"]
+
+  eb_treble:
+    label: E♭ treble clef
+    parts:
+      - alto_sax
+      - alto_sax_*
+      - baritone_sax
+      - alto_clarinet
+      - tenor_horn
+    flex: ["part_{n}_in_eb", "part_{n}_in_eb_tc"]
+
+  c_treble:
+    label: C treble clef
+    parts:
+      - flute
+      - flute_*
+      - oboe
+      - mallets
+      - chimes
+      - violin
+      - violin_*
+      - guitar
+      - piano
+      - keyboard
+    flex: ["part_{n}_in_c_tc"]
+
+  c_bass:
+    label: C bass clef
+    parts:
+      - trombone
+      - trombone_1
+      - trombone_2
+      - trombone_3
+      - baritone
+      - euphonium
+      - tuba
+      - bassoon
+      - cello
+      - bass_guitar
+      - piano
+      - keyboard
+    flex: ["part_{n}_in_c_bc"]
+
+  f_treble:
+    label: F treble clef
+    parts:
+      - french_horn
+      - french_horn_*
+    flex: ["part_{n}_in_f"]
+
+  percussion:
+    label: Percussion
+    parts:
+      - drum_kit
+      - drums
+      - snare_drum
+      - auxiliary_percussion
+      - claves
+      - mallets
+      - chimes

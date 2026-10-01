@@ -11,7 +11,7 @@ def match_part(piece: Piece, ensemble_part: EnsemblePart) -> MatchResult:
     """
     Match an ensemble part against a piece.
     Returns a MatchResult with match_reason of "assignment", "direct",
-    "fallback", or None (missing).
+    "fallback" (a preferred substitute), "compromise", or None (missing).
     """
     # 1. Piece-specific assignment override
     if ensemble_part.id in piece.assignments:
@@ -36,17 +36,21 @@ def match_part(piece: Piece, ensemble_part: EnsemblePart) -> MatchResult:
             match_reason="direct",
         )
 
-    # 3. Fallback
-    for fallback_id in ensemble_part.fallback:
-        if fallback_id in piece.parts_by_id:
-            return MatchResult(
-                requested_id=ensemble_part.id,
-                requested_label=ensemble_part.label,
-                piece_slug=piece.slug,
-                piece_title=piece.title,
-                matched_id=fallback_id,
-                match_reason="fallback",
-            )
+    # 3. Preferred substitutes, then compromises
+    for reason, candidates in (
+        ("fallback", ensemble_part.prefer),
+        ("compromise", ensemble_part.compromise),
+    ):
+        for candidate_id in candidates:
+            if candidate_id in piece.parts_by_id:
+                return MatchResult(
+                    requested_id=ensemble_part.id,
+                    requested_label=ensemble_part.label,
+                    piece_slug=piece.slug,
+                    piece_title=piece.title,
+                    matched_id=candidate_id,
+                    match_reason=reason,
+                )
 
     # 4. Missing
     return MatchResult(
@@ -105,6 +109,14 @@ def build_report(
             elif result.match_reason == "fallback":
                 report_lines.append(
                     f"  {result.piece_slug} -> {result.matched_id} (fallback)"
+                )
+            elif result.match_reason == "compromise":
+                report_lines.append(
+                    f"  {result.piece_slug} -> {result.matched_id} (compromise)"
+                )
+                warning_lines.append(
+                    f"NOTE: {result.piece_slug}: {ep.label} reads "
+                    f"{result.matched_id} as a compromise — check it suits"
                 )
             else:
                 report_lines.append(f"  {result.piece_slug} -> {result.matched_id}")

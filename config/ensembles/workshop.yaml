@@ -1,87 +1,124 @@
-schema_version: 1
+schema_version: 2
 
 ensemble:
   id: workshop
   name: WORKSHOP
   band: South-East Sounds Workshop
 
+# Each chair:
+#   reads:      reading groups (config/reading_groups.yaml) this chair can play
+#   prefer:     good substitutes when the piece has no part for this chair, best first
+#   compromise: readable but not ideal (range, style); used last and flagged in builds
+# "flex N" means part N of a flexible arrangement, in any group the chair reads.
+
 parts:
   - id: flute_1
     label: Flute 1
-    fallback: []
+    reads: [c_treble]
+    prefer: [flute, flex 1]
 
   - id: flute_2
     label: Flute 2
-    fallback: [flute_1]
+    reads: [c_treble]
+    prefer: [flute_1, flute, flex 2]
 
   - id: clarinet_1
     label: Clarinet 1
-    fallback: []
+    reads: [bb_treble]
+    prefer: [flex 1]
 
   - id: clarinet_2
     label: Clarinet 2
-    fallback: [clarinet_1]
+    reads: [bb_treble]
+    prefer: [clarinet_1, flex 2]
 
   - id: clarinet_3
     label: Clarinet 3
-    fallback: [clarinet_2, clarinet_1]
+    reads: [bb_treble]
+    prefer: [clarinet_2, clarinet_1, flex 2]
 
   - id: alto_sax_1
     label: Alto Sax 1
-    fallback: []
+    reads: [eb_treble]
+    prefer: [flex 3]
 
   - id: alto_sax_2
     label: Alto Sax 2
-    fallback: [alto_sax_1]
+    reads: [eb_treble]
+    prefer: [alto_sax_1, flex 3]
 
   - id: tenor_sax
     label: Tenor Sax
-    fallback: []
+    reads: [bb_treble]
+    prefer: [flex 3, flex 4]
+    compromise: [baritone_tc, euphonium_tc, trombone_tc, bass_clarinet]
 
   - id: trumpet_1
     label: Trumpet 1
-    fallback: []
+    reads: [bb_treble]
+    prefer: [flex 1]
 
   - id: trumpet_2
     label: Trumpet 2
-    fallback: [trumpet_1]
+    reads: [bb_treble]
+    prefer: [trumpet_1, flex 2]
 
   - id: trumpet_3
     label: Trumpet 3
-    fallback: [trumpet_2, trumpet_1]
+    reads: [bb_treble]
+    prefer: [trumpet_2, trumpet_1, flex 2]
 
   - id: trombone_1
     label: Trombone 1
-    fallback: [baritone, euphonium]
+    reads: [c_bass]
+    prefer: [trombone, baritone, euphonium, flex 3, flex 4]
 
   - id: trombone_2
     label: Trombone 2
-    fallback: [trombone_1, baritone, euphonium]
+    reads: [c_bass]
+    prefer: [trombone_1, trombone, baritone, euphonium, flex 4, flex 3]
+
+  - id: trombone_tc
+    label: Trombone TC
+    reads: [bb_treble]
+    prefer: [euphonium_tc, baritone_tc, bass_clarinet, flex 4, flex 3]
+    compromise: [tenor_sax]
 
   - id: euphonium_tc
     label: Euphonium TC
-    fallback: [baritone_tc, bass_clarinet]
+    reads: [bb_treble]
+    prefer: [baritone_tc, bass_clarinet, trombone_tc, flex 4, flex 3]
+    compromise: [tenor_sax, flex 5]
 
   - id: baritone_tc
     label: Baritone TC
-    fallback: [euphonium_tc, bass_clarinet]
+    reads: [bb_treble]
+    prefer: [euphonium_tc, bass_clarinet, trombone_tc, flex 4, flex 3]
+    compromise: [tenor_sax, flex 5]
 
   - id: bass_guitar
     label: Bass Guitar
-    fallback: [tuba]
+    reads: [c_bass]
+    prefer: [tuba, cello, flex 5]
 
   - id: guitar
     label: Guitar
-    fallback: [flute]
+    reads: [c_treble]
+    compromise: [flute]
 
   - id: piano
     label: Piano
-    fallback: [mallets, flute]
+    reads: [c_treble, c_bass]
+    prefer: [keyboard, mallets]
+    compromise: [flute]
 
   - id: drum_kit
     label: Drum Kit
-    fallback: []
+    reads: [percussion]
+    prefer: [drums]
+    compromise: [auxiliary_percussion]
 
   - id: auxiliary_percussion
     label: Auxiliary Percussion
-    fallback: [drum_kit]
+    reads: [percussion]
+    prefer: [drum_kit]

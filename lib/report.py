@@ -15,6 +15,8 @@ from pathlib import Path
 from .library import list_pieces, load_ensemble, load_piece
 from .matcher import match_part
 from .models import EnsemblePart, MatchResult, Piece
+from .reading_groups import default_groups_path, is_flex, load_reading_groups
+from .validator import check_readability
 
 CLEF_TOKENS = {"tc", "bc"}
 KEY_TOKENS = {"c", "bb", "eb", "f", "g", "d", "a", "ab", "db"}
@@ -126,6 +128,9 @@ def build_report(library: Path, ensemble_paths: list[Path]) -> Report:
                 counts[result.match_reason or "missing"] += 1
         ensembles.append(EnsembleReport(key, name, band, parts, grid, counts))
         findings.extend(_ensemble_findings(key, parts, pieces, grid, library_ids))
+        groups = load_reading_groups(default_groups_path(path))
+        for problem in check_readability(parts, groups):
+            findings.append(Finding("warning", "Chair lists a part it can't read", problem, key))
 
     findings.extend(_library_findings(library_ids))
     findings.extend(_assignment_findings(pieces, ensembles))
@@ -142,36 +147,19 @@ def _ensemble_findings(
     library_ids: Counter,
 ) -> list[Finding]:
     out: list[Finding] = []
-    chair_ids = {ep.id for ep in parts}
-    by_id = {ep.id: ep for ep in parts}
 
     for ep in parts:
-        # Fallbacks naming parts that no piece in the library contains
-        for fb in ep.fallback:
-            if fb not in library_ids:
+        # Substitutes naming parts that no piece in the library contains
+        for fb in ep.prefer_spec + ep.compromise_spec:
+            if not is_flex(fb) and fb not in library_ids:
                 out.append(Finding(
-                    "warning", "Fallback never matches",
-                    f"{ep.label}: fallback '{fb}' does not appear in any piece",
+                    "info", "Substitute not in any piece yet",
+                    f"{ep.label}: '{fb}' isn't in any piece yet. That's fine if you "
+                    f"expect one; otherwise check the spelling.",
                     key,
                 ))
 
         # Fallbacks to another chair: matched by part id, not followed as a chain
-        for fb in ep.fallback:
-            if fb not in chair_ids:
-                continue
-            unreached = [
-                x for x in by_id[fb].fallback
-                if x != ep.id and x not in ep.fallback
-            ]
-            if unreached:
-                out.append(Finding(
-                    "info", "Fallback is not a chain",
-                    f"{ep.label} falls back to '{fb}', but not to {by_id[fb].label}'s "
-                    f"own fallbacks ({', '.join(unreached)}). Fallbacks only match "
-                    f"piece parts by name; they are not followed as a chain.",
-                    key,
-                ))
-
         # Missing although the piece has the unnumbered/numbered form of this chair
         near_misses = []
         for slug, r in grid[ep.id].items():
@@ -199,19 +187,19 @@ def _ensemble_findings(
                 key,
             ))
 
-    # Mutual fallbacks (A -> B and B -> A)
-    seen: set[frozenset] = set()
+    # Compromises in use, per chair
     for ep in parts:
-        for fb in ep.fallback:
-            if fb in by_id and ep.id in by_id[fb].fallback:
-                pair = frozenset((ep.id, fb))
-                if pair not in seen:
-                    seen.add(pair)
-                    out.append(Finding(
-                        "info", "Mutual fallback",
-                        f"{ep.label} and {by_id[fb].label} fall back to each other",
-                        key,
-                    ))
+        used = [
+            f"{slug} ({r.matched_id})" for slug, r in grid[ep.id].items()
+            if r.match_reason == "compromise"
+        ]
+        if used:
+            out.append(Finding(
+                "info", "Compromise in use",
+                f"{ep.label} reads a compromise part in {len(used)} piece(s): "
+                f"{'; '.join(used)}",
+                key,
+            ))
 
     # Piece parts that no chair in this ensemble ever reads
     used: dict[str, set[str]] = defaultdict(set)
