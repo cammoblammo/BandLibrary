@@ -1,0 +1,7 @@
+# BandBook dependencies.
+# Tested with: PyQt6 6.11, pypdf 6.9, PyMuPDF 1.28, reportlab 5.0, PyYAML 6.0
+PyQt6
+pypdf
+PyMuPDF>=1.24    # imported as "pymupdf", available from 1.24
+reportlab
+PyYAML>=5.1      # yaml.safe_dump(sort_keys=...)

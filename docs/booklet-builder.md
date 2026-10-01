@@ -71,12 +71,14 @@ Slugs must match existing library entries exactly.
 
 ## Matching Logic
 
-For each ensemble part, the builder searches each piece in order:
+For each chair in the ensemble, the builder checks each piece in order:
 
-1. Check `assignments` in the piece YAML for an explicit mapping
-2. Try a direct match against piece part IDs
-3. Try each entry in the ensemble part's `fallback` list in order
-4. If nothing matches, emit a warning and omit the piece from that part's booklet
+1. The piece's `assignments` for this chair, if any
+2. A direct match: a piece part with the same ID as the chair
+3. Each entry in the chair's `prefer` list, in order (reported as **fallback**)
+4. Each entry in the chair's `compromise` list, in order (reported as
+   **compromise**, with a note to check the part suits the player)
+5. If nothing matches, a warning, and the piece is left out of that chair's booklet
 
 ---
 
@@ -114,13 +116,20 @@ Trumpet 1:
   cast-in-blues -> trumpet_1
   modal-mixup -> trumpet_2 (fallback)
 
+Tenor Horn:
+  hound-dog -> tenor_horn
+  cast-in-blues -> alto_sax_1 (compromise)
+  modal-mixup -> part_3_in_eb (fallback)
+
 Trombone:
   hound-dog -> trombone
 WARNING: cast-in-blues has no matching part for Trombone
-WARNING: modal-mixup has no matching part for Trombone
+NOTE: cast-in-blues: Tenor Horn reads alto_sax_1 as a compromise — check it suits
 ```
 
-Use dry run to verify matches, fallbacks, and assignments before building.
+Use dry run to check matches, fallbacks, compromises and assignments before
+building. The Assignments… review screen shows the same information for one
+piece, with previews of each part.
 
 ---
 
@@ -128,22 +137,21 @@ Use dry run to verify matches, fallbacks, and assignments before building.
 
 ```yaml
 parts:
-  - id: trumpet_1
-    label: Trumpet 1
-
-  - id: trumpet_2
-    label: Trumpet 2
-
   - id: trumpet_3
     label: Trumpet 3
-    fallback: [trumpet_2, trumpet_1]
+    reads: [bb_treble]
+    prefer: [trumpet_2, trumpet_1, flex 2]
 
-  - id: trombone
-    label: Trombone
+  - id: tenor_horn
+    label: Tenor Horn
+    reads: [eb_treble]
+    prefer: [flex 3]
+    compromise: [alto_clarinet, alto_sax_1]
 ```
 
-Each part has an `id` and a `label`. An optional `fallback` list specifies
-alternative part IDs to try if a direct match is not found.
+Each chair has an `id` and a `label`, the reading groups it can play, and
+ordered `prefer` and `compromise` lists. See `docs/data-model.md` for the
+full format, including `flex N` and reading groups.
 
 ---
 
@@ -156,7 +164,8 @@ The cover sheet displays:
 - Band name (from `ensemble.band` in the ensemble YAML)
 - Instrument/part name (large, prominent)
 - Edition name (if specified)
-- Contents list (piece titles in build order)
+- Contents list: the pieces in this booklet, in build order (pieces the
+  chair has no part for are left out)
 
 To enable cover sheets, add a `band` field to your ensemble YAML:
 
@@ -198,17 +207,17 @@ Build List panel to manage repertoire files.
 
 ## Assignments
 
-Some pieces use generic part labels (e.g. `Part 1 Bb`) that do not map
-directly to instrument names. In these cases, add an `assignments` block
-to the piece YAML:
+Most chairs are matched automatically, including parts of flexible
+arrangements (`Part 3 in Eb` and so on) through `flex N`. When one piece
+needs a different choice, set an assignment with the Assignments… review
+screen, or add an `assignments` block to the piece YAML:
 
 ```yaml
 assignments:
-  trumpet_1: part_1_bb
-  trumpet_2: part_2_bb
-  alto_sax: part_1_eb
+  tenor_sax: part_4_in_bb_tc
 ```
 
-Assignments are checked before direct matching and fallbacks.
+Assignments are checked before direct matching, preferred substitutes and
+compromises.
 
 See `docs/data-model.md` for the full YAML schema.

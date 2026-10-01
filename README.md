@@ -19,6 +19,7 @@ tools/                      Scripts and GUI tools
 config/
   ensembles/                Ensemble definition files
   aliases.yaml              Instrument name normalisation
+  reading_groups.yaml       Which written parts each kind of chair can read
 docs/                       Project documentation
 output/                     Generated files (not version-controlled)
 ```
@@ -63,12 +64,33 @@ ensemble coverage.
 python3 tools/validate_library.py [--ensemble config/ensembles/my-ensemble.yaml]
 ```
 
+### add_part.py
+
 Appends an additional part PDF to an existing imported piece.
 The new pages are merged into the piece PDF and the YAML is updated automatically.
 
 ```
 python3 tools/add_part.py <piece-slug> "<Part Label>" part.pdf
 ```
+
+### consistency_report.py
+
+Reports how every chair in each ensemble gets its music across the whole
+library, and flags inconsistencies in fallbacks, part names and assignments.
+
+```
+python3 tools/consistency_report.py [--html report.html]
+```
+
+## Installation
+
+Requires Python 3 (developed on 3.13 and 3.14) and the packages below.
+
+```
+python3 -m pip install -r requirements.txt
+```
+
+Library PDFs are stored with Git LFS; run `git lfs install` before cloning.
 
 ## Quick Start
 
@@ -91,5 +113,6 @@ See `docs/quickstart.md` for a full walkthrough.
 - `docs/add-part.md` — adding parts to existing pieces
 - `docs/assignment-editor.md` — setting piece-level part assignments
 - `docs/validator.md` — library validation tool reference
+- `docs/consistency-report.md` — library-wide matching report
 - `docs/data-model.md` — YAML schemas and data structures
 - `docs/roadmap.md` — project history and future plans

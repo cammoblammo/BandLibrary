@@ -58,9 +58,12 @@ python3 tools/validate_library.py --ensemble config/ensembles/serscb.yaml
 
 ### With `--ensemble`
 
-- Ensemble YAML is valid and well-formed
-- Fallback IDs exist within the ensemble part list
-- Coverage report: for each ensemble part, how many library pieces have a match
+- Ensemble YAML is valid and well-formed, and every reading group it names
+  exists in `config/reading_groups.yaml`
+- Each chair can read its own part and every `prefer`/`compromise` entry,
+  according to the groups listed in its `reads` (an error if not)
+- Coverage report: for each chair, how many library pieces give it a part,
+  and how many of those are compromises
 
 ---
 
@@ -97,6 +100,7 @@ Coverage report: SERSCB vs 4 piece(s)
   Trumpet 1:      4/4
   Trumpet 2:      4/4
   Trumpet 3:      2/4  [missing: hound-dog, cast-in-blues]
+  Tenor Horn:     4/4 (2 compromise)
   Trombone:       4/4
   Drum Kit:       4/4
   Bass Guitar:    0/4  [no matches]
@@ -112,3 +116,6 @@ Coverage report: SERSCB vs 4 piece(s)
 | 1 | One or more errors found |
 
 Warnings are printed but do not affect the exit code.
+
+For a fuller picture of how every chair resolves across the whole library,
+see `docs/consistency-report.md`.

@@ -77,22 +77,25 @@ python3 tools/import_piece.py "Hound Dog.pdf" --manual "Hound Dog.manual.txt" --
 
 ---
 
-## 4. For layered pieces, add assignments
+## 4. Review the piece, and assign parts where needed
 
-Some pieces use generic part labels like `Part 1 Bb` rather than instrument names.
-In these cases, add an `assignments` block to the piece YAML:
+Most chairs get a part automatically: their own part, a preferred substitute,
+or, for flexible arrangements labelled like `Part 3 in Eb`, the matching
+`flex` part. Label flexible parts as `Part N in <key>`, adding `TC` or `BC`
+for parts in C (e.g. `Part 4 in C BC`), so they are matched by clef.
+
+In the GUI, select the piece and an ensemble and click `Assignments…` to see
+what every chair gets and why. Use `View` to check a part, and choose a
+different part for any chair that needs one. Choices are saved as
+assignments in the piece YAML:
 
 ```yaml
 assignments:
-  trumpet_1: part_1_bb
-  trumpet_2: part_2_bb
-  trumpet_3: part_3_bb
-  alto_sax: part_1_eb
-  bass_guitar: tuba
+  tenor_sax: part_4_in_bb_tc
 ```
 
-Assignments map ensemble part IDs to piece part IDs.
-The booklet builder checks assignments before trying direct matches or fallbacks.
+Assignments map chair IDs to piece part IDs, and are checked before any
+automatic matching.
 
 ---
 
@@ -117,7 +120,7 @@ Trombone:
 WARNING: another-piece has no matching part for Trombone
 ```
 
-Check for missing parts or unexpected fallbacks before building.
+Check for missing parts, unexpected fallbacks and compromises before building.
 
 ---
 

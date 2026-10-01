@@ -88,6 +88,7 @@ DOC_FILES = [
     ("Add Part",         "add-part.md"),
     ("Assignment Editor", "assignment-editor.md"),
     ("Validator",        "validator.md"),
+    ("Consistency Report", "consistency-report.md"),
     ("Data Model",       "data-model.md"),
     ("Roadmap",          "roadmap.md"),
 ]
