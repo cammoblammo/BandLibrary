@@ -81,16 +81,17 @@ def markdown_to_plain(text: str) -> str:
 
 # Order and labels for the sidebar
 DOC_FILES = [
-    ("Quick Start",      "quickstart.md"),
-    ("Manual Editor",    "manual-editor.md"),
-    ("Importer",         "importer.md"),
-    ("Booklet Builder",  "booklet-builder.md"),
-    ("Add Part",         "add-part.md"),
-    ("Assignment Editor", "assignment-editor.md"),
-    ("Validator",        "validator.md"),
-    ("Consistency Report", "consistency-report.md"),
-    ("Data Model",       "data-model.md"),
-    ("Roadmap",          "roadmap.md"),
+    ("Quick Start",          "quickstart.md"),
+    ("Piece Importer",       "manual-editor.md"),
+    ("Booklet Builder",      "booklet-builder.md"),
+    ("Assignment Editor",    "assignment-editor.md"),
+    ("Setting Up Ensembles", "ensembles.md"),
+    ("Add Part",             "add-part.md"),
+    ("Library Check",        "validator.md"),
+    ("Consistency Report",   "consistency-report.md"),
+    ("Importer (command line)", "importer.md"),
+    ("Data Model",           "data-model.md"),
+    ("Roadmap",              "roadmap.md"),
 ]
 
 

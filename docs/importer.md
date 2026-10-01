@@ -1,10 +1,14 @@
-# Importer
+# Importer (command line)
 
 ## Purpose
 
 The importer converts a source PDF and a manual mapping file into a structured
 library entry consisting of a YAML metadata file, the source PDF, and the
 original manual file.
+
+In the BandBook app, the **Import…** button in the Piece Importer tab runs
+this importer for you (see **Piece Importer** in Help). This page is the
+reference for running it directly.
 
 ---
 
@@ -21,6 +25,7 @@ python3 tools/import_piece.py <pdf> --manual <manual.txt> [options]
 | `--manual <path>` | required | Path to the manual mapping file |
 | `--library <path>` | `library/` | Path to the library directory |
 | `--aliases <path>` | `config/aliases.yaml` | Path to aliases file |
+| `--groups <path>` | `config/reading_groups.yaml` | Reading groups, for the "parts outside every reading group" notes |
 | `--force` | off | Overwrite existing library entry |
 | `--test` | off | Write output to `test/` instead of `library/` |
 | `--yaml-only` | off | Regenerate YAML from manual file without touching the PDF |
@@ -121,6 +126,10 @@ parts:
 
 If a piece with the same slug already exists, the importer stops with an error
 (exit code 1) unless `--force` is given.
+
+`--force` replaces the piece's YAML completely, so **its assignments are lost**.
+To change a piece's mapping and keep its assignments, use `--yaml-only`
+(Regen YAML in the app) instead.
 
 With `--force`:
 

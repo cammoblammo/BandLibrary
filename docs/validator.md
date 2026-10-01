@@ -1,16 +1,26 @@
-# Library Validator
+# Library Check
 
 ## Purpose
 
-The library validator checks the integrity of imported pieces and optionally
-validates an ensemble definition and reports coverage.
+The library check confirms every imported piece is intact, checks each
+ensemble file, and reports how many pieces each chair is covered for.
 
-Run it after importing a batch of pieces, after manually editing a YAML file,
-or any time you want confidence the library is clean before building booklets.
+Run it after importing a batch of pieces, after editing an ensemble or a
+piece's YAML, or any time you want confidence before building booklets.
 
 ---
 
-## Usage
+## In the app
+
+Choose **Tools → Check Library…**. BandBook checks every piece and every
+ensemble in `config/ensembles/` and shows the result in a window. The title
+says whether problems were found; **Copy** copies the text.
+
+In the Booklet Builder's test mode it checks the test library (`test/`).
+
+---
+
+## Command line
 
 ```
 python3 tools/validate_library.py [options] [slug ...]
@@ -23,7 +33,7 @@ Validates all pieces by default. Pass one or more slugs to check specific pieces
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--library <path>` | `library/` | Library root directory |
-| `--ensemble <path>` | none | Ensemble file to validate and check coverage against |
+| `--ensemble <path>` | none | Ensemble file to validate and check coverage against (repeatable) |
 
 ### Examples
 

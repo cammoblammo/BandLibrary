@@ -28,8 +28,10 @@ output/                     Generated files (not version-controlled)
 
 ### bandbook_gui.py
 
-The main graphical interface. Combines the manual mapping editor and booklet
-builder in a single tabbed window.
+The BandBook app, and the normal way to use BandBook. Its Piece Importer and
+Booklet Builder tabs cover importing, reviewing and building, and its Tools
+menu runs the library check and consistency report. The other tools below
+are the same functions for the command line.
 
 ```
 python3 tools/bandbook_gui.py
@@ -121,7 +123,8 @@ See `docs/quickstart.md` for a full walkthrough.
 - `docs/booklet-builder.md` — booklet builder reference
 - `docs/add-part.md` — adding parts to existing pieces
 - `docs/assignment-editor.md` — setting piece-level part assignments
-- `docs/validator.md` — library validation tool reference
+- `docs/ensembles.md` — setting up ensembles and chairs
+- `docs/validator.md` — library check (Tools menu and command line)
 - `docs/consistency-report.md` — library-wide matching report
 - `docs/data-model.md` — YAML schemas and data structures
 - `docs/roadmap.md` — project history and future plans

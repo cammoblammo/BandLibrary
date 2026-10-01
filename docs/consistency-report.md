@@ -11,7 +11,18 @@ importing several pieces.
 
 ---
 
-## Usage
+## In the app
+
+Choose **Tools → Consistency Report…**. BandBook builds the report for every
+ensemble, saves it as `output/consistency-report.html` and opens it in your
+web browser. The status bar shows how many warnings it found.
+
+In the Booklet Builder's test mode it reports on the test library and saves
+to `test-output/`.
+
+---
+
+## Command line
 
 ```
 python3 tools/consistency_report.py [--ensemble FILE ...] [--html FILE]

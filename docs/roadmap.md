@@ -28,7 +28,7 @@ instrument-specific booklets automatically.
   - `--force` overwrite with safe backup and rollback
 - Ensemble definition schema
   - YAML-based part list
-  - Explicit fallback chains
+  - Explicit fallback chains (replaced in Phase 6 by prefer/compromise lists)
 - Booklet builder (dry run)
   - Reads ensemble and piece YAMLs
   - Reports matches, fallbacks, and missing parts
@@ -82,57 +82,56 @@ instrument-specific booklets automatically.
   Check PDFs exist, YAML is valid and well-formed, page ranges within bounds,
   assignments reference real parts; optional ensemble coverage report via `--ensemble`
 
-### Known issues
+### Phase 4 — Backend Extraction
 
-- Desktop launcher icon not displaying — likely a path or PNG conversion issue in the `.desktop` file; to be resolved once `resources/icon.png` is confirmed in place
+- Core logic moved into `lib/` (library, importer, builder, matcher,
+  validator, models), shared by the command-line tools and the app
+
+### Phase 5 — Graphical Interface
+
+- **BandBook** app: one PyQt6 window with Piece Importer and Booklet
+  Builder tabs
+- Booklet Builder: ensemble selector, edition, test mode, build list with
+  repertoire Load/Save, Dry Run/Build with an output panel
+- Library browser with Assignments…, Regen YAML and Add Part…
+- Import with optional git commit and push
+- Help menu showing the `docs/` pages; cover pages with contents
+
+### Phase 6 — Reading Groups and Review
+
+- Reading groups (`config/reading_groups.yaml`): which written parts each
+  kind of chair can read
+- Ensemble chairs with `reads`, ordered `prefer` and `compromise` lists,
+  and `flex N` for flexible arrangements; compromises flagged in builds
+- Review screen (Assignments…): what every chair gets and why, with part
+  previews; saves only real overrides
+- Consistency report and library check, in the Tools menu and as
+  command-line tools
+- Import notes for parts outside every reading group
+- Contents pages bracket pieces a booklet has no part for
+- Automated test suite (`tests/`)
+
+---
+
+## Known Issues
+
+- Re-importing a piece with Force replaces its assignments; use Regen YAML
+  to change a mapping and keep them
+- Desktop launcher icon not displaying — likely a path or PNG conversion
+  issue in the `.desktop` file
 
 ---
 
 ## Planned
 
-### Phase 4 — Backend Extraction
+### Ideas
 
-Extract core logic from CLI scripts into reusable modules:
-
-```
-bandbook/
-  importer.py
-  builder.py
-  models.py
-```
-
-Required before the GUI can call build and import logic directly
-rather than via subprocess.
-
-### Phase 5 — Graphical Interface
-
-A unified PyQt6 application combining the manual editor and a
-booklet builder interface in a tabbed window.
-
-#### Editor tab
-
-The existing manual editor, largely unchanged.
-
-#### Build tab
-
-- Ensemble selector
-- Piece list (add, remove, reorder)
-- Edition label field
-- Dry run / Build buttons
-- Output report panel
-
-#### Help menu
-
-In-application help drawn from the `docs/` directory.
-
-### Phase 6 — Advanced Features (Future)
-
-- Add Part in the GUI — implemented in the library browser alongside Assignments and Regen YAML ✓
+- Keep assignments when a piece is re-imported
+- Mark pieces as reviewed for an ensemble, and warn about unreviewed ones
 - Page rotation correction on import
 - Library browser filter/search
 - Part duplication (e.g. multiple copies of trumpet parts)
 - Divider pages between pieces
-- Structured JSON output from the builder for GUI integration
 
 ---
 
