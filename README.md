@@ -92,6 +92,15 @@ python3 -m pip install -r requirements.txt
 
 Library PDFs are stored with Git LFS; run `git lfs install` before cloning.
 
+## Tests
+
+```
+python3 -m unittest discover -s tests -t .
+```
+
+The tests use the sample pieces in `test/` and `testdata/`, work on temporary
+copies, and also check that the real library and ensembles are consistent.
+
 ## Quick Start
 
 See `docs/quickstart.md` for a full walkthrough.
