@@ -154,7 +154,7 @@ class BuildTests(unittest.TestCase):
             self.assertIn("Test Band", cover)
             self.assertIn("CastInBlues", cover)
 
-    def test_contents_lists_only_pieces_in_the_booklet(self):
+    def test_contents_brackets_pieces_missing_from_the_booklet(self):
         _, band, parts = load_ensemble(self.ensemble)
         piece = load_piece(self.library, "castinblues")
         other = load_piece(self.library, "castinblues")
@@ -171,8 +171,12 @@ class BuildTests(unittest.TestCase):
 
         trumpet_cover = PdfReader(str(out / "trumpet_1.pdf")).pages[0].extract_text()
         horn_cover = PdfReader(str(out / "tenor_horn.pdf")).pages[0].extract_text()
-        self.assertNotIn("No Trumpets Here", trumpet_cover)
-        self.assertIn("No Trumpets Here", horn_cover)
+        # Same numbering in every booklet; missing pieces in brackets
+        self.assertIn("2.  (No Trumpets Here)", trumpet_cover)
+        self.assertIn("have no part for this instrument", trumpet_cover)
+        self.assertIn("2.  No Trumpets Here", horn_cover)
+        self.assertNotIn("(No Trumpets Here)", horn_cover)
+        self.assertNotIn("have no part", horn_cover)
 
 
 if __name__ == "__main__":

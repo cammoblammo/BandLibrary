@@ -164,8 +164,9 @@ The cover sheet displays:
 - Band name (from `ensemble.band` in the ensemble YAML)
 - Instrument/part name (large, prominent)
 - Edition name (if specified)
-- Contents list: the pieces in this booklet, in build order (pieces the
-  chair has no part for are left out)
+- Contents list: every piece in the build, numbered in build order so the
+  numbers match across booklets. Pieces this instrument has no part for are
+  shown greyed in brackets, with a note explaining the brackets
 
 To enable cover sheets, add a `band` field to your ensemble YAML:
 

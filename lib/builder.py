@@ -5,6 +5,7 @@ Booklet PDF generation and ZIP archive creation for BandBook.
 from __future__ import annotations
 
 import io
+from xml.sax.saxutils import escape
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -33,7 +34,7 @@ def generate_cover_page(
     band_name: str,
     part_label: str,
     edition: str,
-    piece_titles: list[str],
+    piece_titles: list[tuple[str, bool]],
 ) -> PdfWriter:
     """
     Generate a single A4 cover page as a PdfWriter.
@@ -42,7 +43,8 @@ def generate_cover_page(
       - Band name (large)
       - Part/instrument name (very large, prominent)
       - Edition name
-      - Contents list (piece titles in order)
+      - Contents list (piece titles in order); pieces this part has no
+        music for are shown in brackets, greyed
     """
     buffer = io.BytesIO()
 
@@ -127,10 +129,28 @@ def generate_cover_page(
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#cccccc")))
     story.append(Spacer(1, 6 * mm))
 
+    style_contents_missing = ParagraphStyle(
+        "contents_missing", parent=style_contents_item, textColor=colors.HexColor("#888888"),
+    )
+    style_contents_note = ParagraphStyle(
+        "contents_note", parent=style_contents_item, fontSize=10, leading=14,
+        textColor=colors.HexColor("#666666"), fontName="Helvetica-Oblique",
+        spaceBefore=4 * mm,
+    )
+
     if piece_titles:
         story.append(Paragraph("Contents", style_contents_header))
-        for i, title in enumerate(piece_titles, start=1):
-            story.append(Paragraph(f"{i}.&nbsp;&nbsp;{title}", style_contents_item))
+        for i, (title, has_part) in enumerate(piece_titles, start=1):
+            if has_part:
+                story.append(Paragraph(f"{i}.&nbsp;&nbsp;{escape(title)}", style_contents_item))
+            else:
+                story.append(Paragraph(
+                    f"{i}.&nbsp;&nbsp;({escape(title)})", style_contents_missing
+                ))
+        if not all(has_part for _, has_part in piece_titles):
+            story.append(Paragraph(
+                "Pieces in brackets have no part for this instrument.", style_contents_note
+            ))
 
     doc.build(story)
 
@@ -182,16 +202,19 @@ def generate_booklets(
 
     for ep in ensemble_parts:
         writer = PdfWriter()
-        piece_titles: list[str] = []
+        # Every piece in build order, so numbering matches across booklets
+        piece_titles: list[tuple[str, bool]] = []
 
         for result in grouped_matches[ep.id]:
-            if result.matched_id is None:
-                continue
             piece = pieces_by_slug[result.piece_slug]
+            title = display_title(piece.title)
+            if result.matched_id is None:
+                piece_titles.append((title, False))
+                continue
             append_part_pages(writer, piece, result.matched_id)
-            piece_titles.append(display_title(piece.title))
+            piece_titles.append((title, True))
 
-        if piece_titles:
+        if any(has_part for _, has_part in piece_titles):
             # Prepend cover sheet
             cover_writer = generate_cover_page(
                 band_name=band_name,
