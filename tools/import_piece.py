@@ -10,8 +10,12 @@ import argparse
 import sys
 from pathlib import Path
 
+import yaml
+
 from lib.aliases import load_aliases
 from lib.importer import import_piece, regenerate_yaml
+from lib.reading_groups import UNGROUPED_HEADING, load_reading_groups, ungrouped_parts
+from lib.utils import slugify
 
 
 def main() -> int:
@@ -20,6 +24,7 @@ def main() -> int:
     parser.add_argument("--manual", type=Path, required=True)
     parser.add_argument("--library", type=Path, default=Path("library"))
     parser.add_argument("--aliases", type=Path, default=Path("config/aliases.yaml"))
+    parser.add_argument("--groups", type=Path, default=Path("config/reading_groups.yaml"))
     parser.add_argument("--force", action="store_true")
     parser.add_argument(
         "--yaml-only",
@@ -41,9 +46,8 @@ def main() -> int:
 
         aliases = load_aliases(args.aliases)
 
+        slug = slugify(args.pdf.stem)
         if args.yaml_only:
-            from lib.utils import slugify
-            slug = slugify(args.pdf.stem)
             unaliased = regenerate_yaml(slug, args.manual, args.library, aliases)
         else:
             unaliased = import_piece(args.pdf, args.manual, args.library, args.force, aliases)
@@ -52,6 +56,16 @@ def main() -> int:
             print("\nUnaliased labels (consider adding to config/aliases.yaml):")
             for label, part_id in unaliased:
                 print(f'  {label!r:30s} ->  {part_id}')
+
+        yaml_path = args.library / slug / f"{slug}.yaml"
+        groups = load_reading_groups(args.groups)
+        if groups and yaml_path.exists():
+            parts = yaml.safe_load(yaml_path.read_text(encoding="utf-8")).get("parts") or []
+            ungrouped = ungrouped_parts(parts, groups)
+            if ungrouped:
+                print(f"\n{UNGROUPED_HEADING}")
+                for label, part_id in ungrouped:
+                    print(f'  {label!r:30s} ->  {part_id}')
 
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)

@@ -128,3 +128,26 @@ def can_read(part_id: str, reads: list[str], groups: dict[str, ReadingGroup]) ->
             if re.fullmatch(re.escape(template).replace(r"\{n\}", r"\d+"), part_id):
                 return True
     return False
+
+
+UNGROUPED_HEADING = "Parts outside every reading group (no chair will get these automatically):"
+
+
+def ungrouped_parts(
+    parts: list[dict],
+    groups: dict[str, ReadingGroup],
+) -> list[tuple[str, str]]:
+    """
+    (label, id) for piece parts that no reading group covers. No chair can be
+    given these automatically; they need an assignment, a group entry or a
+    clearer label (e.g. "Part 1 in C TC" rather than "Part 1 in C").
+    """
+    if not groups:
+        return []
+    names = list(groups)
+    return [
+        (p.get("label", p["id"]), p["id"])
+        for p in parts
+        if isinstance(p, dict) and isinstance(p.get("id"), str)
+        and not can_read(p["id"], names, groups)
+    ]

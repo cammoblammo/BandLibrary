@@ -22,6 +22,8 @@ from PyQt6.QtWidgets import (
 
 import yaml
 
+from .reading_groups import UNGROUPED_HEADING
+
 
 # ---------------------------------------------------------------------------
 # Alias loading
@@ -735,12 +737,8 @@ class EditorWidget(QWidget):
             self.editor._modified = False
             self._status.showMessage(f"Import successful: {stdout or 'done'}", 4000)
 
-            # Parse unaliased labels from stdout
-            unaliased_lines = [
-                line for line in stdout.splitlines()
-                if "->" in line and not line.startswith("Imported")
-            ]
-            if unaliased_lines:
+            # Show unaliased labels and ungrouped parts, if any
+            if "Unaliased labels" in stdout or UNGROUPED_HEADING in stdout:
                 self._show_unaliased_dialog(stdout)
 
             # Git commit and push if requested (skipped in test mode)
@@ -753,7 +751,7 @@ class EditorWidget(QWidget):
             self._status.showMessage("Import failed.", 5000)
 
     def _show_unaliased_dialog(self, output: str):
-        """Show a dialog listing unaliased labels from the import output."""
+        """Show unaliased labels and ungrouped parts from the import output."""
         from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QTextEdit, QPushButton, QLabel, QApplication
         from PyQt6.QtGui import QFont
 
@@ -762,25 +760,29 @@ class EditorWidget(QWidget):
         unaliased_lines = []
         in_section = False
         for line in lines:
-            if line.startswith("Unaliased labels"):
+            if line.startswith("Unaliased labels") or line.startswith(UNGROUPED_HEADING):
+                if unaliased_lines:
+                    unaliased_lines.append("")
+                unaliased_lines.append(line.strip())
                 in_section = True
                 continue
             if in_section and line.strip():
-                unaliased_lines.append(line.strip())
+                unaliased_lines.append("  " + line.strip())
 
         if not unaliased_lines:
             return
 
         dlg = QDialog(self)
-        dlg.setWindowTitle("Unaliased Labels")
+        dlg.setWindowTitle("Import Notes")
         dlg.resize(480, 300)
         layout = QVBoxLayout(dlg)
         layout.setSpacing(8)
         layout.setContentsMargins(12, 12, 12, 12)
 
         layout.addWidget(QLabel(
-            "These labels were normalised by slugification rather than an alias.\n"
-            "Consider adding them to config/aliases.yaml:"
+            "Unaliased labels were named by slugification: consider adding them to\n"
+            "config/aliases.yaml. Parts outside every reading group need an assignment,\n"
+            "a clearer label (e.g. 'Part 1 in C TC') or an entry in config/reading_groups.yaml."
         ))
 
         text = QTextEdit()

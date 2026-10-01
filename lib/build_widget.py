@@ -8,6 +8,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import yaml
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
@@ -23,6 +24,7 @@ from .assignment_editor import open_assignment_editor
 from .importer import regenerate_yaml
 from .aliases import load_aliases
 from .parts import add_part
+from .reading_groups import UNGROUPED_HEADING, load_reading_groups, ungrouped_parts
 from .matcher import build_match_plan, build_report
 from .builder import generate_booklets, create_zip_archive
 from .utils import slugify_edition
@@ -425,12 +427,23 @@ class BuildWidget(QWidget):
             self.refresh_library()
             if self._status:
                 self._status.showMessage(f"YAML regenerated for {slug}.", 4000)
+
+            groups = load_reading_groups(self._project_root / "config" / "reading_groups.yaml")
+            yaml_path = library / slug / f"{slug}.yaml"
+            parts = (yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}).get("parts") or []
+            ungrouped = ungrouped_parts(parts, groups)
+
+            sections = []
             if unaliased:
-                msg = "Unaliased labels:\n" + "\n".join(
-                    f"  {label!r:30s} ->  {part_id}"
-                    for label, part_id in unaliased
-                )
-                QMessageBox.information(self, "Unaliased Labels", msg)
+                sections.append("Unaliased labels:\n" + "\n".join(
+                    f"  {label!r:30s} ->  {part_id}" for label, part_id in unaliased
+                ))
+            if ungrouped:
+                sections.append(UNGROUPED_HEADING + "\n" + "\n".join(
+                    f"  {label!r:30s} ->  {part_id}" for label, part_id in ungrouped
+                ))
+            if sections:
+                QMessageBox.information(self, "Regen YAML Notes", "\n\n".join(sections))
         except Exception as e:
             QMessageBox.critical(self, "Regen YAML Failed", str(e))
 
