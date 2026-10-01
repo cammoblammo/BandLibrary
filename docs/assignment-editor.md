@@ -30,6 +30,7 @@ Each row is a chair in the selected ensemble:
 |--------|-------|
 | Chair | The chair's name. Hover for what it reads, prefers and accepts as a compromise |
 | Gets | The part the chair will read. `Automatic — …` means no assignment |
+| View | Opens the pages the chair will read in a separate window |
 | Why | A badge and a short explanation |
 
 The badges:
@@ -44,6 +45,11 @@ The badges:
 
 The summary at the top counts each kind. Tick **Only chairs that need a look**
 to hide Direct and Fallback rows and see just compromises, assignments and gaps.
+
+**View** always shows the part currently selected in that row, so you can
+try a different dropdown choice and view it before saving. Preview windows
+stay open alongside the review screen; use Page Up/Page Down to turn pages
+and Escape to close.
 
 If you assign a part outside the reading groups the chair reads, the note
 shows a ⚠ warning. The assignment is still allowed.

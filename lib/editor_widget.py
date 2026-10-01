@@ -133,7 +133,10 @@ class PdfViewer(QWidget):
         self._update_buttons()
 
     def load(self, path: Path):
-        doc = pymupdf.open(str(path))
+        self.set_document(pymupdf.open(str(path)))
+
+    def set_document(self, doc):
+        """Show an already-open pymupdf document (e.g. one built in memory)."""
         if self._doc is not None:
             self._doc.close()
         self._doc = doc

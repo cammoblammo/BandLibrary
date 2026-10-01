@@ -9,14 +9,17 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+import pymupdf
 import yaml
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QScrollArea, QWidget, QFrame, QMessageBox,
     QGridLayout, QSizePolicy, QCheckBox,
 )
 
+from .editor_widget import PdfViewer
 from .library import load_ensemble, load_piece
 from .matcher import match_part
 from .models import EnsemblePart, MatchResult, Piece
@@ -111,6 +114,52 @@ def describe_selection(
 
 
 # ---------------------------------------------------------------------------
+# Part preview
+# ---------------------------------------------------------------------------
+
+class PartPreview(QDialog):
+    """A separate window showing just the pages of one part."""
+
+    def __init__(self, piece: Piece, part_id: str, chair_label: str, parent=None):
+        super().__init__(parent)
+        part = piece.parts_by_id[part_id]
+        pages = (
+            f"p. {part.start_page}" if part.start_page == part.end_page
+            else f"pp. {part.start_page}–{part.end_page}"
+        )
+        self.setWindowTitle(
+            f"{chair_label} — {part.label} ({pages}) — {display_title(piece.title)}"
+        )
+        self.resize(760, 980)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.viewer = PdfViewer()
+        layout.addWidget(self.viewer)
+
+        # Copy only this part's pages into an in-memory document
+        source = pymupdf.open(str(piece.pdf_path))
+        try:
+            doc = pymupdf.open()
+            doc.insert_pdf(source, from_page=part.start_page - 1, to_page=part.end_page - 1)
+        finally:
+            source.close()
+        self._doc = doc
+
+        QShortcut(QKeySequence("PgDown"), self).activated.connect(self.viewer.next_page)
+        QShortcut(QKeySequence("PgUp"), self).activated.connect(self.viewer.prev_page)
+        QShortcut(QKeySequence("Escape"), self).activated.connect(self.close)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self._doc is not None:
+            # Load once the window has its size, so the page fits it
+            doc, self._doc = self._doc, None
+            QTimer.singleShot(0, lambda: self.viewer.set_document(doc))
+
+
+# ---------------------------------------------------------------------------
 # Assignment Editor Dialog
 # ---------------------------------------------------------------------------
 
@@ -173,7 +222,7 @@ class AssignmentEditor(QDialog):
         ch_layout = QGridLayout(col_headers)
         ch_layout.setContentsMargins(16, 8, 16, 8)
         self._set_columns(ch_layout)
-        for col, text in enumerate(("Chair", "Gets", "Why", "")):
+        for col, text in enumerate(("Chair", "Gets", "", "Why", "")):
             ch_layout.addWidget(QLabel(f"<b>{text}</b>"), 0, col)
         layout.addWidget(col_headers)
 
@@ -195,6 +244,7 @@ class AssignmentEditor(QDialog):
         self._badges: dict[str, QLabel] = {}
         self._notes: dict[str, QLabel] = {}
         self._row_widgets: dict[str, list[QWidget]] = {}
+        self._view_buttons: dict[str, QPushButton] = {}
 
         for row, ep in enumerate(ensemble_parts):
             chair = QLabel(ep.label)
@@ -219,6 +269,11 @@ class AssignmentEditor(QDialog):
                 if index >= 0:
                     combo.setCurrentIndex(index)
 
+            view_btn = QPushButton("View")
+            view_btn.setFixedHeight(26)
+            view_btn.setToolTip(f"Show the pages {ep.label} will read")
+            view_btn.clicked.connect(lambda _, e=ep: self._preview(e))
+
             badge = QLabel()
             badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
             badge.setFixedSize(104, 24)
@@ -228,13 +283,15 @@ class AssignmentEditor(QDialog):
 
             self._grid.addWidget(chair, row, 0)
             self._grid.addWidget(combo, row, 1)
-            self._grid.addWidget(badge, row, 2)
-            self._grid.addWidget(note, row, 3)
+            self._grid.addWidget(view_btn, row, 2)
+            self._grid.addWidget(badge, row, 3)
+            self._grid.addWidget(note, row, 4)
 
             self._combos[ep.id] = combo
             self._badges[ep.id] = badge
             self._notes[ep.id] = note
-            self._row_widgets[ep.id] = [chair, combo, badge, note]
+            self._view_buttons[ep.id] = view_btn
+            self._row_widgets[ep.id] = [chair, combo, view_btn, badge, note]
 
             combo.currentIndexChanged.connect(self._refresh)
 
@@ -286,8 +343,9 @@ class AssignmentEditor(QDialog):
     def _set_columns(grid: QGridLayout) -> None:
         grid.setColumnStretch(0, 2)
         grid.setColumnStretch(1, 4)
-        grid.setColumnMinimumWidth(2, 104)
-        grid.setColumnStretch(3, 4)
+        grid.setColumnMinimumWidth(2, 56)
+        grid.setColumnMinimumWidth(3, 104)
+        grid.setColumnStretch(4, 4)
         grid.setHorizontalSpacing(12)
 
     def _part_display(self, part_id: str | None) -> str:
@@ -327,6 +385,7 @@ class AssignmentEditor(QDialog):
                 f"padding: 3px 6px; font-weight: bold;"
             )
             self._notes[ep.id].setText(state.note)
+            self._view_buttons[ep.id].setEnabled(state.part_id is not None)
 
             visible = not attention_only or state.reason in ATTENTION
             for widget in self._row_widgets[ep.id]:
@@ -339,6 +398,17 @@ class AssignmentEditor(QDialog):
                 colour = bg if key in ATTENTION else fg
                 parts.append(f'<span style="color:{colour}">{counts[key]} {text.lower()}</span>')
         self._summary.setText("  ·  ".join(parts))
+
+    def _preview(self, ep: EnsemblePart):
+        state = self._state(ep)
+        if state.part_id is None:
+            return
+        try:
+            preview = PartPreview(self._piece, state.part_id, ep.label, parent=self)
+        except Exception as e:
+            QMessageBox.critical(self, "Preview", f"Could not open the part:\n{e}")
+            return
+        preview.show()
 
     def _clear_all(self):
         for combo in self._combos.values():
