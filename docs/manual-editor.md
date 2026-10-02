@@ -186,6 +186,8 @@ What happens:
    the message `Import: <title>` and pushes the current branch to GitHub.
    If nothing changed (an identical re-import) it skips the commit. If git
    fails, the piece is still imported; a window explains what went wrong.
+   If the project folder isn't on the `main` branch, BandBook says which
+   branch the piece will go to and asks before importing.
    Pushing uploads the PDF and can take a while: it runs in the
    background with progress in the status bar, and **Import…** is greyed
    out until it finishes. If you try to close BandBook meanwhile, it asks

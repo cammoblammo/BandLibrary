@@ -443,6 +443,22 @@ class ManualEditor(QTextEdit):
 # Background part detection
 # ---------------------------------------------------------------------------
 
+MAIN_BRANCH = "main"
+
+
+def current_branch(project_root: Path) -> str | None:
+    """The checked-out branch, or None if git can't say (not a repo, detached)."""
+    import subprocess
+    try:
+        result = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                                cwd=str(project_root), capture_output=True,
+                                text=True, timeout=5)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    branch = result.stdout.strip()
+    return branch if result.returncode == 0 and branch and branch != "HEAD" else None
+
+
 class GitThread(QThread):
     """Commit an imported piece and push the current branch, off the UI thread."""
     progress = pyqtSignal(str)
@@ -819,6 +835,26 @@ class EditorWidget(QWidget):
         self._status.showMessage(
             f"Detected {parts}: {flagged}check every line against the PDF before importing.")
 
+    def _confirm_branch(self) -> bool:
+        """
+        Imports are pushed to whichever branch is checked out. Off the main
+        branch, say so and ask first.
+        """
+        if not self.git_checkbox.isChecked() or self.test_checkbox.isChecked():
+            return True
+        branch = current_branch(self._importer_path.parent.parent)
+        if branch is None or branch == MAIN_BRANCH:
+            return True
+        r = QMessageBox.question(
+            self, "Not on main",
+            f'You\'re on branch "{branch}", not {MAIN_BRANCH}. The piece will be '
+            f'committed and pushed to "{branch}", and only reaches {MAIN_BRANCH} '
+            "when that branch is merged.\n\nImport anyway?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        return r == QMessageBox.StandardButton.Yes
+
     def run_importer(self):
         if self.pdf_viewer._doc is None:
             QMessageBox.warning(self, "Import", "No PDF loaded.")
@@ -827,6 +863,9 @@ class EditorWidget(QWidget):
         if not self._importer_path.exists():
             QMessageBox.critical(self, "Import Error",
                 f"Could not find import_piece.py at:\n{self._importer_path}")
+            return
+
+        if not self._confirm_branch():
             return
 
         pdf_file = Path(self.pdf_viewer._doc.name)

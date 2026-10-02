@@ -10,7 +10,7 @@ from tests.helpers import ROOT, TempDir
 
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox, QStatusBar
 
-from lib.editor_widget import EditorWidget, GitThread
+from lib.editor_widget import EditorWidget, GitThread, current_branch
 
 APP = QApplication.instance() or QApplication([])
 
@@ -76,10 +76,40 @@ class GitThreadTests(unittest.TestCase):
         self.assertTrue(any("Pushing" in p for p in progress))
         self.assertEqual(git(self.remote, "log", "-1", "--format=%s"), "Import: Bad Guy")
 
+    def test_current_branch(self):
+        self.assertEqual(current_branch(self.repo),
+                         git(self.repo, "rev-parse", "--abbrev-ref", "HEAD"))
+        self.assertIsNone(current_branch(self.tmp.path))   # not a repository
+
     def test_nothing_to_commit(self):
         self.run_thread()
         results, _ = self.run_thread()
         self.assertEqual(results, [(True, "No changes to commit for bad-guy.")])
+
+
+class BranchWarningTests(unittest.TestCase):
+    def confirm(self, branch, git_push=True, test_mode=False, answer=QMessageBox.StandardButton.No):
+        widget = EditorWidget([], status_bar=QStatusBar())
+        widget.git_checkbox.setChecked(git_push)
+        widget.test_checkbox.setChecked(test_mode)
+        with mock.patch("lib.editor_widget.current_branch", return_value=branch), \
+                mock.patch.object(QMessageBox, "question", return_value=answer) as question:
+            return widget._confirm_branch(), question
+
+    def test_asks_before_pushing_to_another_branch(self):
+        ok, question = self.confirm("part-detection")
+        self.assertFalse(ok)
+        self.assertIn('"part-detection", not main', question.call_args[0][2])
+        ok, _ = self.confirm("part-detection", answer=QMessageBox.StandardButton.Yes)
+        self.assertTrue(ok)
+
+    def test_no_question_on_main_in_test_mode_or_without_push(self):
+        for kwargs in ({"branch": "main"}, {"branch": "x", "test_mode": True},
+                       {"branch": "x", "git_push": False}, {"branch": None}):
+            with self.subTest(**kwargs):
+                ok, question = self.confirm(**kwargs)
+                self.assertTrue(ok)
+                question.assert_not_called()
 
 
 class BusyTests(unittest.TestCase):
