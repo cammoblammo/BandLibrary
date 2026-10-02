@@ -297,6 +297,62 @@ class LibraryDetectionTests(unittest.TestCase):
         self.assertTrue(any("treble clef" in n for n in notes["Euphonium"]))
 
 
+class BadGuyTests(unittest.TestCase):
+    """
+    Bad Guy (Superbrass flexible arrangement) has most of the awkward cases
+    in one text-layer PDF: running headers with instruments after a comma,
+    smaller second-page headers, C parts in both clefs, a name printed for
+    two parts, and a misprinted second-page header (page 16).
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        pdf = LIBRARY / "bad-guy" / "bad-guy.pdf"
+        if not pdf.exists() or pdf.stat().st_size < 1000:
+            raise unittest.SkipTest("Bad Guy PDF not available (Git LFS pointer?)")
+        cls.draft = detect_parts(pdf, ALIASES, GROUPS)
+        cls.parts = {(p.label, p.start, p.end): p.notes for p in cls.draft.parts}
+
+    def test_title_and_skipped_pages(self):
+        self.assertEqual(self.draft.title, "Bad Guy")
+        self.assertEqual([(s.start, s.end, s.reason) for s in self.draft.skipped],
+                         [(1, 2, "no-name"), (3, 10, "score")])
+
+    def test_ranges_match_the_library_except_the_misprinted_page(self):
+        score = score_draft("bad-guy", self.draft,
+                            LIBRARY / "bad-guy" / "bad-guy.manual.txt", ALIASES)
+        self.assertEqual(score.differences, [
+            "missed  Part 3 in Bb: 15-16",
+            # The owner renamed the Tuba version of "Part 5 in C"
+            "name    Part 5 in C BC (part_5_in_c_bc) — expected Tuba (tuba) for 29-30",
+            "extra   Part 3 in Bb: 15-15",
+            "extra   Part 3 in C TC: 16-16",
+        ])
+
+    def test_running_headers_continue_parts(self):
+        # Page 26 is headed "Part 5 in C, Trombone/Baritone"
+        self.assertIn(("Part 5 in Bb", 27, 28), self.parts)
+        for notes in self.parts.values():
+            self.assertFalse(any("no part name" in n for n in notes), notes)
+
+    def test_clef_added_from_the_first_staff(self):
+        self.assertEqual(self.parts[("Part 3 in C BC", 13, 14)],
+                         ["clef added from the first staff (bass clef)"])
+        self.assertEqual(self.parts[("Part 4 in C BC", 21, 22)],
+                         ["clef added from the first staff (bass clef)"])
+
+    def test_misprinted_second_page_is_flagged_not_merged(self):
+        notes = self.parts[("Part 3 in C TC", 16, 16)]
+        self.assertTrue(notes[0].startswith("page 16 looks like a second page (no title)"))
+        self.assertIn('"Part 3 in Bb" above', notes[0])
+
+    def test_name_printed_for_two_parts_says_what_differs(self):
+        first = self.parts[("Part 5 in C BC", 25, 26)][-1]
+        second = self.parts[("Part 5 in C BC", 29, 30)][-1]
+        self.assertIn("(this one for Trombone/Baritone); also pages 29-30, for Tuba", first)
+        self.assertIn("(this one for Tuba); also pages 25-26, for Trombone/Baritone", second)
+
+
 class DetectButtonTests(unittest.TestCase):
     """The Piece Importer's Detect Parts button, without a display."""
 
