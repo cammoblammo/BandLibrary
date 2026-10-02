@@ -1,0 +1,16 @@
+# check: title read from the PDF
+Title: You Really Got Me
+# Detected by BandBook from the PDF's text. Check every line against
+# the PDF before importing; look first at lines marked "check".
+Flute: 1
+Part 1 in Bb: 2
+Part 2 in Bb: 3
+Part 3 in Bb: 4
+# check: clef added from the first staff (bass clef)
+Part 4 in C BC: 5-6
+Drum Set: 7
+# check: page 9 shows no part name
+Bass Guitar: 8-10
+Violin 1: 11
+# check: not a known part name: check it, or add an alias
+Viola: 12
