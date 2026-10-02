@@ -164,6 +164,36 @@ class KnownNameTests(unittest.TestCase):
         self.assertEqual(notes["Part 4 in C"], ["clef not printed: add TC or BC"])
 
 
+class ClefHintTests(unittest.TestCase):
+    def draft(self, *names_and_clefs):
+        pages = [RawPage(n, [*furniture(), line(name)], clef=clef)
+                 for n, (name, clef) in enumerate(names_and_clefs, 1)]
+        return {p.label: p.notes for p in detect_pages(pages, ALIASES, GROUPS).parts}
+
+    def test_clef_shown_for_c_part_without_one(self):
+        notes = self.draft(("Part 4 in C", "bass"), ("Part 1 in C", None))
+        self.assertEqual(notes["Part 4 in C"],
+                         ["clef not printed: add TC or BC (the first staff is in bass clef)"])
+        self.assertEqual(notes["Part 1 in C"], ["clef not printed: add TC or BC"])
+
+    def test_name_read_in_the_other_clef(self):
+        notes = self.draft(("Euphonium", "treble"), ("Trombone", "bass"),
+                           ("Flute", "treble"), ("Piano", "bass"), ("Drum Kit", "treble"))
+        self.assertEqual(notes["Euphonium"], [
+            'the first staff is in treble clef, but "Euphonium" is read as a bass-clef part'])
+        for name in ("Trombone", "Flute", "Piano", "Drum Kit"):
+            self.assertEqual(notes[name], [], name)
+
+    def test_clef_glyphs_in_the_text_layer(self):
+        from lib.detect.sources.text_layer import _clef
+        self.assertEqual(_clef("\ue050", "Leland"), "treble")
+        self.assertEqual(_clef("\ue062", "MuseJazz"), "bass")
+        self.assertEqual(_clef("?bb", "Inkpen2Std"), "bass")
+        self.assertEqual(_clef("&", "ABCDEF+BroadwayCopyist"), "treble")
+        self.assertIsNone(_clef("&", "Helvetica"))
+        self.assertIsNone(_clef("?", "Inkpen2ScriptStd"))
+
+
 class DraftTests(unittest.TestCase):
     def setUp(self):
         self.tmp = TempDir()
@@ -202,6 +232,13 @@ class LibraryDetectionTests(unittest.TestCase):
                 draft = detect_parts(pdf, ALIASES, GROUPS)
                 score = score_draft(slug, draft, LIBRARY / slug / f"{slug}.manual.txt", ALIASES)
                 self.assertEqual(score.ranges_right, score.expected, score.differences)
+
+    def test_clef_hint_on_euphonium_in_treble_clef(self):
+        pdf = LIBRARY / "soundstorm" / "soundstorm.pdf"
+        if pdf.stat().st_size < 1000:
+            self.skipTest("library PDFs are Git LFS pointers here")
+        notes = {p.label: p.notes for p in detect_parts(pdf, ALIASES, GROUPS).parts}
+        self.assertTrue(any("treble clef" in n for n in notes["Euphonium"]))
 
 
 class DetectButtonTests(unittest.TestCase):

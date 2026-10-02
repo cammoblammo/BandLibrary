@@ -40,6 +40,7 @@ def detect_pages(pages: list[RawPage], aliases: dict[str, str],
     for part in parts:
         if not part.known and not can_read(part.part_id, names, groups or {}):
             part.notes.insert(0, UNKNOWN_NOTE)
+        _clef_hint(part, readings, groups or {})
     return Draft(
         title=find_title(pages, aliases),
         parts=parts,
@@ -87,6 +88,37 @@ def read_pages(pdf_path: Path, use_ocr: bool = True,
             if progress:
                 progress(i, len(scans), "ocr")
     return pages, None
+
+
+CLEF_NOT_PRINTED = "clef not printed: add TC or BC"
+
+
+def _group_clef(group: ReadingGroup) -> str | None:
+    label = group.label.lower()
+    return "treble" if "treble clef" in label else "bass" if "bass clef" in label else None
+
+
+def _clef_hint(part: DraftPart, readings: list[PageReading],
+               groups: dict[str, ReadingGroup]) -> None:
+    """
+    Say which clef the part's first staff is in, where it matters: a C part
+    with no clef in its name, or a name the reading groups read in the
+    other clef ("Euphonium" printed in treble clef). Never renames a part.
+    """
+    clef = next((r.clef for r in readings
+                 if part.start <= r.page <= part.end and r.clef), None)
+    if clef is None:
+        return
+    if CLEF_NOT_PRINTED in part.notes:
+        i = part.notes.index(CLEF_NOT_PRINTED)
+        part.notes[i] = f"{CLEF_NOT_PRINTED} (the first staff is in {clef} clef)"
+        return
+    clefs = {_group_clef(g) for name, g in groups.items()
+             if can_read(part.part_id, [name], groups)} - {None}
+    if clefs and clef not in clefs:
+        other = " or ".join(sorted(clefs))
+        part.notes.append(f'the first staff is in {clef} clef, but "{part.label}" '
+                          f"is read as a {other}-clef part")
 
 
 def detect_parts(pdf_path: Path, aliases: dict[str, str],

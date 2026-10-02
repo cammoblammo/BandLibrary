@@ -83,7 +83,7 @@ def read_labels(pages: list[RawPage],
     for page in pages:
         real = real_lines(page, furniture)
         reading = PageReading(page=page.page, has_text=bool(real),
-                              source=page.source)
+                              source=page.source, clef=page.clef)
         readings.append(reading)
         if not real:
             continue

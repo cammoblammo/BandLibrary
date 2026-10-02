@@ -63,9 +63,34 @@ def _join_spans(spans: list[dict]) -> list[TextLine]:
     return sorted(lines, key=lambda l: (l.y0, l.x0))
 
 
+# Clef glyphs. SMuFL fonts (MuseScore's Leland, Bravura, MuseJazz…) have
+# their own code points; older Finale-style fonts draw clefs as "&" / "?".
+SMUFL_TREBLE = range(0xE050, 0xE05C)        # gClef and its 8va/8vb forms
+SMUFL_BASS = range(0xE062, 0xE069)          # fClef and its forms
+LEGACY_MUSIC_FONTS = ("maestro", "opus", "inkpen2", "broadwaycopyist",
+                      "petrucci", "jazz", "engraver", "sonata", "reprise",
+                      "golden", "pmusic", "november")
+
+
+def _clef(text: str, font: str) -> str | None:
+    first = text.strip()[:1]
+    if not first:
+        return None
+    if ord(first) in SMUFL_TREBLE:
+        return "treble"
+    if ord(first) in SMUFL_BASS:
+        return "bass"
+    font = font.split("+")[-1].lower()
+    if any(f in font for f in LEGACY_MUSIC_FONTS) and \
+            not any(w in font for w in ("text", "perc", "chord", "script")):
+        return {"&": "treble", "?": "bass"}.get(first)
+    return None
+
+
 def read_page(page: pymupdf.Page, number: int) -> RawPage:
     w, h = page.rect.width, page.rect.height
     spans = []
+    clefs = []          # (y, clef) of clef glyphs at the start of a staff
     for block in page.get_text("dict")["blocks"]:
         for line in block.get("lines", []):
             for sp in line["spans"]:
@@ -73,12 +98,16 @@ def read_page(page: pymupdf.Page, number: int) -> RawPage:
                 if not text.strip():
                     continue
                 x0, y0, x1, y1 = sp["bbox"]
+                clef = _clef(text, sp["font"])
+                if clef and x0 / w < 0.25:
+                    clefs.append((y0 / h, clef))
                 spans.append({
                     "text": text, "size": round(sp["size"], 1),
                     "x0": x0 / w, "y0": y0 / h, "x1": x1 / w, "y1": y1 / h,
                     "em": sp["size"] / w,
                 })
-    return RawPage(page=number, lines=_join_spans(spans), source="text")
+    return RawPage(page=number, lines=_join_spans(spans), source="text",
+                   clef=min(clefs)[1] if clefs else None)
 
 
 def read_pdf(path: Path,

@@ -83,11 +83,14 @@ What the notes mean:
 | `no part name found` | Usually a cover or notes page; map by hand if it is a part |
 | `page N shows no part name` | A page without a name was added to the part above it. Check it belongs there |
 | `read "in B" as "in Bb"` | The flat was missing from the PDF's text |
-| `clef not printed: add TC or BC` | Add the clef, or no chair will get the part automatically |
+| `clef not printed: add TC or BC` | Add the clef, or no chair will get the part automatically. If BandBook could see the first staff's clef, the note says which it is |
+| `the first staff is in treble clef, but "Euphonium" is read as a bass-clef part` | The PDF's clef doesn't match the name: rename the part (e.g. `Euphonium TC`) if that's right |
 | `not a known part name` | Rename it to a name the aliases know, or add an alias |
 | `is this "Trombone 1"?` | The PDF prints just "Trombone" beside a "Trombone 2" |
 | `used more than once` | Two parts have the same name; rename or remove one |
 
+Clef notes come only from PDFs made by notation software (not scans), and
+only for the first staff. BandBook never changes a name because of them.
 Detection never guesses a clef or which chair should play a part (for
 example a "Beginners B♭" part shared by two chairs): set that up in
 **Assignments…** as usual.

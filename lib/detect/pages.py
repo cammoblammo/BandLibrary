@@ -32,6 +32,7 @@ class RawPage:
     page: int                       # 1-based
     lines: list[TextLine]
     source: str = "text"            # "text", "ocr" or "ai"
+    clef: str | None = None         # first staff's clef, "treble" or "bass", if read
 
 
 @dataclass
@@ -51,6 +52,7 @@ class PageReading:
     is_score: bool = False
     label: NameMatch | None = None
     source: str = "text"
+    clef: str | None = None
 
 
 @dataclass

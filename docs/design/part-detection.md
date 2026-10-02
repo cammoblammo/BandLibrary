@@ -175,8 +175,7 @@ Differences from the sketch above, found against the real PDFs:
 - **"Known" names** are those the aliases resolve, `Part N in X`, or whose
   ID a reading group covers ("Flute 1" → `flute_1`). Others get a note.
 - **Bare `Part N in C`** keeps no clef and is flagged; no clef is guessed.
-  (The text layer does carry clef glyphs, e.g. `&` / `?` in Inkpen2, so a
-  clef *hint* would be possible later, if wanted.)
+  The clef *hint* (below) reports what the first staff shows.
 - Module layout: `pages.py` holds the data classes; `score.py` compares a
   draft with a manual file.
 
@@ -219,6 +218,22 @@ What it took, beyond the sketch:
   Hound Dog (16 pages) takes ~18 s instead of 42 s.
 - `--ocr-cache DIR` on the scoring tool keeps OCR results between runs.
 
+## Clef hints (owner: yes, 2026-10-02)
+
+The text layer carries clef glyphs: SMuFL code points (U+E050–E05B G
+clefs, U+E062–E068 F clefs) in MuseScore fonts, and "&" / "?" in older
+Finale-style fonts (Inkpen2, Broadway Copyist, Maestro…). The first staff's
+clef (topmost clef glyph near the left edge) of a part's first page gives
+a `# check` note when:
+
+- a `Part N in C` has no clef in its name: "(the first staff is in bass clef)";
+- the reading groups read the name in the other clef (group labels say
+  "treble clef" / "bass clef"): Euphonium in Soundstorm and Going Quackers,
+  where the owner had named the parts Euphonium TC by hand.
+
+Notes only; names are never changed. Things That Go Bump's Opus font is
+re-encoded, so it gets no hints; scans get none.
+
 ## Decisions (owner, 2026-10-01)
 
 1. Scans: offer both. Local OCR is the default; AI is optional.
@@ -228,6 +243,15 @@ What it took, beyond the sketch:
    environment, or a key saved in `~/.config/bandbook/gui.yaml` from a
    settings dialog. Never stored in the project.
 4. Title: yes, detect it (stage 1).
+
+## Open (owner, 2026-10-02)
+
+- **Percussion part names** from scans ("Percussion 1/2", "Bells",
+  "Keyboard Percussion", "Snare Drum", "Tambourine"): they all belong in
+  auxiliary percussion, but how to handle them in the alias/reading-group
+  system is undecided. Don't add aliases for them until the owner decides.
+- **Stage 3 (AI reader)** is on hold while the owner looks into
+  feasibility (API account, cost, publisher permissions).
 
 ## Still to settle when building
 
