@@ -143,6 +143,17 @@ class BuildListTests(unittest.TestCase):
 
 
 class BusyTests(unittest.TestCase):
+    def test_activity_indicator(self):
+        widget = EditorWidget([], status_bar=QStatusBar())
+        self.assertTrue(widget.activity_bar.isHidden())
+        widget._busy("Pushing to GitHub…")
+        self.assertFalse(widget.activity_bar.isHidden())
+        self.assertEqual(widget.activity_label.text(), "Pushing to GitHub…")
+        widget._git_thread = None
+        widget._on_git_done(True, "Imported and pushed 'X'.")
+        self.assertTrue(widget.activity_bar.isHidden())
+        self.assertEqual(widget.activity_label.text(), "✓ Imported and pushed 'X'.")
+
     def test_reports_a_running_push(self):
         widget = EditorWidget([], status_bar=QStatusBar())
         self.assertIsNone(widget.is_busy())

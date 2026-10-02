@@ -197,8 +197,9 @@ What happens:
    If the project folder isn't on the `main` branch, BandBook says which
    branch the piece will go to and asks before importing.
    Pushing uploads the PDF and can take a while: it runs in the
-   background with progress in the status bar, and **Import…** is greyed
-   out until it finishes. If you try to close BandBook meanwhile, it asks
+   background, with a moving bar and a note of what's happening at the top
+   right ("Importing…", "Pushing … to GitHub"), and **Import…** is greyed
+   out until it finishes. A green ✓ message says when it's done. If you try to close BandBook meanwhile, it asks
    you to wait.
 
 ### Re-importing a piece

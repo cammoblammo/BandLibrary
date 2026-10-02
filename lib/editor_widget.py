@@ -12,12 +12,12 @@ import sys
 from pathlib import Path
 
 import pymupdf
-from PyQt6.QtCore import Qt, QProcess, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QProcess, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap, QFont, QTextCursor, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QSplitter, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QTextEdit, QFileDialog, QMessageBox,
-    QScrollArea, QFrame, QStatusBar, QCheckBox, QToolBar, QMainWindow,
+    QScrollArea, QFrame, QStatusBar, QCheckBox, QToolBar, QMainWindow, QProgressBar,
 )
 
 import yaml
@@ -585,6 +585,22 @@ class EditorWidget(QWidget):
         top_layout.addWidget(self.detect_btn)
         top_layout.addStretch()
 
+        # What is running in the background (importing, pushing, detecting),
+        # shown where it can be seen rather than only in the status bar
+        self.activity_label = QLabel()
+        self.activity_label.setObjectName("activityLabel")
+        self.activity_bar = QProgressBar()
+        self.activity_bar.setRange(0, 0)          # moving: no known end
+        self.activity_bar.setFixedWidth(140)
+        self.activity_bar.setFixedHeight(14)
+        self.activity_bar.setTextVisible(False)
+        self.activity_bar.hide()
+        top_layout.addWidget(self.activity_label)
+        top_layout.addWidget(self.activity_bar)
+        self._activity_timer = QTimer(self)
+        self._activity_timer.setSingleShot(True)
+        self._activity_timer.timeout.connect(lambda: self.activity_label.setText(""))
+
         layout.addWidget(top_toolbar)
 
         sep0 = QFrame()
@@ -791,23 +807,26 @@ class EditorWidget(QWidget):
         pdf_path = Path(self.pdf_viewer._doc.name)
         thread = DetectThread(pdf_path, aliases, groups)
         thread.progress.connect(
-            lambda page, total, stage: self._status.showMessage(
-                f"Detecting parts… reading page {page} of {total}" if stage == "text"
-                else f"Detecting parts… reading scanned page {page} of {total} (OCR)"))
+            lambda page, total, stage: self._busy(
+                f"Detecting parts… page {page} of {total}" if stage == "text"
+                else f"Detecting parts… scanned page {page} of {total} (OCR)"))
         thread.done.connect(self._on_detect_done)
         thread.failed.connect(self._on_detect_failed)
         self._detect_thread = thread
         self.detect_btn.setEnabled(False)
-        self._status.showMessage("Detecting parts…")
+        self._busy("Detecting parts…")
         thread.start()
 
     def _on_detect_failed(self, message: str):
         self.detect_btn.setEnabled(True)
+        self._idle("Part detection failed", ok=False)
         self._status.showMessage("Part detection failed.", 5000)
         QMessageBox.critical(self, "Detect Parts", f"Part detection failed:\n{message}")
 
     def _on_detect_done(self, draft):
         self.detect_btn.setEnabled(True)
+        self._idle(f"✓ Detected {len(draft.parts)} part{'s' if len(draft.parts) != 1 else ''}"
+                   if draft.parts else "No parts detected", ok=bool(draft.parts))
         if not draft.parts:
             if draft.ocr_unavailable:
                 reason = ("This PDF looks like a scan, and scanned pages can't be "
@@ -855,6 +874,22 @@ class EditorWidget(QWidget):
         )
         return r == QMessageBox.StandardButton.Yes
 
+    def _busy(self, text: str):
+        """Show what is running, with a moving bar, next to Detect Parts."""
+        self._activity_timer.stop()
+        self.activity_label.setText(text)
+        self.activity_label.setStyleSheet("color: #f9e2af;")
+        self.activity_bar.show()
+        self._status.showMessage(text)
+
+    def _idle(self, text: str = "", ok: bool = True):
+        """Stop the bar; show a closing message for a few seconds."""
+        self.activity_bar.hide()
+        self.activity_label.setText(text)
+        self.activity_label.setStyleSheet(f"color: {'#a6e3a1' if ok else '#f38ba8'};")
+        if text:
+            self._activity_timer.start(8000)
+
     def run_importer(self):
         if self.pdf_viewer._doc is None:
             QMessageBox.warning(self, "Import", "No PDF loaded.")
@@ -891,7 +926,7 @@ class EditorWidget(QWidget):
                 return
             manual_path = temp_manual
 
-        self._status.showMessage("Running importer…")
+        self._busy("Importing…")
         self.import_btn.setEnabled(False)
 
         # Run asynchronously so the UI stays responsive and large imports
@@ -918,6 +953,7 @@ class EditorWidget(QWidget):
             temp_manual.unlink(missing_ok=True)
         self.import_btn.setEnabled(True)
         self._import_proc = None
+        self._idle("Import failed", ok=False)
         QMessageBox.critical(self, "Import Failed",
             f"Could not start import_piece.py:\n\n{proc.errorString()}")
         self._status.showMessage("Import failed.", 5000)
@@ -940,16 +976,22 @@ class EditorWidget(QWidget):
 
         if exit_code == 0:
             self.editor._modified = False
-            self._status.showMessage(f"Import successful: {stdout or 'done'}", 4000)
+            pushing = self.git_checkbox.isChecked() and not self.test_checkbox.isChecked()
+            if pushing:
+                self._busy("Imported — committing…")
+            else:
+                self._idle("✓ Imported" + (" (test library)" if self.test_checkbox.isChecked() else ""))
+                self._status.showMessage(f"Import successful: {stdout or 'done'}", 4000)
 
             # Show unaliased labels and ungrouped parts, if any
             if "Unaliased labels" in stdout or UNGROUPED_HEADING in stdout:
                 self._show_unaliased_dialog(stdout)
 
             # Git commit and push if requested (skipped in test mode)
-            if self.git_checkbox.isChecked() and not self.test_checkbox.isChecked():
+            if pushing:
                 self._git_commit_push(pdf_file)
         else:
+            self._idle("Import failed", ok=False)
             detail = stderr or stdout or "No output."
             QMessageBox.critical(self, "Import Failed",
                 f"import_piece.py exited with code {exit_code}:\n\n{detail}")
@@ -1021,7 +1063,7 @@ class EditorWidget(QWidget):
         slug = slugify(pdf_file.stem)
         project_root = self._importer_path.parent.parent
         thread = GitThread(project_root, project_root / "library" / slug, slug)
-        thread.progress.connect(lambda msg: self._status.showMessage(msg))
+        thread.progress.connect(self._busy)
         thread.done.connect(self._on_git_done)
         self._git_thread = thread
         self.import_btn.setEnabled(False)
@@ -1030,8 +1072,10 @@ class EditorWidget(QWidget):
     def _on_git_done(self, ok: bool, message: str):
         self.import_btn.setEnabled(True)
         if ok:
+            self._idle(f"✓ {message}")
             self._status.showMessage(message, 6000)
             return
+        self._idle("Imported, but the git push failed", ok=False)
         QMessageBox.critical(self, "Git Error",
             f"Import succeeded but git operation failed:\n\n{message}\n\n"
             f"The piece is in the library — use the CLI to commit and push manually.")
