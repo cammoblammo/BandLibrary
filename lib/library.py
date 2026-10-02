@@ -10,7 +10,7 @@ from pathlib import Path
 import yaml
 from pypdf import PdfReader
 
-from .models import EnsemblePart, Piece, PiecePart
+from .models import TAKES_ALL, TAKES_ONE, EnsemblePart, Piece, PiecePart
 from .reading_groups import default_groups_path, expand_entry, load_reading_groups
 
 
@@ -104,6 +104,17 @@ def load_ensemble(
             if name not in groups:
                 raise LibraryError(f"{where}: unknown reading group {name!r}")
 
+        takes = item.get("takes", TAKES_ONE)
+        if takes not in (TAKES_ONE, TAKES_ALL):
+            raise LibraryError(f"{where}: 'takes' must be '{TAKES_ONE}' or '{TAKES_ALL}'")
+        if takes == TAKES_ALL:
+            if not reads:
+                raise LibraryError(f"{where}: 'takes: all' needs 'reads' (which parts to take)")
+            if prefer_spec or compromise_spec:
+                raise LibraryError(
+                    f"{where}: a 'takes: all' chair gets every part it reads, so it "
+                    f"doesn't use 'prefer' or 'compromise'")
+
         try:
             prefer = _expand(prefer_spec, reads, groups, where)
             compromise = _expand(compromise_spec, reads, groups, where)
@@ -123,6 +134,8 @@ def load_ensemble(
             reads=reads,
             prefer_spec=prefer_spec,
             compromise_spec=compromise_spec,
+            takes=takes,
+            read_groups=tuple(groups[name] for name in reads),
         ))
 
     return ensemble_name, band_name, parts
@@ -216,22 +229,28 @@ def load_piece(library_dir: Path, slug: str) -> Piece:
             end_page=end_page,
         )
 
-    assignments: dict[str, str] = {}
-    for target_id, source_id in assignments_raw.items():
+    # A chair gets one part (a string) or, for a "takes: all" chair such as
+    # Percussion, a list of parts
+    assignments: dict[str, str | tuple[str, ...]] = {}
+    for target_id, value in assignments_raw.items():
         if not isinstance(target_id, str) or not target_id.strip():
             raise LibraryError(
                 f"Invalid assignment key in {piece_yaml}"
             )
-        if not isinstance(source_id, str) or not source_id.strip():
+        sources = [value] if isinstance(value, str) else value
+        if (not isinstance(sources, list) or not sources
+                or not all(isinstance(x, str) and x.strip() for x in sources)):
             raise LibraryError(
-                f"Invalid assignment value for {target_id!r} in {piece_yaml}"
+                f"Invalid assignment value for {target_id!r} in {piece_yaml}: "
+                f"give a part id, or a list of part ids"
             )
-        if source_id not in parts_by_id:
-            raise LibraryError(
-                f"Assignment for {target_id!r} in {piece_yaml} "
-                f"refers to unknown part id {source_id!r}"
-            )
-        assignments[target_id] = source_id
+        for source_id in sources:
+            if source_id not in parts_by_id:
+                raise LibraryError(
+                    f"Assignment for {target_id!r} in {piece_yaml} "
+                    f"refers to unknown part id {source_id!r}"
+                )
+        assignments[target_id] = value if isinstance(value, str) else tuple(value)
 
     return Piece(
         slug=slug,

@@ -106,13 +106,9 @@ parts:
     prefer: [keyboard, mallets]
     compromise: [flute]
 
-  - id: drum_kit
-    label: Drum Kit
+  # Every percussion part in each piece, in PDF order: percussionists move
+  # between instruments. A piece's assignment can list the parts instead.
+  - id: percussion
+    label: Percussion
     reads: [percussion]
-    prefer: [drums]
-    compromise: [auxiliary_percussion]
-
-  - id: auxiliary_percussion
-    label: Auxiliary Percussion
-    reads: [percussion]
-    prefer: [drum_kit]
+    takes: all

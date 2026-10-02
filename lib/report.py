@@ -14,7 +14,7 @@ from pathlib import Path
 
 from .library import list_pieces, load_ensemble, load_piece
 from .matcher import match_part
-from .models import EnsemblePart, MatchResult, Piece
+from .models import EnsemblePart, MatchResult, Piece, assigned_ids
 from .reading_groups import can_read, default_groups_path, is_flex, load_reading_groups
 from .validator import check_readability
 
@@ -180,7 +180,14 @@ def _ensemble_findings(
 
         # Chairs with nothing to fall back on that are missing somewhere
         missing = [s for s, r in grid[ep.id].items() if r.matched_id is None]
-        if missing and not ep.fallback:
+        if missing and ep.takes_all:
+            out.append(Finding(
+                "info", "No parts it reads",
+                f"{ep.label} gets nothing in {len(missing)} piece(s), which have no "
+                f"part in {', '.join(ep.reads)}: {', '.join(missing)}",
+                key,
+            ))
+        elif missing and not ep.fallback:
             out.append(Finding(
                 "warning", "Missing with no fallback",
                 f"{ep.label} has no fallbacks and gets nothing in "
@@ -206,8 +213,7 @@ def _ensemble_findings(
     used: dict[str, set[str]] = defaultdict(set)
     for results in grid.values():
         for slug, r in results.items():
-            if r.matched_id:
-                used[slug].add(r.matched_id)
+            used[slug].update(r.matched_ids)
     unused: dict[str, list[str]] = defaultdict(list)
     for piece in pieces:
         for pid in piece.parts_by_id:
@@ -251,7 +257,9 @@ def _assignment_findings(
             slug=piece.slug, title=piece.title, pdf_path=piece.pdf_path,
             parts_by_id=piece.parts_by_id, assignments={},
         )
-        for chair_id, source_id in piece.assignments.items():
+        for chair_id, value in piece.assignments.items():
+            sources = assigned_ids(value)
+            source_id = ", ".join(sources)
             if chair_id not in all_chairs:
                 out.append(Finding(
                     "warning", "Assignment for unknown chair",
@@ -267,7 +275,7 @@ def _assignment_findings(
                         auto_results.append((e.key, match_part(unassigned, ep)))
 
             if all(
-                r.matched_id == source_id and r.match_reason in ("direct", "fallback")
+                r.matched_ids == sources and r.match_reason in ("direct", "fallback", "all")
                 for _, r in auto_results
             ):
                 out.append(Finding(
@@ -276,7 +284,7 @@ def _assignment_findings(
                     f"automatic rules already choose",
                 ))
             for key, r in auto_results:
-                if r.match_reason == "direct" and source_id != chair_id:
+                if r.match_reason == "direct" and sources != (chair_id,):
                     out.append(Finding(
                         "info", "Assignment overrides a direct match",
                         f"{piece.slug}: '{chair_id}' is assigned '{source_id}' although "
@@ -328,15 +336,15 @@ def _assignment_reading_findings(
             if not ep.reads:
                 continue
             for piece in pieces:
-                source = piece.assignments.get(ep.id)
-                if source is None or can_read(source, ep.reads, groups):
-                    continue
-                if (piece.slug, ep.id, source) in seen:
-                    continue
-                seen.add((piece.slug, ep.id, source))
-                out.append(Finding(
-                    "warning", "Assignment outside what the chair reads",
-                    f"{piece.slug}: {ep.label} is assigned '{source}', which isn't in "
-                    f"the groups it reads ({', '.join(ep.reads)})",
-                ))
+                for source in assigned_ids(piece.assignments.get(ep.id)):
+                    if can_read(source, ep.reads, groups):
+                        continue
+                    if (piece.slug, ep.id, source) in seen:
+                        continue
+                    seen.add((piece.slug, ep.id, source))
+                    out.append(Finding(
+                        "warning", "Assignment outside what the chair reads",
+                        f"{piece.slug}: {ep.label} is assigned '{source}', which isn't in "
+                        f"the groups it reads ({', '.join(ep.reads)})",
+                    ))
     return out

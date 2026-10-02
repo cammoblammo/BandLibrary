@@ -11,9 +11,10 @@ from datetime import datetime
 from .report import EnsembleReport, Finding, Report
 from .utils import display_title
 
-REASONS = ("direct", "fallback", "compromise", "assignment", "missing")
+REASONS = ("direct", "all", "fallback", "compromise", "assignment", "missing")
 REASON_LABELS = {
     "direct": "Direct",
+    "all": "All parts",
     "fallback": "Fallback",
     "compromise": "Compromise",
     "assignment": "Assigned",
@@ -141,6 +142,7 @@ code, .id { font-family: var(--font-mono); font-size: 0.85em; }
 .legend div { display: flex; justify-content: space-between; gap: 8px; }
 .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 .c-direct { background: var(--rule); }
+.c-all { background: var(--muted); }
 .c-fallback { background: var(--fallback-fg); }
 .c-compromise { background: var(--compromise-fg); }
 .c-assignment { background: var(--accent); }
@@ -175,6 +177,7 @@ table.grid thead th.corner { left: 0; z-index: 3; position: sticky; border-right
 table.grid tbody th .fb { display: block; font-weight: 400; color: var(--muted); font-family: var(--font-mono); font-size: 0.7rem; white-space: normal; max-width: 220px; }
 td.cell { font-family: var(--font-mono); }
 td.direct { color: var(--muted); text-align: center; }
+td.all { color: var(--muted); }
 td.fallback { background: var(--fallback-bg); color: var(--fallback-fg); }
 td.compromise { background: var(--compromise-bg); color: var(--compromise-fg); font-style: italic; }
 td.assignment { background: var(--assigned-bg); color: var(--assigned-fg); }
@@ -296,6 +299,8 @@ def _render_grid(e: EnsembleReport, report: Report) -> str:
             fb += f'<span class="fb">→ {_e(", ".join(ep.prefer_spec))}</span>'
         if ep.compromise_spec:
             fb += f'<span class="fb">≈ {_e(", ".join(ep.compromise_spec))}</span>'
+        if ep.takes_all:
+            fb += '<span class="fb">takes every part it reads</span>'
 
         cells = []
         for p in report.pieces:
@@ -306,10 +311,10 @@ def _render_grid(e: EnsembleReport, report: Report) -> str:
             elif reason == "missing":
                 text = "—"
             else:
-                text = _e(r.matched_id)
+                text = _e(", ".join(r.matched_ids))
             label = f"{ep.label} in {p.title}: {REASON_LABELS[reason]}"
-            if reason in ("fallback", "compromise", "assignment"):
-                label += f" ({r.matched_id})"
+            if reason in ("fallback", "compromise", "assignment", "all"):
+                label += f" ({', '.join(r.matched_ids)})"
             cells.append(f'<td class="cell {reason}" title="{_e(label)}">{text}</td>')
         rows.append(f'<tr><th scope="row">{_e(ep.label)}{fb}</th>{"".join(cells)}</tr>')
     rows.append("</tbody>")

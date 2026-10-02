@@ -116,18 +116,17 @@ def expand_entry(
     return ids
 
 
+def in_group(part_id: str, group: ReadingGroup) -> bool:
+    """True if part_id belongs to the group, or is one of its flex parts."""
+    if any(fnmatchcase(part_id, pattern) for pattern in group.patterns):
+        return True
+    return any(re.fullmatch(re.escape(template).replace(r"\{n\}", r"\d+"), part_id)
+               for template in group.flex)
+
+
 def can_read(part_id: str, reads: list[str], groups: dict[str, ReadingGroup]) -> bool:
     """True if part_id belongs to (or is a flex part of) any group in reads."""
-    for name in reads:
-        group = groups.get(name)
-        if group is None:
-            continue
-        if any(fnmatchcase(part_id, pattern) for pattern in group.patterns):
-            return True
-        for template in group.flex:
-            if re.fullmatch(re.escape(template).replace(r"\{n\}", r"\d+"), part_id):
-                return True
-    return False
+    return any(name in groups and in_group(part_id, groups[name]) for name in reads)
 
 
 UNGROUPED_HEADING = "Parts outside every reading group (no chair will get these automatically):"

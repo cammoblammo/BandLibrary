@@ -45,16 +45,39 @@ Lists are not followed as chains: `prefer: [trumpet_2]` means a piece's
 Trumpet 2 part, not whatever the Trumpet 2 chair would get. List every
 substitute you want, in order.
 
+### A chair that gets every part: Percussion
+
+```yaml
+  - id: percussion
+    label: Percussion
+    reads: [percussion]
+    takes: all
+```
+
+`takes: all` gives the chair **every** part of each piece that is in the
+groups it reads, in the order they appear in the PDF. Both bands have one
+Percussion chair like this: percussionists move between instruments, so
+their booklet holds the kit, auxiliary, mallets and any other percussion
+parts. Print a copy for each player.
+
+A `takes: all` chair doesn't use `prefer` or `compromise`. To give it
+something different in one piece, use the review screen (**Assignments…**),
+which lets you tick the parts it should get.
+
+Which parts count as percussion is the `percussion` reading group in
+`config/reading_groups.yaml`. If a piece's percussion part isn't picked up
+(for example a new name such as `Spoons`), add the name there.
+
 ### Reading groups
 
 | Group | Covers |
 |-------|--------|
 | `bb_treble` | B♭ treble clef: clarinets, trumpets, tenor sax, bass clarinet, TC euphonium/baritone/trombone |
 | `eb_treble` | E♭ treble clef: alto and baritone sax, alto clarinet, tenor horn |
-| `c_treble` | C treble clef: flute, oboe, mallets, violin, guitar, piano |
+| `c_treble` | C treble clef: flute, oboe, mallets, violin, guitar, piano. Mallets can double for these chairs through their `prefer` / `compromise` lists |
 | `c_bass` | C bass clef: trombone, baritone, euphonium, tuba, bassoon, cello, bass guitar, piano |
 | `f_treble` | F: French horn |
-| `percussion` | Drum kit and percussion |
+| `percussion` | Every percussion part: drum kit, snare and bass drum, timpani, auxiliary, mallets, bells, glockenspiel, chimes, `Percussion 1`… |
 
 A chair can read more than one group: piano reads `c_treble` and `c_bass`.
 

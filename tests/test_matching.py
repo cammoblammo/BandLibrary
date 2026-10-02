@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from collections import Counter
 from pathlib import Path
 
 from tests.helpers import GROUPS_PATH, TempDir
@@ -147,6 +148,88 @@ class MatchingOrderTests(unittest.TestCase):
         lines, notes = build_report("Test", [self.chair], [piece], plan)
         self.assertIn("  piece -> alto_sax_1 (compromise)", lines)
         self.assertTrue(any("compromise" in n for n in notes))
+
+
+class TakesAllTests(unittest.TestCase):
+    """A "takes: all" chair (Percussion) gets every part it reads."""
+
+    def setUp(self):
+        self.tmp = TempDir()
+        path = self.tmp.ensemble(
+            "  - {id: percussion, label: Percussion, reads: [percussion], takes: all}\n"
+            "  - {id: flute, label: Flute, reads: [c_treble], prefer: [mallets]}\n"
+        )
+        _, _, parts = load_ensemble(path)
+        self.percussion, self.flute = parts
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_every_percussion_part_in_pdf_order(self):
+        piece = make_piece("flute", "percussion_2", "mallets", "snare_drum", "percussion_1")
+        result = match_part(piece, self.percussion)
+        self.assertEqual(result.match_reason, "all")
+        self.assertEqual(result.matched_ids,
+                         ("percussion_2", "mallets", "snare_drum", "percussion_1"))
+        self.assertEqual(result.matched_id, "percussion_2")
+
+    def test_mallets_still_double_for_another_chair(self):
+        piece = make_piece("mallets", "drum_kit")
+        self.assertEqual(match_part(piece, self.flute).matched_ids, ("mallets",))
+        self.assertEqual(match_part(piece, self.percussion).matched_ids, ("mallets", "drum_kit"))
+
+    def test_list_assignment_overrides(self):
+        piece = make_piece("percussion_1", "percussion_2", "bells",
+                           assignments={"percussion": ("bells", "percussion_2")})
+        result = match_part(piece, self.percussion)
+        self.assertEqual((result.match_reason, result.matched_ids),
+                         ("assignment", ("bells", "percussion_2")))
+
+    def test_single_assignment_still_works(self):
+        piece = make_piece("percussion_1", "percussion_2",
+                           assignments={"percussion": "percussion_2"})
+        self.assertEqual(match_part(piece, self.percussion).matched_ids, ("percussion_2",))
+
+    def test_nothing_to_take(self):
+        result = match_part(make_piece("flute", "tuba"), self.percussion)
+        self.assertEqual((result.match_reason, result.matched_ids, result.matched_id),
+                         (None, (), None))
+
+    def test_report_lists_every_part(self):
+        piece = make_piece("drum_kit", "tambourine")
+        plan = {"percussion": [match_part(piece, self.percussion)]}
+        lines, notes = build_report("Test", [self.percussion], [piece], plan)
+        self.assertIn("  piece -> drum_kit, tambourine", lines)
+        self.assertEqual(notes, [])
+
+    def test_consistency_report_explains_a_piece_without_percussion(self):
+        from lib.report import _ensemble_findings
+        piece = make_piece("flute")
+        grid = {"percussion": {"piece": match_part(piece, self.percussion)}}
+        findings = _ensemble_findings("t", [self.percussion], [piece], grid, Counter())
+        self.assertEqual([f.category for f in findings], ["No parts it reads"])
+
+    def test_loading_errors(self):
+        cases = {
+            "unknown takes": "  - {id: p, label: P, reads: [percussion], takes: some}\n",
+            "all without reads": "  - {id: p, label: P, takes: all}\n",
+            "all with prefer": "  - {id: p, label: P, reads: [percussion], takes: all, "
+                               "prefer: [drum_kit]}\n",
+        }
+        for name, body in cases.items():
+            with self.subTest(name):
+                path = self.tmp.ensemble(body, name=name.replace(" ", "_"))
+                with self.assertRaises(LibraryError):
+                    load_ensemble(path)
+
+    def test_percussion_group_covers_printed_names(self):
+        for part_id in ("percussion", "percussion_1", "drum_set", "snare_drum", "bass_drum",
+                        "timpani", "suspended_cymbal", "glockenspiel", "keyboard_percussion",
+                        "auxiliary_percussion"):
+            with self.subTest(part_id):
+                self.assertTrue(self.percussion.reads_part(part_id))
+        for part_id in ("flute", "tuba", "bass_guitar"):
+            self.assertFalse(self.percussion.reads_part(part_id), part_id)
 
 
 if __name__ == "__main__":

@@ -22,7 +22,7 @@ from PyQt6.QtWidgets import (
 from .editor_widget import PdfViewer
 from .library import load_ensemble, load_piece
 from .matcher import match_part
-from .models import EnsemblePart, MatchResult, Piece
+from .models import EnsemblePart, MatchResult, Piece, assigned_ids
 from .reading_groups import (
     ReadingGroup, can_read, default_groups_path, expand_entry, load_reading_groups,
 )
@@ -32,6 +32,7 @@ from .utils import display_title
 # Badge text and colours (matching the app's dark palette)
 REASONS = {
     "direct":     ("Direct",     "#a6adc8", "#313244"),
+    "all":        ("All parts",  "#a6adc8", "#313244"),
     "fallback":   ("Fallback",   "#f9e2af", "#3a3a35"),
     "compromise": ("Compromise", "#1e1e2e", "#fab387"),
     "assignment": ("Assigned",   "#1e1e2e", "#89b4fa"),
@@ -43,9 +44,14 @@ ATTENTION = {"compromise", "assignment", "missing"}
 @dataclass
 class RowState:
     reason: str            # key of REASONS
-    part_id: str | None    # the part the chair will read
+    part_id: str | None    # the (first) part the chair will read
     note: str              # explanation shown beside the badge
     save: bool             # whether the selection is stored as an assignment
+    part_ids: tuple[str, ...] = ()   # every part, for a "takes: all" chair
+
+    def __post_init__(self):
+        if not self.part_ids and self.part_id is not None:
+            self.part_ids = (self.part_id,)
 
 
 def _matching_spec(
@@ -113,6 +119,106 @@ def describe_selection(
     return RowState("assignment", selected, note, save=True)
 
 
+def describe_all_selection(
+    ep: EnsemblePart,
+    auto: MatchResult,
+    selected: tuple[str, ...] | None,
+    piece: Piece,
+    groups: dict[str, ReadingGroup],
+) -> RowState:
+    """
+    What a "takes: all" chair (e.g. Percussion) gets for a selection of
+    parts, and why. None means automatic: every part the chair reads.
+    """
+    def names(ids) -> str:
+        return ", ".join(piece.parts_by_id[i].label if i in piece.parts_by_id else i
+                         for i in ids)
+
+    if selected is None:
+        if auto.matched_ids:
+            return RowState("all", auto.matched_id, f"Every part it reads: {names(auto.matched_ids)}",
+                            save=False, part_ids=auto.matched_ids)
+        return RowState("missing", None, "Nothing in this piece is in what this chair reads",
+                        save=False)
+
+    if selected == auto.matched_ids:
+        return RowState("all", selected[0], "Same as automatic — no assignment needed",
+                        save=False, part_ids=selected)
+
+    note = (f"Automatic would be {names(auto.matched_ids)}" if auto.matched_ids
+            else "Automatic would be nothing")
+    outside = [i for i in selected if not ep.reads_part(i)]
+    if outside:
+        note += f" — ⚠ not in what this chair reads: {names(outside)}"
+    return RowState("assignment", selected[0], note, save=True, part_ids=selected)
+
+
+# ---------------------------------------------------------------------------
+# Choosing several parts (a "takes: all" chair)
+# ---------------------------------------------------------------------------
+
+class PartChooser(QDialog):
+    """Tick the parts a "takes: all" chair gets in this piece."""
+
+    def __init__(self, piece: Piece, ep: EnsemblePart, current: tuple[str, ...],
+                 parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(f"{ep.label} — {display_title(piece.title)}")
+        self.setMinimumWidth(420)
+        self._automatic = False
+        self._boxes: dict[str, QCheckBox] = {}
+
+        layout = QVBoxLayout(self)
+        layout.setSpacing(6)
+        layout.addWidget(QLabel(
+            f"Which parts should {ep.label} get in this piece?\n"
+            "They go in the booklet in PDF order."))
+
+        ordered = sorted(piece.parts_by_id.values(), key=lambda p: (p.start_page, p.end_page))
+        for heading, parts in (
+            (f"Parts {ep.label} reads", [p for p in ordered if ep.reads_part(p.id)]),
+            ("Other parts in this piece", [p for p in ordered if not ep.reads_part(p.id)]),
+        ):
+            if not parts:
+                continue
+            layout.addSpacing(6)
+            layout.addWidget(QLabel(f"<b>{heading}</b>"))
+            for p in parts:
+                pages = (f"p. {p.start_page}" if p.start_page == p.end_page
+                         else f"pp. {p.start_page}–{p.end_page}")
+                box = QCheckBox(f"{p.label}  [{p.id}]  ({pages})")
+                box.setChecked(p.id in current)
+                layout.addWidget(box)
+                self._boxes[p.id] = box
+
+        layout.addSpacing(8)
+        buttons = QHBoxLayout()
+        auto_btn = QPushButton("Automatic")
+        auto_btn.setToolTip(f"Every part {ep.label} reads (no assignment)")
+        ok_btn = QPushButton("OK")
+        ok_btn.setObjectName("importBtn")
+        cancel_btn = QPushButton("Cancel")
+        buttons.addWidget(auto_btn)
+        buttons.addStretch()
+        buttons.addWidget(cancel_btn)
+        buttons.addWidget(ok_btn)
+        layout.addLayout(buttons)
+
+        auto_btn.clicked.connect(self._choose_automatic)
+        ok_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
+
+    def _choose_automatic(self):
+        self._automatic = True
+        self.accept()
+
+    def selection(self) -> tuple[str, ...] | None:
+        """The ticked parts in PDF order, or None for automatic."""
+        if self._automatic:
+            return None
+        return tuple(pid for pid, box in self._boxes.items() if box.isChecked())
+
+
 # ---------------------------------------------------------------------------
 # Part preview
 # ---------------------------------------------------------------------------
@@ -120,16 +226,21 @@ def describe_selection(
 class PartPreview(QDialog):
     """A separate window showing just the pages of one part."""
 
-    def __init__(self, piece: Piece, part_id: str, chair_label: str, parent=None):
+    def __init__(self, piece: Piece, part_ids: str | tuple[str, ...], chair_label: str,
+                 parent=None):
         super().__init__(parent)
-        part = piece.parts_by_id[part_id]
-        pages = (
-            f"p. {part.start_page}" if part.start_page == part.end_page
-            else f"pp. {part.start_page}–{part.end_page}"
-        )
-        self.setWindowTitle(
-            f"{chair_label} — {part.label} ({pages}) — {display_title(piece.title)}"
-        )
+        part_ids = (part_ids,) if isinstance(part_ids, str) else tuple(part_ids)
+        parts = [piece.parts_by_id[pid] for pid in part_ids]
+        if len(parts) == 1:
+            part = parts[0]
+            pages = (
+                f"p. {part.start_page}" if part.start_page == part.end_page
+                else f"pp. {part.start_page}–{part.end_page}"
+            )
+            what = f"{part.label} ({pages})"
+        else:
+            what = ", ".join(p.label for p in parts)
+        self.setWindowTitle(f"{chair_label} — {what} — {display_title(piece.title)}")
         self.resize(760, 980)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
@@ -138,11 +249,13 @@ class PartPreview(QDialog):
         self.viewer = PdfViewer()
         layout.addWidget(self.viewer)
 
-        # Copy only this part's pages into an in-memory document
+        # Copy only these parts' pages, in order, into an in-memory document
         source = pymupdf.open(str(piece.pdf_path))
         try:
             doc = pymupdf.open()
-            doc.insert_pdf(source, from_page=part.start_page - 1, to_page=part.end_page - 1)
+            for part in parts:
+                doc.insert_pdf(source, from_page=part.start_page - 1,
+                               to_page=part.end_page - 1)
         finally:
             source.close()
         self._doc = doc
@@ -241,6 +354,9 @@ class AssignmentEditor(QDialog):
         self._grid.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self._combos: dict[str, QComboBox] = {}
+        # "takes: all" chairs: chosen parts (None = automatic) and their buttons
+        self._selections: dict[str, tuple[str, ...] | None] = {}
+        self._choosers: dict[str, QPushButton] = {}
         self._badges: dict[str, QLabel] = {}
         self._notes: dict[str, QLabel] = {}
         self._row_widgets: dict[str, list[QWidget]] = {}
@@ -252,22 +368,33 @@ class AssignmentEditor(QDialog):
             chair.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             chair.setToolTip(self._chair_tooltip(ep))
 
-            combo = QComboBox()
-            combo.setMinimumHeight(28)
-            auto = self._auto[ep.id]
-            auto_text = (
-                f"Automatic — {self._part_display(auto.matched_id)}"
-                if auto.matched_id else "Automatic — nothing"
-            )
-            combo.addItem(auto_text, userData=None)
-            for p in piece.parts_by_id.values():
-                combo.addItem(f"{p.label}  [{p.id}]", userData=p.id)
+            if ep.takes_all:
+                # Several parts: a button opening a list of tick boxes
+                current = piece.assignments.get(ep.id)
+                self._selections[ep.id] = assigned_ids(current) if current else None
+                combo = QPushButton()
+                combo.setMinimumHeight(28)
+                combo.setStyleSheet("text-align: left; padding-left: 8px;")
+                combo.setToolTip(f"Choose which parts {ep.label} gets in this piece")
+                combo.clicked.connect(lambda _, e=ep: self._choose_parts(e))
+                self._choosers[ep.id] = combo
+            else:
+                combo = QComboBox()
+                combo.setMinimumHeight(28)
+                auto = self._auto[ep.id]
+                auto_text = (
+                    f"Automatic — {self._part_display(auto.matched_id)}"
+                    if auto.matched_id else "Automatic — nothing"
+                )
+                combo.addItem(auto_text, userData=None)
+                for p in piece.parts_by_id.values():
+                    combo.addItem(f"{p.label}  [{p.id}]", userData=p.id)
 
-            current = piece.assignments.get(ep.id)
-            if current:
-                index = combo.findData(current)
-                if index >= 0:
-                    combo.setCurrentIndex(index)
+                current = piece.assignments.get(ep.id)
+                if current:
+                    index = combo.findData(current)
+                    if index >= 0:
+                        combo.setCurrentIndex(index)
 
             view_btn = QPushButton("View")
             view_btn.setFixedHeight(26)
@@ -287,13 +414,15 @@ class AssignmentEditor(QDialog):
             self._grid.addWidget(badge, row, 3)
             self._grid.addWidget(note, row, 4)
 
-            self._combos[ep.id] = combo
+            if not ep.takes_all:
+                self._combos[ep.id] = combo
             self._badges[ep.id] = badge
             self._notes[ep.id] = note
             self._view_buttons[ep.id] = view_btn
             self._row_widgets[ep.id] = [chair, combo, view_btn, badge, note]
 
-            combo.currentIndexChanged.connect(self._refresh)
+            if not ep.takes_all:
+                combo.currentIndexChanged.connect(self._refresh)
 
         scroll.setWidget(scroll_content)
         layout.addWidget(scroll, stretch=1)
@@ -366,8 +495,27 @@ class AssignmentEditor(QDialog):
         return "\n".join(lines)
 
     def _state(self, ep: EnsemblePart) -> RowState:
+        if ep.takes_all:
+            return describe_all_selection(ep, self._auto[ep.id], self._selections[ep.id],
+                                          self._piece, self._groups)
         selected = self._combos[ep.id].currentData()
         return describe_selection(ep, self._auto[ep.id], selected, self._piece, self._groups)
+
+    def _choose_parts(self, ep: EnsemblePart):
+        state = self._state(ep)
+        chooser = PartChooser(self._piece, ep, state.part_ids, parent=self)
+        if chooser.exec() == QDialog.DialogCode.Accepted:
+            self._selections[ep.id] = chooser.selection()
+            self._refresh()
+
+    def _chooser_text(self, ep: EnsemblePart, state: RowState) -> str:
+        if self._selections[ep.id] is None:
+            n = len(state.part_ids)
+            return (f"Automatic — all {n} part{'s' if n != 1 else ''}" if n
+                    else "Automatic — nothing")
+        if not state.part_ids:
+            return "Nothing"
+        return ", ".join(self._part_display(i) for i in state.part_ids)
 
     def _refresh(self, *_):
         counts: Counter = Counter()
@@ -385,14 +533,16 @@ class AssignmentEditor(QDialog):
                 f"padding: 3px 6px; font-weight: bold;"
             )
             self._notes[ep.id].setText(state.note)
-            self._view_buttons[ep.id].setEnabled(state.part_id is not None)
+            self._view_buttons[ep.id].setEnabled(bool(state.part_ids))
+            if ep.takes_all:
+                self._choosers[ep.id].setText(self._chooser_text(ep, state))
 
             visible = not attention_only or state.reason in ATTENTION
             for widget in self._row_widgets[ep.id]:
                 widget.setVisible(visible)
 
         parts = []
-        for key in ("direct", "fallback", "compromise", "assignment", "missing"):
+        for key in ("direct", "all", "fallback", "compromise", "assignment", "missing"):
             if counts[key]:
                 text, fg, bg = REASONS[key]
                 colour = bg if key in ATTENTION else fg
@@ -401,10 +551,10 @@ class AssignmentEditor(QDialog):
 
     def _preview(self, ep: EnsemblePart):
         state = self._state(ep)
-        if state.part_id is None:
+        if not state.part_ids:
             return
         try:
-            preview = PartPreview(self._piece, state.part_id, ep.label, parent=self)
+            preview = PartPreview(self._piece, state.part_ids, ep.label, parent=self)
         except Exception as e:
             QMessageBox.critical(self, "Preview", f"Could not open the part:\n{e}")
             return
@@ -413,13 +563,23 @@ class AssignmentEditor(QDialog):
     def _clear_all(self):
         for combo in self._combos.values():
             combo.setCurrentIndex(0)
+        for chair_id in self._selections:
+            self._selections[chair_id] = None
+        self._refresh()
 
-    def assignments(self) -> dict[str, str]:
-        """The assignments to store for this ensemble's chairs."""
-        result = {}
+    def assignments(self) -> dict[str, str | list[str]]:
+        """
+        The assignments to store for this ensemble's chairs: a part id, or a
+        list of part ids for a "takes: all" chair (an empty list: nothing).
+        """
+        result: dict[str, str | list[str]] = {}
         for ep in self._ensemble_parts:
             state = self._state(ep)
-            if state.save and state.part_id is not None:
+            if not state.save:
+                continue
+            if ep.takes_all:
+                result[ep.id] = list(state.part_ids)
+            elif state.part_id is not None:
                 result[ep.id] = state.part_id
         return result
 
@@ -432,8 +592,9 @@ class AssignmentEditor(QDialog):
 
             # Keep assignments for chairs not shown here (e.g. other ensembles)
             existing = data.get("assignments") or {}
+            shown = {ep.id for ep in self._ensemble_parts}
             for ep_id, value in existing.items():
-                if ep_id not in self._combos:
+                if ep_id not in shown:
                     assignments[ep_id] = value
 
             if assignments:

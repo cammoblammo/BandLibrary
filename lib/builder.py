@@ -14,8 +14,8 @@ from pypdf import PdfReader, PdfWriter
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.lib import colors
 
 from .models import EnsemblePart, MatchResult, Piece
@@ -34,17 +34,19 @@ def generate_cover_page(
     band_name: str,
     part_label: str,
     edition: str,
-    piece_titles: list[tuple[str, bool]],
+    piece_titles: list[tuple[str, int | None]],
 ) -> PdfWriter:
     """
-    Generate a single A4 cover page as a PdfWriter.
+    Generate the A4 cover as a PdfWriter: one page, or more if the contents
+    list is long.
 
     Layout (top to bottom):
       - Band name (large)
       - Part/instrument name (very large, prominent)
       - Edition name
-      - Contents list (piece titles in order); pieces this part has no
-        music for are shown in brackets, greyed
+      - Contents list: piece titles in order, each with the booklet page it
+        starts on (counting the cover as page 1); pieces this part has no
+        music for (page None) are shown in brackets, greyed
     """
     buffer = io.BytesIO()
 
@@ -138,26 +140,44 @@ def generate_cover_page(
         spaceBefore=4 * mm,
     )
 
+    style_contents_page = ParagraphStyle(
+        "contents_page", parent=style_contents_item, alignment=TA_RIGHT, leftIndent=0,
+    )
+
     if piece_titles:
         story.append(Paragraph("Contents", style_contents_header))
-        for i, (title, has_part) in enumerate(piece_titles, start=1):
-            if has_part:
-                story.append(Paragraph(f"{i}.&nbsp;&nbsp;{escape(title)}", style_contents_item))
+        rows = []
+        for i, (title, page) in enumerate(piece_titles, start=1):
+            if page is not None:
+                rows.append([Paragraph(f"{i}.&nbsp;&nbsp;{escape(title)}", style_contents_item),
+                             Paragraph(f"p.&nbsp;{page}", style_contents_page)])
             else:
-                story.append(Paragraph(
-                    f"{i}.&nbsp;&nbsp;({escape(title)})", style_contents_missing
-                ))
-        if not all(has_part for _, has_part in piece_titles):
+                rows.append([Paragraph(f"{i}.&nbsp;&nbsp;({escape(title)})",
+                                       style_contents_missing), ""])
+        table = Table(rows, colWidths=[None, 22 * mm])
+        table.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+        ]))
+        story.append(table)
+        if any(page is None for _, page in piece_titles):
             story.append(Paragraph(
                 "Pieces in brackets have no part for this instrument.", style_contents_note
             ))
+        story.append(Paragraph(
+            "Page numbers count this cover as page 1.", style_contents_note
+        ))
 
     doc.build(story)
 
     buffer.seek(0)
     reader = PdfReader(buffer)
     writer = PdfWriter()
-    writer.add_page(reader.pages[0])
+    for page in reader.pages:
+        writer.add_page(page)
     return writer
 
 
@@ -202,26 +222,40 @@ def generate_booklets(
 
     for ep in ensemble_parts:
         writer = PdfWriter()
-        # Every piece in build order, so numbering matches across booklets
-        piece_titles: list[tuple[str, bool]] = []
+        # Every piece in build order, so numbering matches across booklets,
+        # with where it starts among the music pages (None: no part)
+        pieces_in_booklet: list[tuple[str, int | None]] = []
 
         for result in grouped_matches[ep.id]:
             piece = pieces_by_slug[result.piece_slug]
             title = display_title(piece.title)
-            if result.matched_id is None:
-                piece_titles.append((title, False))
+            if not result.matched_ids:
+                pieces_in_booklet.append((title, None))
                 continue
-            append_part_pages(writer, piece, result.matched_id)
-            piece_titles.append((title, True))
+            start = len(writer.pages)
+            # Several parts for a "takes: all" chair (e.g. Percussion)
+            for part_id in result.matched_ids:
+                append_part_pages(writer, piece, part_id)
+            pieces_in_booklet.append((title, start))
 
-        if any(has_part for _, has_part in piece_titles):
-            # Prepend cover sheet
-            cover_writer = generate_cover_page(
-                band_name=band_name,
-                part_label=ep.label,
-                edition=edition,
-                piece_titles=piece_titles,
-            )
+        if any(start is not None for _, start in pieces_in_booklet):
+            # Prepend the cover. Page numbers depend on how many pages the
+            # cover itself takes, so build it again if the contents spill over.
+            cover_pages = 1
+            for _ in range(3):      # settles at once in practice
+                piece_titles = [
+                    (title, None if start is None else cover_pages + start + 1)
+                    for title, start in pieces_in_booklet
+                ]
+                cover_writer = generate_cover_page(
+                    band_name=band_name,
+                    part_label=ep.label,
+                    edition=edition,
+                    piece_titles=piece_titles,
+                )
+                if len(cover_writer.pages) == cover_pages:
+                    break
+                cover_pages = len(cover_writer.pages)
             final_writer = PdfWriter()
             for page in cover_writer.pages:
                 final_writer.add_page(page)

@@ -15,9 +15,10 @@ from tests.helpers import TESTDATA, TempDir
 
 from lib.builder import generate_booklets
 from lib.importer import import_piece, regenerate_yaml
-from lib.library import load_ensemble, load_piece
+from lib.library import LibraryError, load_ensemble, load_piece
 from lib.manual import parse_manual_file
 from lib.matcher import build_match_plan
+from lib.models import Piece, PiecePart
 from lib.parts import add_part
 from lib.utils import display_title, slugify
 
@@ -105,6 +106,32 @@ class ImportTests(unittest.TestCase):
         self.assertEqual(
             yaml.safe_load(yaml_path.read_text())["assignments"], {"tenor_horn": "alto_sax_1"}
         )
+
+    def test_reimport_keeps_surviving_parts_of_a_list_assignment(self):
+        quiet(import_piece, self.pdf, self.manual, self.library, False, {})
+        yaml_path = self.library / "cast-in-blues" / "cast-in-blues.yaml"
+        data = yaml.safe_load(yaml_path.read_text())
+        data["assignments"] = {"percussion": ["drum_kit", "gone"], "horn": ["gone"]}
+        yaml_path.write_text(yaml.safe_dump(data, sort_keys=False))
+
+        quiet(import_piece, self.pdf, self.manual, self.library, True, {})
+        self.assertEqual(
+            yaml.safe_load(yaml_path.read_text())["assignments"], {"percussion": ["drum_kit"]}
+        )
+
+    def test_list_assignments_load_and_are_checked(self):
+        quiet(import_piece, self.pdf, self.manual, self.library, False, {})
+        yaml_path = self.library / "cast-in-blues" / "cast-in-blues.yaml"
+        data = yaml.safe_load(yaml_path.read_text())
+        data["assignments"] = {"percussion": ["drum_kit", "trombone"]}
+        yaml_path.write_text(yaml.safe_dump(data, sort_keys=False))
+        piece = load_piece(self.library, "cast-in-blues")
+        self.assertEqual(piece.assignments["percussion"], ("drum_kit", "trombone"))
+
+        data["assignments"] = {"percussion": ["drum_kit", "no_such_part"]}
+        yaml_path.write_text(yaml.safe_dump(data, sort_keys=False))
+        with self.assertRaisesRegex(LibraryError, "no_such_part"):
+            load_piece(self.library, "cast-in-blues")
 
     def test_regenerate_accepts_empty_assignments(self):
         quiet(import_piece, self.pdf, self.manual, self.library, False, {})
@@ -195,6 +222,63 @@ class BuildTests(unittest.TestCase):
         self.assertIn("2.  No Trumpets Here", horn_cover)
         self.assertNotIn("(No Trumpets Here)", horn_cover)
         self.assertNotIn("have no part", horn_cover)
+
+
+class PercussionBookletTests(unittest.TestCase):
+    """A "takes: all" chair's booklet holds several parts per piece."""
+
+    def setUp(self):
+        self.tmp = TempDir()
+        self.library = self.tmp.copy_piece("castinblues")
+        self.ensemble = self.tmp.ensemble(
+            "  - {id: percussion, label: Percussion, reads: [percussion], takes: all}\n"
+            "  - {id: trumpet_1, label: Trumpet 1, reads: [bb_treble]}\n"
+        )
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_every_part_and_contents_page_numbers(self):
+        _, band, parts = load_ensemble(self.ensemble)
+        piece = load_piece(self.library, "castinblues")
+        drum = piece.parts_by_id["drum_kit"]
+        # Pretend two more percussion parts, borrowing real pages
+        extra = {
+            "percussion_2": PiecePart("percussion_2", "Percussion 2", drum.start_page - 1,
+                                      drum.start_page - 1),
+            "bells": PiecePart("bells", "Bells", drum.start_page - 2, drum.start_page - 2),
+        }
+        first = Piece(slug="first", title="First Piece", pdf_path=piece.pdf_path,
+                      parts_by_id={**piece.parts_by_id, **extra}, assignments={})
+        second = Piece(slug="second", title="Second Piece", pdf_path=piece.pdf_path,
+                       parts_by_id=piece.parts_by_id, assignments={})
+        pieces = [first, second]
+        plan = build_match_plan(parts, pieces)
+        self.assertEqual(plan["percussion"][0].matched_ids, ("bells", "percussion_2", "drum_kit"))
+
+        out = self.tmp.path / "out"
+        quiet(generate_booklets, out, parts, {p.slug: p for p in pieces}, plan, band, "")
+
+        reader = PdfReader(str(out / "percussion.pdf"))
+        # cover + three parts for the first piece + the drum kit for the second
+        self.assertEqual(len(reader.pages), 5)
+        cover = reader.pages[0].extract_text()
+        self.assertIn("First Piece", cover)
+        self.assertIn("p. 2", cover)
+        self.assertIn("p. 5", cover)
+        self.assertIn("count this cover as page 1", cover)
+
+        trumpet = PdfReader(str(out / "trumpet_1.pdf")).pages[0].extract_text()
+        self.assertIn("p. 2", trumpet)
+        self.assertIn("p. 3", trumpet)
+
+    def test_long_contents_keep_every_cover_page(self):
+        from lib.builder import generate_cover_page
+        titles = [(f"Piece number {i}", i + 2) for i in range(60)]
+        cover = generate_cover_page("Band", "Percussion", "", titles)
+        self.assertGreater(len(cover.pages), 1)
+        text = "".join(page.extract_text() for page in cover.pages)
+        self.assertIn("Piece number 59", text)
 
 
 if __name__ == "__main__":

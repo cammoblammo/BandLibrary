@@ -99,6 +99,14 @@ assignments:
 Maps ensemble part IDs to piece part IDs for pieces with non-standard part labels.
 The builder checks assignments before attempting direct matching or fallbacks.
 
+A value is one part ID, or a **list** of part IDs for a `takes: all` chair
+(the Percussion chair), in booklet order:
+
+```yaml
+assignments:
+  percussion: [percussion_2, bells]
+```
+
 ---
 
 ## Ensemble YAML
@@ -143,6 +151,7 @@ parts:
 | `reads` | [string, ...] | Reading groups this chair can play (see below) |
 | `prefer` | [string, ...] | Good substitutes, best first |
 | `compromise` | [string, ...] | Readable but not ideal (e.g. range); used last and flagged |
+| `takes` | `one` or `all` | `one` (default): one part per piece. `all`: every part of the piece in the `reads` groups, in PDF order (the Percussion chair). An `all` chair needs `reads` and has no `prefer` / `compromise` |
 
 Entries in `prefer` and `compromise` are **piece part IDs** (what a piece
 calls its parts), or `flex N`:
@@ -165,11 +174,13 @@ They still load, with `fallback` treated as `prefer`.
 
 For each chair and each piece, the builder takes the first of:
 
-1. the piece's **assignment** for this chair, if any
-2. a **direct** match: a piece part with the same ID as the chair
-3. the first `prefer` entry the piece has (**fallback**)
-4. the first `compromise` entry the piece has (**compromise**, noted in the build report)
-5. nothing (**missing**)
+1. the piece's **assignment** for this chair, if any (one part, or a list)
+2. for a `takes: all` chair: **every** part it reads (**all**), or nothing
+   (**missing**); the steps below don't apply to it
+3. a **direct** match: a piece part with the same ID as the chair
+4. the first `prefer` entry the piece has (**fallback**)
+5. the first `compromise` entry the piece has (**compromise**, noted in the build report)
+6. nothing (**missing**)
 
 ---
 

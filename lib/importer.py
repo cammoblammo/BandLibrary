@@ -181,10 +181,25 @@ def regenerate_yaml(
         raise
 
 
-def _filter_assignments(assignments: dict, part_ids: set[str]) -> dict[str, str]:
-    """Keep assignments whose part still exists; warn about the rest."""
-    kept = {k: v for k, v in assignments.items() if v in part_ids}
-    dropped = sorted(f"{k} ({v})" for k, v in assignments.items() if k not in kept)
+def _filter_assignments(assignments: dict, part_ids: set[str]) -> dict:
+    """
+    Keep assignments whose part still exists; warn about the rest. A list
+    assignment (a "takes: all" chair) keeps the parts that still exist.
+    """
+    kept: dict = {}
+    dropped: list[str] = []
+    for k, v in assignments.items():
+        if isinstance(v, str):
+            if v in part_ids:
+                kept[k] = v
+            else:
+                dropped.append(f"{k} ({v})")
+        elif isinstance(v, list):
+            survivors = [x for x in v if x in part_ids]
+            dropped.extend(f"{k} ({x})" for x in v if x not in part_ids)
+            if survivors:
+                kept[k] = survivors
+    dropped.sort()
     if dropped:
         print(
             "WARNING: removed assignments whose part no longer exists: "
@@ -193,7 +208,7 @@ def _filter_assignments(assignments: dict, part_ids: set[str]) -> dict[str, str]
     return kept
 
 
-def _surviving_assignments(yaml_path: Path, part_ids: set[str]) -> dict[str, str]:
+def _surviving_assignments(yaml_path: Path, part_ids: set[str]) -> dict:
     """Assignments from an existing piece YAML that still match part_ids."""
     try:
         with yaml_path.open("r", encoding="utf-8") as f:

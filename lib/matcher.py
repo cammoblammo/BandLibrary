@@ -4,25 +4,43 @@ Part matching and report generation for BandLibrary.
 
 from __future__ import annotations
 
-from .models import EnsemblePart, MatchResult, Piece
+from .models import EnsemblePart, MatchResult, Piece, assigned_ids
 
 
 def match_part(piece: Piece, ensemble_part: EnsemblePart) -> MatchResult:
     """
     Match an ensemble part against a piece.
     Returns a MatchResult with match_reason of "assignment", "direct",
-    "fallback" (a preferred substitute), "compromise", or None (missing).
+    "fallback" (a preferred substitute), "compromise", "all" (a "takes: all"
+    chair's parts), or None (missing).
     """
-    # 1. Piece-specific assignment override
+    # 1. Piece-specific assignment override (one part, or a list of parts)
     if ensemble_part.id in piece.assignments:
-        assigned_id = piece.assignments[ensemble_part.id]
+        assigned = assigned_ids(piece.assignments[ensemble_part.id])
         return MatchResult(
             requested_id=ensemble_part.id,
             requested_label=ensemble_part.label,
             piece_slug=piece.slug,
             piece_title=piece.title,
-            matched_id=assigned_id,
+            matched_id=assigned[0],
             match_reason="assignment",
+            matched_ids=assigned,
+        )
+
+    # A "takes: all" chair (e.g. Percussion) gets every part it reads,
+    # in the order they appear in the PDF
+    if ensemble_part.takes_all:
+        taken = tuple(p.id for p in sorted(
+            (p for p in piece.parts_by_id.values() if ensemble_part.reads_part(p.id)),
+            key=lambda p: (p.start_page, p.end_page)))
+        return MatchResult(
+            requested_id=ensemble_part.id,
+            requested_label=ensemble_part.label,
+            piece_slug=piece.slug,
+            piece_title=piece.title,
+            matched_id=taken[0] if taken else None,
+            match_reason="all" if taken else None,
+            matched_ids=taken,
         )
 
     # 2. Direct match
@@ -104,7 +122,11 @@ def build_report(
                 )
             elif result.match_reason == "assignment":
                 report_lines.append(
-                    f"  {result.piece_slug} -> {result.matched_id} (assignment)"
+                    f"  {result.piece_slug} -> {', '.join(result.matched_ids)} (assignment)"
+                )
+            elif result.match_reason == "all":
+                report_lines.append(
+                    f"  {result.piece_slug} -> {', '.join(result.matched_ids)}"
                 )
             elif result.match_reason == "fallback":
                 report_lines.append(

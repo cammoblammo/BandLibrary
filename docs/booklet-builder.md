@@ -87,10 +87,12 @@ piece, change the ensemble (see **Setting Up Ensembles**).
 For each chair and each piece, the first of these that applies:
 
 1. The piece's **assignment** for this chair (set in the review screen)
-2. A **direct** match: the piece has the chair's own part
-3. The chair's **preferred** substitutes, in order (reported as fallback)
-4. The chair's **compromise** substitutes, in order (reported as compromise)
-5. **Missing**: a warning, and the piece is left out of that chair's booklet
+2. For the **Percussion** chair (`takes: all`): **every** percussion part
+   in the piece, in PDF order
+3. A **direct** match: the piece has the chair's own part
+4. The chair's **preferred** substitutes, in order (reported as fallback)
+5. The chair's **compromise** substitutes, in order (reported as compromise)
+6. **Missing**: a warning, and the piece is left out of that chair's booklet
 
 ---
 
@@ -124,8 +126,13 @@ Each booklet starts with a cover showing:
 - The chair's name, large
 - The edition, if set
 - A contents list of every piece in the build, numbered in build order so
-  numbers match across booklets. Pieces this chair has no part for are
-  shown greyed in brackets, with a note explaining the brackets
+  numbers match across booklets, with the page each piece starts on
+  (counting the cover as page 1). Pieces this chair has no part for are
+  shown greyed in brackets, with a note explaining the brackets. A long
+  list continues onto a second cover page
+
+The Percussion booklet holds all of a piece's percussion parts one after
+another; the contents page number is where the first of them starts.
 
 ---
 

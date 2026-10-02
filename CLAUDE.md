@@ -20,6 +20,9 @@ Chair (ensemble part) → piece part, first match wins:
 assignment (piece YAML) → direct (same ID) → `prefer` list → `compromise`
 list (flagged in builds) → missing.
 
+- A `takes: all` chair (the Percussion chair in both bands) instead gets
+  **every** piece part in its `reads` groups, in PDF order; its assignment
+  can be a list. Design: `docs/design/percussion.md`.
 - `config/reading_groups.yaml` says which written parts each kind of chair
   can read; chairs list groups in `reads`. `flex N` expands to part N in
   those groups. Bare `part_N_in_c` (no `_tc`/`_bc`) is deliberately in no group.

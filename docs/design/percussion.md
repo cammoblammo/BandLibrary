@@ -1,8 +1,23 @@
 # Design: one Percussion chair that gets every percussion part
 
-Status: **design approved, not built.** Branch `percussion-chair`,
-2026-10-02. Open question C (existing pieces) is for after the rule is
-built.
+Status: **built** on branch `percussion-chair`, 2026-10-02, awaiting
+owner review. Open question C (existing pieces) is next.
+
+## Result (before/after check)
+
+Snapshot of every chair × piece before and after, both bands (21 pieces):
+
+- Every other chair: **no change** (0 of 798 results).
+- Drum Kit and Auxiliary Percussion chairs replaced by Percussion. It gets
+  every part those two chairs got (nothing lost), plus mallets and chimes
+  parts that previously went to no chair (10 pieces). Both bands identical.
+- The library check passes. The consistency report flags 5 assignments for
+  the old `drum_kit` / `auxiliary_percussion` chairs (Going Quackers ×2,
+  Rock Around the Clock, The Sound of Silence, Yellow Submarine): harmless,
+  for question C.
+
+Also fixed on the way: a booklet cover kept only its first page, so a long
+contents list would have been cut off.
 
 ## Why
 

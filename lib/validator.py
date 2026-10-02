@@ -139,16 +139,21 @@ def validate_piece(
         if not isinstance(assignments, dict):
             result.error(f"{slug}: 'assignments' must be a mapping")
         else:
-            for target_id, source_id in assignments.items():
-                if not isinstance(source_id, str) or not source_id.strip():
+            for target_id, value in assignments.items():
+                sources = [value] if isinstance(value, str) else value
+                if (not isinstance(sources, list) or not sources
+                        or not all(isinstance(x, str) and x.strip() for x in sources)):
                     result.error(
-                        f"{slug}: assignment for {target_id!r} must be a non-empty string"
+                        f"{slug}: assignment for {target_id!r} must be a part id "
+                        f"or a list of part ids"
                     )
-                elif source_id not in seen_ids:
-                    result.error(
-                        f"{slug}: assignment for {target_id!r} references "
-                        f"unknown part id {source_id!r}"
-                    )
+                    continue
+                for source_id in sources:
+                    if source_id not in seen_ids:
+                        result.error(
+                            f"{slug}: assignment for {target_id!r} references "
+                            f"unknown part id {source_id!r}"
+                        )
 
     return data
 
@@ -200,7 +205,11 @@ def _piece_from_data(slug: str, data: dict) -> Piece:
         title=str((data.get("piece") or {}).get("title", slug)),
         pdf_path=Path(),
         parts_by_id=parts_by_id,
-        assignments={k: v for k, v in assignments.items() if isinstance(v, str)},
+        assignments={
+            k: v if isinstance(v, str) else tuple(v) for k, v in assignments.items()
+            if isinstance(v, str) or (isinstance(v, list) and v
+                                      and all(isinstance(x, str) for x in v))
+        },
     )
 
 

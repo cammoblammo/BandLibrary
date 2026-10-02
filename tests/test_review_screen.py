@@ -82,6 +82,78 @@ class ReviewTests(unittest.TestCase):
         editor.close()
 
 
+class PercussionReviewTests(unittest.TestCase):
+    """The review screen for a "takes: all" chair: a list of parts, not one."""
+
+    def setUp(self):
+        self.tmp = TempDir()
+        self.library = self.tmp.copy_piece("castinblues")
+        self.yaml_path = self.library / "castinblues" / "castinblues.yaml"
+        self.groups = load_reading_groups(GROUPS_PATH)
+        ensemble = self.tmp.ensemble(
+            "  - {id: percussion, label: Percussion, reads: [percussion], takes: all}\n"
+            "  - {id: trumpet_1, label: Trumpet 1, reads: [bb_treble]}\n"
+        )
+        _, _, self.parts = load_ensemble(ensemble)
+        self.percussion = self.parts[0]
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def editor(self) -> AssignmentEditor:
+        return AssignmentEditor(
+            load_piece(self.library, "castinblues"), self.parts, self.yaml_path, self.groups
+        )
+
+    def test_automatic_is_every_part_it_reads(self):
+        editor = self.editor()
+        state = editor._state(self.percussion)
+        self.assertEqual((state.reason, state.part_ids, state.save), ("all", ("drum_kit",), False))
+        self.assertIn("Automatic — all 1 part", editor._choosers["percussion"].text())
+        self.assertEqual(editor.assignments(), {})
+
+    def test_choosing_parts_saves_a_list(self):
+        editor = self.editor()
+        editor._selections["percussion"] = ("drum_kit", "guitar")
+        editor._refresh()
+        state = editor._state(self.percussion)
+        self.assertEqual(state.reason, "assignment")
+        self.assertIn("⚠ not in what this chair reads", state.note)
+        editor._save()
+        saved = yaml.safe_load(self.yaml_path.read_text())["assignments"]
+        self.assertEqual(saved, {"percussion": ["drum_kit", "guitar"]})
+
+        # Reopening shows the saved list; Reset All goes back to automatic
+        editor = self.editor()
+        self.assertEqual(editor._selections["percussion"], ("drum_kit", "guitar"))
+        editor._clear_all()
+        self.assertEqual(editor.assignments(), {})
+
+    def test_same_as_automatic_is_not_saved(self):
+        editor = self.editor()
+        editor._selections["percussion"] = ("drum_kit",)
+        self.assertEqual(editor.assignments(), {})
+
+    def test_chooser_lists_its_parts_first(self):
+        from lib.assignment_editor import PartChooser
+        piece = load_piece(self.library, "castinblues")
+        chooser = PartChooser(piece, self.percussion, ("drum_kit",))
+        self.assertTrue(chooser._boxes["drum_kit"].isChecked())
+        self.assertFalse(chooser._boxes["flute"].isChecked())
+        self.assertEqual(next(iter(chooser._boxes)), "drum_kit")
+        chooser._boxes["flute"].setChecked(True)
+        self.assertEqual(chooser.selection(), ("drum_kit", "flute"))
+        chooser._choose_automatic()
+        self.assertIsNone(chooser.selection())
+
+    def test_preview_shows_every_part(self):
+        from lib.assignment_editor import PartPreview
+        piece = load_piece(self.library, "castinblues")
+        preview = PartPreview(piece, ("drum_kit", "bass_guitar"), "Percussion")
+        self.assertEqual(len(preview._doc), 3)  # drum kit p.31, bass guitar pp.29-30
+        preview.close()
+
+
 class DescribeSelectionTests(unittest.TestCase):
     def test_missing_chair(self):
         from tests.test_matching import make_piece

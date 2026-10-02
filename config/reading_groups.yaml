@@ -80,11 +80,33 @@ groups:
 
   percussion:
     label: Percussion
+    # Every part a percussionist might be given. The Percussion chair takes
+    # all of them ("takes: all"), so add the names publishers print here.
     parts:
-      - drum_kit
-      - drums
-      - snare_drum
-      - auxiliary_percussion
+      - percussion*            # percussion, percussion_1, percussion_2 …
+      - drum*                  # drum_kit, drums, drum_set …
+      - "*_drum"               # snare_drum, bass_drum …
+      - "*_drums"
+      - auxiliary_percussion*
+      - timpani
+      - tambourine
+      - triangle
       - claves
+      - woodblock
+      - cowbell
+      - shaker
+      - maracas
+      - "*cymbal*"             # cymbals, suspended_cymbal, crash_cymbals …
+      - bongos
+      - congas
+      - guiro
+      - cabasa
+      - timbales
       - mallets
+      - bells
+      - glockenspiel
+      - xylophone
+      - marimba
+      - vibraphone
+      - keyboard_percussion
       - chimes

@@ -208,10 +208,11 @@ class TitleTests(unittest.TestCase):
 class KnownNameTests(unittest.TestCase):
     def test_names_outside_aliases_and_groups_are_flagged(self):
         pages = [page(n, *furniture(), line(name))
-                 for n, name in enumerate(["Flute 1", "Tambourine", "Part 4 in C"], 1)]
+                 for n, name in enumerate(["Flute 1", "Tambourine", "Harp", "Part 4 in C"], 1)]
         notes = {p.label: p.notes for p in detect_pages(pages, ALIASES, GROUPS).parts}
         self.assertEqual(notes["Flute 1"], [])            # a reading group covers flute_*
-        self.assertTrue(any("not a known" in n for n in notes["Tambourine"]))
+        self.assertEqual(notes["Tambourine"], [])         # …and percussion covers tambourine
+        self.assertTrue(any("not a known" in n for n in notes["Harp"]))
         self.assertEqual(notes["Part 4 in C"], ["clef not printed: add TC or BC"])
 
 
