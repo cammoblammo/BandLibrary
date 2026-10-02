@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: trumpet-hero
-  title: trumpet hero
+  title: Trumpet Hero
   source_pdf: trumpet-hero.pdf
   status: manual
 parts:

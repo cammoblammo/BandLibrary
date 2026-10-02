@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: rock-around-the-clock
-  title: rock around the clock
+  title: Rock Around the Clock
   source_pdf: rock-around-the-clock.pdf
   status: manual
 parts:

@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: soundstorm
-  title: soundstorm
+  title: Soundstorm
   source_pdf: soundstorm.pdf
   status: manual
 parts:

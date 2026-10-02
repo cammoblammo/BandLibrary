@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: cast-in-blues
-  title: cast in blues
+  title: Cast in Blues
   source_pdf: cast-in-blues.pdf
   status: manual
 parts:

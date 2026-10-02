@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: old-macdonald-had-a-farm
-  title: old macdonald had a farm
+  title: Old MacDonald Had a Band
   source_pdf: old-macdonald-had-a-farm.pdf
   status: manual
 parts:

@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: going-quackers
-  title: going quackers
+  title: Going Quackers
   source_pdf: going-quackers.pdf
   status: manual
 parts:

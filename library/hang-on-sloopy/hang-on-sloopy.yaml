@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: hang-on-sloopy
-  title: hang on sloopy
+  title: Hang On Sloopy
   source_pdf: hang-on-sloopy.pdf
   status: manual
 parts:

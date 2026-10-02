@@ -1,3 +1,4 @@
+Title: Old MacDonald Had a Band
 Flute: 1
 Clarinet: 2
 Clarinet in Eb: 3

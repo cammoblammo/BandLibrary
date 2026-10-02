@@ -155,7 +155,15 @@ in the name. Any other key accepts the current suggestion.
 ### Title
 
 Add a line `Title: Hound Dog` anywhere to set the title used on booklet
-covers. Without it, the PDF file name is used.
+covers. It is printed exactly as written, so punctuation and small words
+come through: `Title: Don't Stop Believin'`, `Title: T.W.A.`,
+`Title: Cast in Blues`. Detect Parts fills it in from the PDF.
+
+Without it, the title is made from the PDF file name (`dont-stop-believin`
+becomes "Dont Stop Believin"), which loses punctuation. To fix an existing
+piece's title, open its `.manual.txt` here, add or change the `Title:`
+line, **Save**, then select the piece in the Booklet Builder and click
+**Regen YAML**.
 
 ---
 

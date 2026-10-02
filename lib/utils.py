@@ -43,9 +43,12 @@ def infer_title_from_filename(stem: str) -> str:
 
 def display_title(title: str) -> str:
     """
-    Capitalise the first letter of each word, leaving the rest unchanged.
-    Unlike str.title(), this keeps "Don't" and "AC/DC" intact.
+    A title as written ("Cast in Blues", "T.W.A.") if it has any capitals.
+    An all-lowercase title, made from a file name because the manual file
+    has no Title: line, gets a capital at the start of each word.
     """
+    if any(c.isupper() for c in title):
+        return title
     return " ".join(w[:1].upper() + w[1:] for w in title.split(" "))
 
 

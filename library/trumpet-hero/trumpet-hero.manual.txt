@@ -1,3 +1,4 @@
+Title: Trumpet Hero
 flute: 1
 oboe: 2
 clarinet: 3

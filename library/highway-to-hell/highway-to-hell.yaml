@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: highway-to-hell
-  title: highway to hell
+  title: Highway to Hell
   source_pdf: highway-to-hell.pdf
   status: manual
 parts:

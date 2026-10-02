@@ -29,10 +29,12 @@ def quiet(fn, *args, **kwargs):
 
 
 class UtilityTests(unittest.TestCase):
-    def test_display_title_keeps_apostrophes_and_capitals(self):
+    def test_display_title(self):
+        # A file-name title is capitalised; a written title is kept as written
         self.assertEqual(display_title("dont stop believin"), "Dont Stop Believin")
         self.assertEqual(display_title("Don't Stop Believin'"), "Don't Stop Believin'")
-        self.assertEqual(display_title("AC/DC hits"), "AC/DC Hits")
+        self.assertEqual(display_title("Cast in Blues"), "Cast in Blues")
+        self.assertEqual(display_title("T.W.A."), "T.W.A.")
 
     def test_slugify(self):
         self.assertEqual(slugify("Cast In Blues (Workshop)"), "cast-in-blues-workshop")

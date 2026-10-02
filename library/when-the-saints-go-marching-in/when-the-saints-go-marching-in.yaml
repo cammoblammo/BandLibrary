@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: when-the-saints-go-marching-in
-  title: when the saints go marching in
+  title: When the Saints Go Marching In
   source_pdf: when-the-saints-go-marching-in.pdf
   status: manual
 parts:

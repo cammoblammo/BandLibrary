@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: power-rock
-  title: power rock
+  title: Power Rock
   source_pdf: power-rock.pdf
   status: manual
 parts:

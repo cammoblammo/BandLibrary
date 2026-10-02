@@ -1,7 +1,7 @@
 schema_version: 1
 piece:
   id: the-sound-of-silence
-  title: the sound of silence
+  title: The Sound of Silence
   source_pdf: the-sound-of-silence.pdf
   status: manual
 parts:
