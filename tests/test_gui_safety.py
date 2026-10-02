@@ -112,6 +112,36 @@ class BranchWarningTests(unittest.TestCase):
                 question.assert_not_called()
 
 
+class BuildListTests(unittest.TestCase):
+    """The Booklet Builder checks the build list against the library in use."""
+
+    def widget(self):
+        from lib.build_widget import BuildWidget
+        widget = BuildWidget(status_bar=QStatusBar(), config={})
+        widget._add_piece("hound-dog")          # from the real library
+        return widget
+
+    def test_real_pieces_in_test_mode_are_explained_not_built(self):
+        widget = self.widget()
+        widget.test_checkbox.setChecked(True)
+        self.assertIn("TEST", widget.library_label.text())
+        with mock.patch.object(QMessageBox, "warning") as warning:
+            widget.run_build()
+        warning.assert_called_once()
+        self.assertIn("Untick Test mode", warning.call_args[0][2])
+        self.assertIsNone(widget._build_thread)
+
+    def test_dry_run_from_the_real_library(self):
+        widget = self.widget()
+        self.assertEqual(widget.library_label.text(), "Library")
+        with mock.patch.object(QMessageBox, "warning") as warning:
+            widget.run_dry_run()
+            widget._build_thread.wait()
+            APP.processEvents()
+        warning.assert_not_called()
+        self.assertIn("Percussion:", widget.output_view.toPlainText())
+
+
 class BusyTests(unittest.TestCase):
     def test_reports_a_running_push(self):
         widget = EditorWidget([], status_bar=QStatusBar())

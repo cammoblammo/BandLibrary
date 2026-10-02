@@ -154,7 +154,9 @@ class BuildWidget(QWidget):
 
         # Test mode checkbox
         self.test_checkbox = QCheckBox("Test mode")
-        self.test_checkbox.setToolTip("Write output to test-output/ instead of output/")
+        self.test_checkbox.setToolTip(
+            "Use the small sample library in test/ (not your real library) "
+            "and write to test-output/ instead of output/")
         ctrl_layout.addWidget(self.test_checkbox)
 
         ctrl_layout.addStretch()
@@ -194,7 +196,8 @@ class BuildWidget(QWidget):
         browser_header.setObjectName("panelHeader")
         bh_layout = QHBoxLayout(browser_header)
         bh_layout.setContentsMargins(10, 6, 10, 6)
-        bh_layout.addWidget(QLabel("Library"))
+        self.library_label = QLabel("Library")
+        bh_layout.addWidget(self.library_label)
         bh_layout.addStretch()
         refresh_btn = QPushButton("Refresh")
         refresh_btn.setFixedHeight(26)
@@ -555,8 +558,15 @@ class BuildWidget(QWidget):
                 item = QTreeWidgetItem([f"{slug} — ERROR: {e}"])
                 self.library_tree.addTopLevelItem(item)
 
+        if self.test_checkbox.isChecked():
+            self.library_label.setText(f"Library — TEST: {len(slugs)} sample piece(s) in test/")
+            self.library_label.setStyleSheet("color: #fab387; font-weight: bold;")
+        else:
+            self.library_label.setText("Library")
+            self.library_label.setStyleSheet("")
         if self._status:
-            self._status.showMessage(f"Library: {len(slugs)} piece(s) loaded.", 3000)
+            where = "test library (test/)" if self.test_checkbox.isChecked() else "library"
+            self._status.showMessage(f"{where[0].upper()}{where[1:]}: {len(slugs)} piece(s) loaded.", 4000)
 
     def _on_library_double_click(self, item: QTreeWidgetItem, column: int):
         slug = item.data(0, Qt.ItemDataRole.UserRole)
@@ -710,6 +720,22 @@ class BuildWidget(QWidget):
         output_dir = self._project_root / ("test-output" if test_mode else "output")
         library = self._project_root / ("test" if test_mode else "library")
         edition = self.edition_edit.text().strip() or None
+
+        # Pieces from the real library can't be built in test mode, and
+        # the other way round: say so instead of failing part-way
+        absent = [slug for slug in slugs if slug not in list_pieces(library)]
+        if absent:
+            if test_mode:
+                hint = ("Test mode is on, so only the sample pieces in test/ can be "
+                        "built. Untick Test mode to build from your library, or remove "
+                        "these from the build list.")
+            else:
+                hint = "Remove them from the build list, or import them first."
+            QMessageBox.warning(
+                self, "Build",
+                f"These pieces aren't in the {'test library' if test_mode else 'library'}:"
+                f"\n\n{', '.join(absent)}\n\n{hint}")
+            return
 
         # Clear and head the output panel
         self.output_view.clear()
