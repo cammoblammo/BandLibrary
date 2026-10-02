@@ -76,6 +76,15 @@ def name_notes(parts: list[DraftPart]) -> None:
     """Notes about names across the piece: duplicates, "Trumpet" beside "Trumpet 2"."""
     counts = Counter(p.label for p in parts)
     for p in parts:
+        # Different names that the aliases turn into the same part ID: the
+        # import would refuse them, so say so in the draft
+        same_id = [q for q in parts
+                   if q is not p and q.part_id == p.part_id and q.label != p.label]
+        if same_id:
+            others = "; ".join(f'"{q.label}" ({page_list(list(range(q.start, q.end + 1)))})'
+                               for q in same_id)
+            p.notes.append(f'"{p.label}" has the same part ID ({p.part_id}) as {others}: '
+                           "rename one, or the import will refuse it")
         if counts[p.label] > 1:
             p.notes.append(_duplicate_note(p, [q for q in parts
                                                if q.label == p.label and q is not p]))

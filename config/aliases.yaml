@@ -63,6 +63,10 @@ aliases:
   "Drumkit": drum_kit
   "Percussion": percussion
   "Mallets": mallets
+  # Tuned percussion (bells, glockenspiel, marimba …) keeps its own IDs, since
+  # a piece can have several; chairs that double from them list them all.
+  "Chimes": chimes
+  "Chime Bars": chimes
   "Auxiliary percussion": auxiliary_percussion
   "Aux Percussion": auxiliary_percussion
   "Aux perc": auxiliary_percussion

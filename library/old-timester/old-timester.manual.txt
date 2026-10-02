@@ -7,4 +7,4 @@ trombone: 8
 euphonium tc: 9
 electric bass: 10
 Drum kit: 11
-aux perc: 12
+Tambourine: 12

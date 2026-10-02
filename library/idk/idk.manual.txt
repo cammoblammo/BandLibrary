@@ -1,4 +1,4 @@
-drum kit: 1
+Percussion: 1
 tuba: 2
 baritone: 3
 baritone tc: 4

@@ -50,8 +50,8 @@ parts:
   pages:
   - 11
   - 11
-- label: aux perc
-  id: auxiliary_percussion
+- label: Tambourine
+  id: tambourine
   pages:
   - 12
   - 12

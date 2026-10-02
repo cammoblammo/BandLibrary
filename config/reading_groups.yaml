@@ -45,7 +45,14 @@ groups:
       - flute
       - flute_*
       - oboe
-      - mallets
+      - mallets               # and every other tuned percussion part
+      - keyboard_percussion   # except timpani (owner, 2026-10-02)
+      - tuned_percussion
+      - bells
+      - glockenspiel
+      - xylophone
+      - marimba
+      - vibraphone
       - chimes
       - violin
       - violin_*
@@ -88,6 +95,7 @@ groups:
       - "*_drum"               # snare_drum, bass_drum …
       - "*_drums"
       - auxiliary_percussion*
+      - "*_percussion"         # unpitched_percussion, untuned_percussion …
       - timpani
       - tambourine
       - triangle

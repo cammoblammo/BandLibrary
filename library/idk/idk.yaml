@@ -5,8 +5,8 @@ piece:
   source_pdf: idk.pdf
   status: manual
 parts:
-- label: drum kit
-  id: drum_kit
+- label: Percussion
+  id: percussion
   pages:
   - 1
   - 1

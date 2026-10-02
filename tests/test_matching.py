@@ -209,6 +209,11 @@ class TakesAllTests(unittest.TestCase):
         findings = _ensemble_findings("t", [self.percussion], [piece], grid, Counter())
         self.assertEqual([f.category for f in findings], ["No parts it reads"])
 
+    def test_tuned_and_untuned_are_not_duplicates(self):
+        from lib.report import _possible_duplicate
+        self.assertFalse(_possible_duplicate("tuned_percussion", "untuned_percussion"))
+        self.assertTrue(_possible_duplicate("glockenspeil", "glockenspiel"))
+
     def test_loading_errors(self):
         cases = {
             "unknown takes": "  - {id: p, label: P, reads: [percussion], takes: some}\n",

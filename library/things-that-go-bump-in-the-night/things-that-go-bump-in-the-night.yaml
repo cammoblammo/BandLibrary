@@ -70,18 +70,18 @@ parts:
   pages:
   - 58
   - 61
-- label: aux perc
-  id: auxiliary_percussion
+- label: Snare Drum
+  id: snare_drum
   pages:
   - 70
   - 73
-- label: drum kit
-  id: drum_kit
+- label: Bass Drum
+  id: bass_drum
   pages:
   - 74
   - 77
-- label: mallets
-  id: mallets
+- label: Glockenspiel
+  id: glockenspiel
   pages:
   - 78
   - 80

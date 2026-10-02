@@ -70,18 +70,18 @@ parts:
   pages:
   - 13
   - 13
-- label: Mallets
-  id: mallets
+- label: Tuned Percussion
+  id: tuned_percussion
   pages:
   - 14
   - 14
-- label: Drums
-  id: drums
+- label: Drum Set
+  id: drum_set
   pages:
   - 15
   - 15
-- label: Aux perc
-  id: auxiliary_percussion
+- label: Untuned Percussion
+  id: untuned_percussion
   pages:
   - 16
   - 16

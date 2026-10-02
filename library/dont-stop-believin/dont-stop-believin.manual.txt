@@ -11,7 +11,7 @@ Violin 1: 10
 Violin 2: 11
 Viola: 12
 Cello: 13
-Mallets: 14
-Drums: 15
-Aux perc: 16
+Tuned Percussion: 14
+Drum Set: 15
+Untuned Percussion: 16
 Guitar: 17

@@ -65,13 +65,13 @@ parts:
   pages:
   - 12
   - 12
-- label: Mallets
-  id: mallets
+- label: Keyboard Percussion
+  id: keyboard_percussion
   pages:
   - 13
   - 13
-- label: Drum kit
-  id: drum_kit
+- label: Percussion
+  id: percussion
   pages:
   - 14
   - 14

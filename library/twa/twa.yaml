@@ -65,13 +65,13 @@ parts:
   pages:
   - 12
   - 12
-- label: drum kit
-  id: drum_kit
+- label: Percussion 1
+  id: percussion_1
   pages:
   - 13
   - 13
-- label: aux percussion
-  id: auxiliary_percussion
+- label: Percussion 2
+  id: percussion_2
   pages:
   - 14
   - 14

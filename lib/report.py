@@ -76,6 +76,9 @@ def _possible_duplicate(a: str, b: str) -> bool:
     if ta == tb:
         return True
     diff = set(ta) ^ set(tb)
+    # Opposites, not typos: tuned / untuned, pitched / unpitched
+    if any(f"un{x}" in diff for x in diff):
+        return False
     if diff and all(_is_minor(t) for t in diff):
         return False
     return difflib.SequenceMatcher(None, a, b).ratio() >= 0.9

@@ -11,7 +11,7 @@ Part 4 in C BC: 10
 Violin 1: 11
 Violin 2: 12
 Viola: 13
-Mallets: 14
-Aux Percussion: 15-16
+Tuned Percussion: 14
+Unpitched Percussion: 15-16
 Guitar: 17
 Keyboard: 17-18

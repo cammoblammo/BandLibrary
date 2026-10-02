@@ -40,8 +40,8 @@ parts:
   pages:
   - 7
   - 7
-- label: drum kit
-  id: drum_kit
+- label: Percussion
+  id: percussion
   pages:
   - 8
   - 8

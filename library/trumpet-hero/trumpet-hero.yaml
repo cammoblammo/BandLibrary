@@ -50,18 +50,18 @@ parts:
   pages:
   - 9
   - 9
-- label: mallets
-  id: mallets
+- label: Keyboard Percussion
+  id: keyboard_percussion
   pages:
   - 10
   - 10
-- label: drum kit
-  id: drum_kit
+- label: Percussion 1
+  id: percussion_1
   pages:
   - 11
   - 11
-- label: aux perc
-  id: auxiliary_percussion
+- label: Percussion 2
+  id: percussion_2
   pages:
   - 12
   - 12

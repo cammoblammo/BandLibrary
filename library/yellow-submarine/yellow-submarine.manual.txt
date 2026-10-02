@@ -13,8 +13,8 @@ Violin 1: 12
 Violin 2: 13
 Viola: 14
 Cello: 15
-Mallets: 16
-Aux Percussion: 17-18
-Chimes: 19
+Tuned Percussion: 16
+Unpitched Percussion: 17-18
+Chime Bars: 19
 Guitar: 20-21
 Keyboard: 22-24

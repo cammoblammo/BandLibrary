@@ -1,7 +1,7 @@
 # Design: one Percussion chair that gets every percussion part
 
-Status: **built** on branch `percussion-chair`, 2026-10-02, awaiting
-owner review. Open question C (existing pieces) is next.
+Status: **built** on branch `percussion-chair`, 2026-10-02, including
+the tidy-up of existing pieces (question C).
 
 ## Result (before/after check)
 
@@ -132,7 +132,25 @@ B. Keeping pieces apart: contents page numbers (decision 4). Considered and
    not chosen: a stamp on each part's first page; divider pages.
 D. Copies: printed by the owner (decision 6).
 
-## Open
+C. Existing pieces (owner, 2026-10-02): the five assignments for the old
+   chairs were removed (no effect on any chair). Percussion parts renamed
+   while mapping got their printed names back, names only (no instrument
+   lists): e.g. Hound Dog "Bells", "Percussion 1", "Percussion 2". Low
+   Rider's Maracas part (p. 22) was added.
+
+   Tuned percussion (every kind except timpani) can double for C
+   treble-clef chairs. It keeps its own IDs (`bells`, `glockenspiel`,
+   `keyboard_percussion`, `tuned_percussion`, `marimba`, `chimes` …) rather
+   than aliases of `mallets`: a piece can have several (a glockenspiel and
+   a marimba part), and two parts can't share an ID. They are all in the
+   `c_treble` group; Piano prefers them (keyboard, mallets, then the rest);
+   Flute and Guitar take them as compromises (there is no Oboe chair).
+   Detect Parts now flags two names that resolve to the same ID.
+
+   Before/after: no chair's pages changed except Percussion gaining Maracas
+   in Low Rider; Piano reads the same pages under the new IDs.
+
+## Former open question
 
 C. **Existing pieces** (owner's question 4, after the rule settles):
    restore printed names where percussion parts were renamed while

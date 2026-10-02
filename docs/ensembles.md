@@ -68,13 +68,19 @@ Which parts count as percussion is the `percussion` reading group in
 `config/reading_groups.yaml`. If a piece's percussion part isn't picked up
 (for example a new name such as `Spoons`), add the name there.
 
+Tuned percussion keeps the name it's printed with (`Bells`, `Glockenspiel`,
+`Keyboard Percussion` …), because a piece can have more than one. Chairs
+that double from it list every kind, in order of preference, e.g. Piano:
+`prefer: [keyboard, mallets, keyboard_percussion, tuned_percussion, bells,
+glockenspiel, xylophone, marimba, vibraphone, chimes]`.
+
 ### Reading groups
 
 | Group | Covers |
 |-------|--------|
 | `bb_treble` | B♭ treble clef: clarinets, trumpets, tenor sax, bass clarinet, TC euphonium/baritone/trombone |
 | `eb_treble` | E♭ treble clef: alto and baritone sax, alto clarinet, tenor horn |
-| `c_treble` | C treble clef: flute, oboe, mallets, violin, guitar, piano. Mallets can double for these chairs through their `prefer` / `compromise` lists |
+| `c_treble` | C treble clef: flute, oboe, violin, guitar, piano, and tuned percussion (mallets, bells, glockenspiel, xylophone, marimba, vibraphone, keyboard/tuned percussion, chimes), which can double for these chairs through their `prefer` / `compromise` lists |
 | `c_bass` | C bass clef: trombone, baritone, euphonium, tuba, bassoon, cello, bass guitar, piano |
 | `f_treble` | F: French horn |
 | `percussion` | Every percussion part: drum kit, snare and bass drum, timpani, auxiliary, mallets, bells, glockenspiel, chimes, `Percussion 1`… |

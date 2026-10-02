@@ -16,6 +16,7 @@ parts:
     label: Flute
     reads: [c_treble]
     prefer: [flute_1, flex 1]
+    compromise: [mallets, keyboard_percussion, tuned_percussion, bells, glockenspiel, xylophone, marimba, vibraphone, chimes]
 
   - id: clarinet_1
     label: Clarinet 1
@@ -109,12 +110,12 @@ parts:
   - id: guitar
     label: Guitar
     reads: [c_treble]
-    compromise: [oboe, flute]
+    compromise: [oboe, flute, mallets, keyboard_percussion, tuned_percussion, bells, glockenspiel, xylophone, marimba, vibraphone, chimes]
 
   - id: piano
     label: Piano
     reads: [c_treble, c_bass]
-    prefer: [keyboard, mallets]
+    prefer: [keyboard, mallets, keyboard_percussion, tuned_percussion, bells, glockenspiel, xylophone, marimba, vibraphone, chimes]
     compromise: [oboe, flute]
 
   # Every percussion part in each piece, in PDF order: percussionists move

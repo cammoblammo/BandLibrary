@@ -11,5 +11,5 @@ french horn: 10
 trombone: 11
 baritone tc: 12
 tuba: 13
-aux percussion: 14
-drum kit: 15
+Auxiliary Percussion: 14
+Percussion: 15

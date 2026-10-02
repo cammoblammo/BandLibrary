@@ -70,18 +70,18 @@ parts:
   pages:
   - 13
   - 13
-- label: mallets
-  id: mallets
+- label: Bells
+  id: bells
   pages:
   - 14
   - 14
-- label: drum kit
-  id: drum_kit
+- label: Percussion 1
+  id: percussion_1
   pages:
   - 15
   - 15
-- label: aux percussion
-  id: auxiliary_percussion
+- label: Percussion 2
+  id: percussion_2
   pages:
   - 16
   - 16

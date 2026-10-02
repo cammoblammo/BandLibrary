@@ -65,18 +65,23 @@ parts:
   pages:
   - 20
   - 20
-- label: aux percussion
-  id: auxiliary_percussion
+- label: Cowbell
+  id: cowbell
   pages:
   - 21
   - 21
-- label: mallets
-  id: mallets
+- label: Maracas
+  id: maracas
+  pages:
+  - 22
+  - 22
+- label: Bells
+  id: bells
   pages:
   - 23
   - 23
-- label: drum kit
-  id: drum_kit
+- label: Drum Set
+  id: drum_set
   pages:
   - 24
   - 24

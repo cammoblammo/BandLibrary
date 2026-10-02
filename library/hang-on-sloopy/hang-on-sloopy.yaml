@@ -70,13 +70,13 @@ parts:
   pages:
   - 13
   - 13
-- label: aux percussion
+- label: Auxiliary Percussion
   id: auxiliary_percussion
   pages:
   - 14
   - 14
-- label: drum kit
-  id: drum_kit
+- label: Percussion
+  id: percussion
   pages:
   - 15
   - 15

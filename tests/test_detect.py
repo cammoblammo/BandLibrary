@@ -121,6 +121,12 @@ class SegmentTests(unittest.TestCase):
         self.assertIn("(this one for Trombone/Baritone); also page 3, for Tuba",
                       parts[0].notes[-1])
 
+    def test_different_names_with_the_same_part_id(self):
+        parts, _ = segment([self.reading(1, "Drum kit"), self.reading(2, "Drumkit")])
+        name_notes(parts)
+        self.assertIn('same part ID (drum_kit) as "Drumkit" (page 2)', parts[0].notes[-1])
+        self.assertIn("import will refuse", parts[1].notes[-1])
+
     def test_bare_name_beside_a_numbered_one(self):
         parts, _ = segment([self.reading(1, "Trumpet"), self.reading(2, "Trumpet 2")])
         name_notes(parts)

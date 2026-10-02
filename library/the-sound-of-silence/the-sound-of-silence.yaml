@@ -70,13 +70,13 @@ parts:
   pages:
   - 13
   - 13
-- label: Mallets
-  id: mallets
+- label: Tuned Percussion
+  id: tuned_percussion
   pages:
   - 14
   - 14
-- label: Aux Percussion
-  id: auxiliary_percussion
+- label: Unpitched Percussion
+  id: unpitched_percussion
   pages:
   - 15
   - 16
@@ -92,5 +92,4 @@ parts:
   - 18
 assignments:
   bass_guitar: part_4_in_c_bc
-  drum_kit: auxiliary_percussion
   trombone_2: part_3_in_c_bc

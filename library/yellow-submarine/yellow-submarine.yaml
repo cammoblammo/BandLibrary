@@ -80,17 +80,17 @@ parts:
   pages:
   - 15
   - 15
-- label: Mallets
-  id: mallets
+- label: Tuned Percussion
+  id: tuned_percussion
   pages:
   - 16
   - 16
-- label: Aux Percussion
-  id: auxiliary_percussion
+- label: Unpitched Percussion
+  id: unpitched_percussion
   pages:
   - 17
   - 18
-- label: Chimes
+- label: Chime Bars
   id: chimes
   pages:
   - 19
@@ -108,4 +108,3 @@ parts:
 assignments:
   tenor_sax: part_4_in_bb_tc
   trombone_1: part_4_in_c_bc
-  drum_kit: auxiliary_percussion

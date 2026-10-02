@@ -10,5 +10,5 @@ French horn: 9
 Trombone: 10
 Baritone TC: 11
 Tuba: 12
-Mallets: 13
-Drum kit: 14
+Keyboard Percussion: 13
+Percussion: 14
