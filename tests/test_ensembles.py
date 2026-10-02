@@ -90,10 +90,17 @@ class CheckTests(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertIn("only gets substitutes", result.chair_notes[0][0])
 
-    def test_shared_chair_ids_are_noted(self):
-        other = BandSpec("serscb", "SERSCB", "", [chair("flute", reads=["c_treble"])])
-        result = self.check(chair("flute", reads=["c_treble"]), others={"serscb": other})
-        self.assertIn("SERSCB also has a chair with this ID", result.chair_notes[0][0])
+    def test_shared_assignments_are_noted_only_where_there_are_some(self):
+        other = BandSpec("serscb", "SERSCB", "", [chair("flute", reads=["c_treble"]),
+                                                  chair("oboe", reads=["c_treble"])])
+        result = check_band(
+            BandSpec("b", "B", "", [chair("flute", reads=["c_treble"]),
+                                    chair("oboe", reads=["c_treble"])]),
+            GROUPS, {"serscb": other}, {"flute": ["Going Quackers"]})
+        self.assertEqual(result.chair_notes[0], [
+            "Shares 1 assignment with SERSCB, which has a chair with the same ID "
+            "(Going Quackers)."])
+        self.assertNotIn(1, result.chair_notes)          # oboe: shared ID, no assignments
 
 
 class CompareTests(unittest.TestCase):

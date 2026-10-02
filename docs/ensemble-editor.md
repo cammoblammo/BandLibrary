@@ -54,8 +54,10 @@ read:
 The new entry goes below the selected one; use **↑** / **↓** to order the
 list and **Remove** to take an entry out.
 
-Notes under the chair (grey) are for information, for example when another
-band has a chair with the same ID, so they share its assignments.
+Notes under the chair (grey) are for information. For example, "Shares 1
+assignment with WORKSHOP… (Going Quackers)" means the other band has a
+chair with the same ID, so the assignments set for it in those pieces apply
+to both bands. The note only appears when there are such assignments.
 
 ### Band names and saving
 
@@ -112,8 +114,9 @@ Assignments (set in the review screen) are stored in each piece under the
 chair's ID:
 
 - A band made with **New (copy)…** keeps the original's chair IDs, so it
-  **shares** its assignments. That's usually what you want; the chair's
-  notes say when an ID is shared.
+  **shares** its assignments. That's usually what you want; a chair's
+  notes say which pieces have shared assignments. To make one band's chair
+  independent, give it a different ID with **Change…**.
 - **Change…** on an existing chair's ID asks whether to copy its
   assignments to the new ID. They are copied when you save; the old ones
   are removed unless another band still uses the old ID. The changed

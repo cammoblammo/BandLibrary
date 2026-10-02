@@ -150,11 +150,14 @@ class BandCheck:
 
 
 def check_band(band: BandSpec, groups: dict[str, ReadingGroup],
-               other_bands: dict[str, BandSpec] | None = None) -> BandCheck:
+               other_bands: dict[str, BandSpec] | None = None,
+               assigned: dict[str, list[str]] | None = None) -> BandCheck:
     """
     Problems with a band, per chair where possible. The same rules as
     loading the file; anything that would stop it loading is an error.
-    other_bands (id -> band) are used to say which chair IDs are shared.
+    other_bands (id -> band) and assigned (chair ID -> titles of pieces with
+    an assignment for it) say where a chair shares assignments with another
+    band; only chairs that actually have assignments get that note.
     """
     result = BandCheck()
 
@@ -214,13 +217,26 @@ def check_band(band: BandSpec, groups: dict[str, ReadingGroup],
                         note.split(": ", 1)[1][:1].upper() + note.split(": ", 1)[1][1:] + ".")
 
     for i, c in enumerate(band.chairs):
+        pieces = (assigned or {}).get(c.id, [])
+        if not pieces:
+            continue
         sharing = [b.name for b_id, b in (other_bands or {}).items()
                    if b_id != band.id and any(o.id == c.id for o in b.chairs)]
         if sharing:
+            shown = ", ".join(pieces[:3]) + (", …" if len(pieces) > 3 else "")
             result.chair_notes.setdefault(i, []).append(
-                f"{', '.join(sharing)} also has a chair with this ID, so they share "
-                f"its assignments.")
+                f"Shares {len(pieces)} assignment{'s' if len(pieces) != 1 else ''} with "
+                f"{' and '.join(sharing)}, which has a chair with the same ID ({shown}).")
     return result
+
+
+def assignments_by_chair(library: Path) -> dict[str, list[str]]:
+    """Chair ID -> titles of the pieces with an assignment for that chair."""
+    out: dict[str, list[str]] = {}
+    for piece in load_pieces(library):
+        for chair_id in piece.assignments:
+            out.setdefault(chair_id, []).append(piece.title)
+    return out
 
 
 def readable_library_parts(library: Path, chair: ChairSpec,

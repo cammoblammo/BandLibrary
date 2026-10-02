@@ -22,7 +22,8 @@ from PyQt6.QtWidgets import (
 
 from .editor_widget import MAIN_BRANCH, CommitThread, current_branch
 from .ensemble_io import (
-    BandSpec, ChairSpec, bands_using_chair, check_band, compare, copy_assignments,
+    BandSpec, ChairSpec, assignments_by_chair, bands_using_chair, check_band, compare,
+    copy_assignments,
     copy_band, describe_change, load_pieces, pieces_assigning, read_band,
     readable_library_parts, summarise, suggest_id, write_band,
 )
@@ -445,6 +446,8 @@ class EnsembleWidget(QWidget):
     # -----------------------------------------------------------------------
 
     def reload_bands(self, select: str | None = None):
+        # Which chairs have assignments, for the "shares assignments" notes
+        self._assigned = assignments_by_chair(self._library)
         self._saved = {}
         for path in sorted(self._dir.glob("*.yaml")):
             try:
@@ -793,7 +796,7 @@ class EnsembleWidget(QWidget):
             self.problems_label.clear()
             self.notes_label.clear()
             return
-        check = check_band(self._band, self._groups, self._saved)
+        check = check_band(self._band, self._groups, self._saved, self._assigned)
         for i in range(self.chair_list.count()):
             label = self._band.chairs[i].label or "(no name)"
             self.chair_list.item(i).setText(("⚠ " if check.chair_errors.get(i) else "") + label)
