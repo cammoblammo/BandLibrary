@@ -52,7 +52,10 @@ list (flagged in builds) → missing.
 ## Planned work
 
 - Automatic part detection on import: design and owner decisions in
-  `docs/design/part-detection.md` (not built yet).
+  `docs/design/part-detection.md`. Stages 1-2 (text layer, local OCR) are
+  built in `lib/detect/`; stages 3-4 (AI, polish) are not. Check changes
+  with `python3 tools/detect_parts.py --score -v --ocr-cache <dir>` (OCR of
+  the whole library takes ~5 min uncached).
 
 ## Commands
 

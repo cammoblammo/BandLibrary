@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 import pymupdf
-from PyQt6.QtCore import Qt, QProcess
+from PyQt6.QtCore import Qt, QProcess, QThread, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap, QFont, QTextCursor, QKeySequence, QShortcut
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QSplitter, QVBoxLayout, QHBoxLayout,
@@ -22,7 +22,9 @@ from PyQt6.QtWidgets import (
 
 import yaml
 
-from .reading_groups import UNGROUPED_HEADING
+from .aliases import load_aliases
+from .detect import check_count, detect_parts, render
+from .reading_groups import UNGROUPED_HEADING, load_reading_groups
 
 
 # ---------------------------------------------------------------------------
@@ -438,6 +440,31 @@ class ManualEditor(QTextEdit):
 
 
 # ---------------------------------------------------------------------------
+# Background part detection
+# ---------------------------------------------------------------------------
+
+class DetectThread(QThread):
+    progress = pyqtSignal(int, int, str)  # page, of pages, "text" or "ocr"
+    done = pyqtSignal(object)        # lib.detect.Draft
+    failed = pyqtSignal(str)
+
+    def __init__(self, pdf_path: Path, aliases: dict[str, str], groups: dict):
+        super().__init__()
+        self.pdf_path = pdf_path
+        self.aliases = aliases
+        self.groups = groups
+
+    def run(self):
+        try:
+            draft = detect_parts(self.pdf_path, self.aliases, self.groups,
+                                 progress=self.progress.emit)
+        except Exception as e:
+            self.failed.emit(str(e))
+            return
+        self.done.emit(draft)
+
+
+# ---------------------------------------------------------------------------
 # Editor Widget (embeddable)
 # ---------------------------------------------------------------------------
 
@@ -451,9 +478,12 @@ class EditorWidget(QWidget):
     """
 
     def __init__(self, alias_labels: list[str], status_bar: QStatusBar | None = None,
-                 importer_path: Path | None = None, parent=None):
+                 importer_path: Path | None = None, aliases_path: Path | None = None,
+                 parent=None):
         super().__init__(parent)
         self._importer_path = importer_path or Path(__file__).parent.parent / "tools" / "import_piece.py"
+        self._aliases_path = aliases_path or Path(__file__).parent.parent / "config" / "aliases.yaml"
+        self._detect_thread: DetectThread | None = None
 
         # Use provided status bar or create internal one
         if status_bar is not None:
@@ -477,6 +507,12 @@ class EditorWidget(QWidget):
         open_pdf_btn = QPushButton("Open PDF…")
         open_pdf_btn.setFixedHeight(28)
         top_layout.addWidget(open_pdf_btn)
+
+        self.detect_btn = QPushButton("Detect Parts")
+        self.detect_btn.setFixedHeight(28)
+        self.detect_btn.setToolTip(
+            "Read the part names in the PDF and fill the part list with a draft to check")
+        top_layout.addWidget(self.detect_btn)
         top_layout.addStretch()
 
         layout.addWidget(top_toolbar)
@@ -576,6 +612,7 @@ class EditorWidget(QWidget):
 
         # Connections
         open_pdf_btn.clicked.connect(self.open_pdf)
+        self.detect_btn.clicked.connect(self.detect_parts)
         new_btn.clicked.connect(self.new_file)
         open_btn.clicked.connect(self.open_manual)
         save_btn.clicked.connect(self.editor.save)
@@ -652,6 +689,72 @@ class EditorWidget(QWidget):
             self.editor.load_file(p)
             self.file_label.setText(p.name)
             self._status.showMessage(f"Loaded: {p.name}")
+
+    def detect_parts(self):
+        if self.pdf_viewer._doc is None:
+            QMessageBox.warning(self, "Detect Parts", "Open a PDF first.")
+            return
+        if self.editor.toPlainText().strip():
+            r = QMessageBox.question(
+                self, "Detect Parts",
+                "Replace the part list with the detected parts?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if r != QMessageBox.StandardButton.Yes:
+                return
+        try:
+            aliases = load_aliases(self._aliases_path)
+            groups = load_reading_groups(self._aliases_path.parent / "reading_groups.yaml")
+        except Exception as e:
+            QMessageBox.critical(self, "Detect Parts", f"Could not read the configuration:\n{e}")
+            return
+
+        pdf_path = Path(self.pdf_viewer._doc.name)
+        thread = DetectThread(pdf_path, aliases, groups)
+        thread.progress.connect(
+            lambda page, total, stage: self._status.showMessage(
+                f"Detecting parts… reading page {page} of {total}" if stage == "text"
+                else f"Detecting parts… reading scanned page {page} of {total} (OCR)"))
+        thread.done.connect(self._on_detect_done)
+        thread.failed.connect(self._on_detect_failed)
+        self._detect_thread = thread
+        self.detect_btn.setEnabled(False)
+        self._status.showMessage("Detecting parts…")
+        thread.start()
+
+    def _on_detect_failed(self, message: str):
+        self.detect_btn.setEnabled(True)
+        self._status.showMessage("Part detection failed.", 5000)
+        QMessageBox.critical(self, "Detect Parts", f"Part detection failed:\n{message}")
+
+    def _on_detect_done(self, draft):
+        self.detect_btn.setEnabled(True)
+        if not draft.parts:
+            if draft.ocr_unavailable:
+                reason = ("This PDF looks like a scan, and scanned pages can't be "
+                          f"read: {draft.ocr_unavailable}.\n\n"
+                          "Map the parts by hand as usual.")
+            elif draft.text_pages == 0:
+                reason = ("No text could be read from this PDF.\n\n"
+                          "Map the parts by hand as usual.")
+            else:
+                reason = ("No part names were found in this PDF's text.\n\n"
+                          "Map the parts by hand as usual.")
+            self._status.showMessage("No parts detected.", 5000)
+            QMessageBox.information(self, "Detect Parts", reason)
+            return
+
+        self.editor.setPlainText(render(draft))
+        cursor = self.editor.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
+        self.editor.setTextCursor(cursor)
+        self.editor.setFocus()
+
+        checks = check_count(draft)
+        parts = f"{len(draft.parts)} part{'s' if len(draft.parts) != 1 else ''}"
+        flagged = (f"{checks} marked “check” — " if checks else "")
+        self._status.showMessage(
+            f"Detected {parts}: {flagged}check every line against the PDF before importing.")
 
     def run_importer(self):
         if self.pdf_viewer._doc is None:

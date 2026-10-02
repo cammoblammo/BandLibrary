@@ -1,6 +1,7 @@
 # Design: automatic part detection on import
 
-Status: **design only, not built.** Sketched 2026-10-01.
+Status: **stages 1-2 (text layer, local OCR) built** on branch
+`part-detection`, 2026-10-02. Stages 3-4 not built. Sketched 2026-10-01.
 
 ## Goal
 
@@ -146,6 +147,77 @@ lists (continuation pages, score pages, combined headers).
 - Accidentals missing from the text layer ("Clarinet in B")
 - One part shared by several chairs ("Beginners B♭")
 - Transposition shown only as "in B♭" with the number elsewhere
+
+## Stage 1 as built (2026-10-02)
+
+Score with `python3 tools/detect_parts.py --score [-v]`. Every part range
+on pages with text is found (109 of 142 parts in the 9 pieces with any
+text; the rest are on scanned pages and reported as gaps). Name
+differences are mostly the owner's choices (e.g. "Snare Drum" mapped as
+aux perc), so ranges are the measure that matters.
+
+Differences from the sketch above, found against the real PDFs:
+
+- **Notes go on their own line above the entry** (`# check: …`), not after
+  it: the manual parser only skips whole comment lines.
+- **Survey correction**: Low Rider has a text layer in a symbol-font
+  encoding (U+F020–F07E for ASCII); it is decoded, so 9 pieces have text,
+  not 8. Don't Stop Believin' and Old MacDonald have one text page each.
+- **Label finding uses a "slot"** (top / body / bottom zone + type size)
+  chosen by how many pages have a part name there, instead of a scoring of
+  repeated text. Cue names in the music ("T. Sax", "Triangle") fall outside
+  it. A known name printed in another style is accepted too (Highway to
+  Hell's drum and bass parts come from another source), unless the page
+  sits inside a part named on both sides of it (Things That Go Bump's
+  "Flute" title page inside "Flute or Oboe").
+- **Flats as separate glyphs** ("Part 1 in B" + "b" in a chord font) are
+  joined by merging spans on the same baseline.
+- **"Known" names** are those the aliases resolve, `Part N in X`, or whose
+  ID a reading group covers ("Flute 1" → `flute_1`). Others get a note.
+- **Bare `Part N in C`** keeps no clef and is flagged; no clef is guessed.
+  (The text layer does carry clef glyphs, e.g. `&` / `?` in Inkpen2, so a
+  clef *hint* would be possible later, if wanted.)
+- Module layout: `pages.py` holds the data classes; `score.py` compares a
+  draft with a manual file.
+
+## Stage 2 as built (2026-10-02)
+
+Pages with no real text (nothing but furniture such as a shop watermark)
+are read with Tesseract (`sources/ocr.py`, 200 dpi, `--psm 11`, words
+below 50% confidence dropped), then go through the same rules.
+
+Library score (`--score`): page ranges right for **232 of 287** parts, up
+from 109 with text only. Every ordinary scan (Hal Leonard and similar:
+Hound Dog, Hang On Sloopy, TWA, Power Rock, Trumpet Hero, Saints, IDK,
+Old MacDonald) is right or one part off. What OCR can't do:
+
+- **Nicholas Hare flexible series** (Rock Around the Clock, Yellow
+  Submarine, Sound of Silence) and Don't Stop Believin': 21 of 73. Small
+  boxed headers ("MELODY (Part 1) in C", "Part 4 in B♭ (𝄞)"), a clef
+  printed as a symbol, two-line headers ("3. in B♭" / "Clarinet"),
+  "2 — Easy B♭ Clarinet/Trumpet". Removing box lines before OCR helped
+  but stayed garbled. These are the case for the stage 3 AI reader.
+- Stylised title fonts (Highway to Hell pages 13-14).
+
+What it took, beyond the sketch:
+
+- **Margins read separately**: the top and bottom strips are OCR'd on
+  their own as well as the whole page; names are read more reliably
+  without music beside them. Whole-page lines are kept where the strips
+  found nothing. About a third more OCR time.
+- **Slots per source**: OCR word heights vary with the letters, so on
+  scanned pages the slot is the zone only, chosen separately from
+  text-layer pages (mixed PDFs like Highway to Hell).
+- **Name clean-up for OCR**: capitals to title case; "E>" → "Eb";
+  "tst"/"4st" → "1st"; "EbALTO" and "AltoSaxophone" split; "2nd Bb
+  Clarinet" → "Clarinet 2"; key prefixes that go without saying dropped
+  ("Bb Trumpet", "F Horn" → "French Horn").
+- **Score pages** need four staff names down the left margin, spread over
+  a quarter of the page (an aux percussion part lists four instruments
+  near the top).
+- Pages are read 4 at a time with Tesseract limited to one thread each:
+  Hound Dog (16 pages) takes ~18 s instead of 42 s.
+- `--ocr-cache DIR` on the scoring tool keeps OCR results between runs.
 
 ## Decisions (owner, 2026-10-01)
 

@@ -63,7 +63,8 @@ def save_config(config: dict) -> None:
 # ---------------------------------------------------------------------------
 
 class BandBookWindow(QMainWindow):
-    def __init__(self, alias_labels: list[str], config: dict):
+    def __init__(self, alias_labels: list[str], config: dict,
+                 aliases_path: Path | None = None):
         super().__init__()
         self._config = config
         self.setWindowTitle("BandBook")
@@ -88,6 +89,7 @@ class BandBookWindow(QMainWindow):
             alias_labels=alias_labels,
             status_bar=status,
             importer_path=importer_path,
+            aliases_path=aliases_path,
         )
         self.editor_widget.set_window_title_callback(
             lambda t: self.setWindowTitle(t)
@@ -411,7 +413,7 @@ def main():
 
     app = QApplication(sys.argv)
     app.setApplicationName("BandBook")
-    window = BandBookWindow(alias_labels, config)
+    window = BandBookWindow(alias_labels, config, args.aliases)
     window.show()
     sys.exit(app.exec())
 

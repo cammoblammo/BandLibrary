@@ -112,6 +112,14 @@ instrument-specific booklets automatically.
 - Automated test suite (`tests/`)
 - Re-importing a piece keeps its assignments where the parts still exist
 
+### Phase 7 — Automatic Part Detection (in progress)
+
+- Stage 1: **Detect Parts** in the Piece Importer drafts the part list from
+  the PDF's text layer, with `# check` notes; `tools/detect_parts.py` for
+  the command line and `--score` against the library
+- Stage 2: scanned pages read with local OCR (Tesseract)
+- Next: optional AI reader, polish (see `docs/design/part-detection.md`)
+
 ---
 
 ## Known Issues

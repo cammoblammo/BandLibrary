@@ -21,6 +21,10 @@ In the **Piece Importer** tab:
 1. Click **Open PDF…** (Ctrl+P) and choose the full set of parts as one PDF.
    Name the file after the piece first: the file name becomes the piece's
    name in the library (`Hound Dog.pdf` becomes `hound-dog`).
+   Click **Detect Parts** to get a draft part list (scans take a few
+   seconds a page), check every line against the PDF (especially lines
+   with a `# check` note above them), then skip to **2. Import it**. Or
+   map the parts by hand:
 2. Go to the first page of the first part and press **Enter**. A line like
    `: 3` appears with the page number.
 3. Type the part name, e.g. `Trumpet 1`. **Tab** cycles through known names.

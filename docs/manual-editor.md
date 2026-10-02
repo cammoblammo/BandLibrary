@@ -16,6 +16,8 @@ page numbers.
 ### Top toolbar
 
 - **Open PDF…** (Ctrl+P): choose the PDF containing all the parts
+- **Detect Parts**: read the part names in the PDF and fill the part list
+  with a draft to check (see "Detecting the parts" below)
 
 The PDF's file name becomes the piece's name in the library, so rename the
 file first if needed (`Hound Dog.pdf` becomes `hound-dog`).
@@ -37,6 +39,64 @@ The toolbar above it has:
 - The current file name, and how many aliases are loaded for autocomplete
 - **New**, **Open…**, **Save**, **Save As…**: work with `.manual.txt` files
 - **Force**, **Test** and **Git push** checkboxes, and **Import…**
+
+---
+
+## Detecting the parts
+
+**Detect Parts** can do most of the mapping for you. It reads PDFs made by
+notation software (MuseScore, Sibelius, Finale and so on) directly, and
+reads scanned pages with OCR (text recognition on this computer; nothing
+is sent anywhere). Scans take a few seconds a page; the status bar shows
+progress.
+
+1. Open the PDF and click **Detect Parts**. If the part list already has
+   text, BandBook asks before replacing it.
+2. The part list fills with a draft, for example:
+
+   ```
+   # check: title read from the PDF
+   Title: Going Quackers
+   # pages 1-6: score (skipped)
+   Flute 1: 7
+   # check: there is also a "Trombone 2": is this "Trombone 1"?
+   Trombone: 19
+   Trombone 2: 20
+   # check: clef not printed: add TC or BC
+   Part 4 in C: 17
+   ```
+
+3. Check every line against the PDF, starting with the `# check` notes
+   just above an entry. Fix names and page numbers by typing, or use the
+   usual Enter / Page Down steps below. Delete parts you don't want.
+4. Click **Import…** as usual. Lines starting with `#` are ignored, so the
+   notes can stay.
+
+What the notes mean:
+
+| Note | What to do |
+|------|-----------|
+| `title read from the PDF` | Check the title line; shorten it if needed |
+| `score (skipped)` | Pages with many staves; nothing to do |
+| `Read from scanned images (OCR)` | OCR makes mistakes: check those pages' names and page numbers closely |
+| `no text found` | Map these pages by hand |
+| `no part name found` | Usually a cover or notes page; map by hand if it is a part |
+| `page N shows no part name` | A page without a name was added to the part above it. Check it belongs there |
+| `read "in B" as "in Bb"` | The flat was missing from the PDF's text |
+| `clef not printed: add TC or BC` | Add the clef, or no chair will get the part automatically |
+| `not a known part name` | Rename it to a name the aliases know, or add an alias |
+| `is this "Trombone 1"?` | The PDF prints just "Trombone" beside a "Trombone 2" |
+| `used more than once` | Two parts have the same name; rename or remove one |
+
+Detection never guesses a clef or which chair should play a part (for
+example a "Beginners B♭" part shared by two chairs): set that up in
+**Assignments…** as usual.
+
+OCR copes with most scans, but not all: small names in boxes, stylised
+fonts and poor copies may not be read. Those pages show up as `no part
+name` notes or are added to the part before them, so check them by hand.
+If OCR isn't installed (`sudo apt install tesseract-ocr python3-pytesseract`),
+Detect Parts says so and leaves the part list alone.
 
 ---
 
