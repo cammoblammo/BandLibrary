@@ -360,6 +360,18 @@ class BuildWidget(QWidget):
         ensembles = sorted(self._ensembles_dir.glob("*.yaml"))
         for path in ensembles:
             self.ensemble_combo.addItem(path.stem, userData=path)
+        self.ensemble_combo.setToolTip("Select ensemble definition (edit bands in the Ensembles tab)")
+
+    def reload_ensembles(self):
+        """Re-read the band list (after the Ensembles tab saves or deletes one)."""
+        current = self.ensemble_combo.currentData()
+        self.ensemble_combo.blockSignals(True)
+        self._populate_ensemble_combo()
+        for i in range(self.ensemble_combo.count()):
+            if self.ensemble_combo.itemData(i) == current:
+                self.ensemble_combo.setCurrentIndex(i)
+        self.ensemble_combo.blockSignals(False)
+        self._on_ensemble_changed(self.ensemble_combo.currentIndex())
 
     def _on_ensemble_changed(self, index):
         self._on_library_selection_changed()

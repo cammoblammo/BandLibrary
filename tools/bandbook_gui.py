@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (
 
 from lib.editor_widget import EditorWidget, load_alias_labels
 from lib.build_widget import BuildWidget
+from lib.ensemble_widget import EnsembleWidget
 from lib.help_window import HelpWindow
 from lib.report import build_report
 from lib.report_html import render_html
@@ -104,6 +105,12 @@ class BandBookWindow(QMainWindow):
         )
         tabs.addTab(self.build_widget, "Booklet Builder")
 
+        # Ensembles tab: saving a band refreshes the Booklet Builder's list
+        self.ensemble_widget = EnsembleWidget(status_bar=status)
+        self.ensemble_widget.ensembles_changed.connect(self.build_widget.reload_ensembles)
+        tabs.addTab(self.ensemble_widget, "Ensembles")
+        self._tabs = tabs
+
         self.setCentralWidget(tabs)
         self._build_menu()
         self._apply_style()
@@ -111,6 +118,7 @@ class BandBookWindow(QMainWindow):
         # Restore last active tab
         last_tab = config.get("last_tab", 0)
         tabs.setCurrentIndex(last_tab)
+        self._last_tab = tabs.currentIndex()
         tabs.currentChanged.connect(self._on_tab_changed)
 
     def _build_menu(self):
@@ -176,12 +184,28 @@ class BandBookWindow(QMainWindow):
         dlg.exec()
 
     def _on_tab_changed(self, index: int):
+        # Leaving the Ensembles tab with unsaved changes: builds would use
+        # the saved band, so offer to go back and save
+        leaving = self._tabs.widget(self._last_tab)
+        if leaving is self.ensemble_widget and self.ensemble_widget.unsaved_band():
+            r = QMessageBox.question(
+                self, "Unsaved band",
+                f"{self.ensemble_widget.unsaved_band()} has unsaved changes. Builds use "
+                "the saved version.\n\nGo back to the Ensembles tab to save them?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes)
+            if r == QMessageBox.StandardButton.Yes:
+                self._tabs.blockSignals(True)
+                self._tabs.setCurrentIndex(self._last_tab)
+                self._tabs.blockSignals(False)
+                return
+        self._last_tab = index
         self._config["last_tab"] = index
         save_config(self._config)
 
     def closeEvent(self, event):
         # Closing while a background job runs would kill BandBook mid-job
-        busy = self.editor_widget.is_busy()
+        busy = self.editor_widget.is_busy() or self.ensemble_widget.is_busy()
         build = getattr(self.build_widget, "_build_thread", None)
         if busy is None and build is not None and build.isRunning():
             busy = "building booklets"
@@ -197,6 +221,16 @@ class BandBookWindow(QMainWindow):
         self._config["window_width"] = self.width()
         self._config["window_height"] = self.height()
         save_config(self._config)
+
+        if self.ensemble_widget.unsaved_band():
+            r = QMessageBox.question(
+                self, "Unsaved band",
+                f"Discard your unsaved changes to {self.ensemble_widget.unsaved_band()}?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No)
+            if r != QMessageBox.StandardButton.Yes:
+                event.ignore()
+                return
 
         if self.editor_widget.prompt_save_on_close():
             event.accept()
@@ -278,10 +312,12 @@ class BandBookWindow(QMainWindow):
                 background: #1e4a2e; color: #a6e3a1; border: 1px solid #40a060;
             }
             QPushButton#importBtn:hover { background: #2a5e3a; border-color: #50c070; }
+            QPushButton#importBtn:disabled { background: #2a2a3a; color: #6c7086; border-color: #45475a; }
             QPushButton#buildBtn {
                 background: #1e3a5f; color: #89b4fa; border: 1px solid #4080c0;
             }
             QPushButton#buildBtn:hover { background: #2a4e7a; border-color: #5090d0; }
+            QPushButton#buildBtn:disabled { background: #2a2a3a; color: #6c7086; border-color: #45475a; }
             QPushButton#buildBtn:disabled {
                 background: #1e1e2e; color: #585b70; border-color: #313244;
             }

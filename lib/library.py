@@ -59,7 +59,19 @@ def load_ensemble(
         groups = load_reading_groups(groups_path or default_groups_path(path))
     except ValueError as exc:
         raise LibraryError(str(exc)) from exc
+    return parse_ensemble(data, groups, str(path))
 
+
+def parse_ensemble(
+    data: dict,
+    groups: dict,
+    path: str = "the ensemble",
+) -> tuple[str, str, list[EnsemblePart]]:
+    """
+    Check an ensemble held as data (as read from its YAML file) and return
+    (ensemble_name, band_name, parts). The Ensembles tab uses this for a
+    band being edited, so it follows exactly the rules of loading a file.
+    """
     ensemble_meta = data.get("ensemble")
     parts_raw = data.get("parts")
 

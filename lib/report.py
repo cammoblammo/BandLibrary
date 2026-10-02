@@ -16,7 +16,7 @@ from .library import list_pieces, load_ensemble, load_piece
 from .matcher import match_part
 from .models import EnsemblePart, MatchResult, Piece, assigned_ids
 from .reading_groups import can_read, default_groups_path, is_flex, load_reading_groups
-from .validator import check_readability
+from .validator import check_own_parts, check_readability
 
 CLEF_TOKENS = {"tc", "bc"}
 KEY_TOKENS = {"c", "bb", "eb", "f", "g", "d", "a", "ab", "db"}
@@ -134,6 +134,8 @@ def build_report(library: Path, ensemble_paths: list[Path]) -> Report:
         groups = load_reading_groups(default_groups_path(path))
         for problem in check_readability(parts, groups):
             findings.append(Finding("warning", "Chair lists a part it can't read", problem, key))
+        for problem in check_own_parts(parts, groups):
+            findings.append(Finding("info", "Chair only gets substitutes", problem, key))
 
     findings.extend(_library_findings(library_ids))
     findings.extend(_assignment_findings(pieces, ensembles))

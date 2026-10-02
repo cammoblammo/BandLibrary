@@ -158,23 +158,35 @@ def validate_piece(
     return data
 
 
+def check_own_parts(
+    ensemble_parts: list[EnsemblePart],
+    groups: dict[str, ReadingGroup],
+) -> list[str]:
+    """
+    Chairs whose own ID is in none of the groups they read. Harmless (the
+    chair relies on its substitutes; e.g. a new "Tuba 2" chair), so callers
+    report these as warnings.
+    """
+    return [
+        f"{ep.label}: its own part {ep.id!r} is not in the groups it reads "
+        f"({', '.join(ep.reads)}), so it only gets substitutes"
+        for ep in ensemble_parts
+        if ep.reads and not ep.takes_all and not can_read(ep.id, ep.reads, groups)
+    ]
+
+
 def check_readability(
     ensemble_parts: list[EnsemblePart],
     groups: dict[str, ReadingGroup],
 ) -> list[str]:
     """
-    Return problems where a chair lists a part outside the groups it reads.
-    Chairs with no `reads` are not checked.
+    Return problems where a chair lists a substitute outside the groups it
+    reads. Chairs with no `reads` are not checked.
     """
     problems: list[str] = []
     for ep in ensemble_parts:
         if not ep.reads:
             continue
-        if not can_read(ep.id, ep.reads, groups):
-            problems.append(
-                f"{ep.label}: its own part {ep.id!r} is not in the groups it reads "
-                f"({', '.join(ep.reads)})"
-            )
         for kind, specs in (("prefer", ep.prefer_spec), ("compromise", ep.compromise_spec)):
             for spec in specs:
                 if is_flex(spec):
@@ -228,6 +240,8 @@ def validate_ensemble(
 
     for problem in check_readability(ensemble_parts, groups):
         result.error(f"Ensemble part {problem}")
+    for problem in check_own_parts(ensemble_parts, groups):
+        result.warning(f"Ensemble part {problem}")
 
     if not pieces_data:
         return

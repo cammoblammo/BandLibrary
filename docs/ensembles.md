@@ -1,9 +1,10 @@
 # Setting Up Ensembles
 
 An ensemble file lists a band's chairs and the rules for which part each
-chair gets when a piece has no part of its own. There is no editing screen
-for ensembles in the app; you change them in a text editor. This page shows
-how.
+chair gets when a piece has no part of its own. Create and edit bands in
+the **Ensembles** tab (see **Ensembles Tab** in Help); this page explains
+the ideas behind it and the file it writes, and how to edit reading groups,
+which the tab doesn't do.
 
 The files:
 
@@ -145,8 +146,9 @@ chair lists a part outside the groups it reads.
 
 ### Adding a new ensemble
 
-Copy an existing file in `config/ensembles/`, give it a new file name, and
-change `id`, `name` and `band` at the top:
+In the **Ensembles** tab, click **New (copy)…**. By hand: copy an existing
+file in `config/ensembles/`, give it a new file name, and change `id`,
+`name` and `band` at the top:
 
 ```yaml
 schema_version: 2
@@ -164,8 +166,10 @@ Build or review.
 ### Renaming a chair
 
 The chair ID is also the booklet file name and the key for its assignments.
-If you change an ID, assignments made under the old ID no longer apply. The
-Consistency Report lists them as assignments for an unknown chair.
+Change it with **Change…** in the Ensembles tab, which offers to carry its
+assignments over. Changed by hand, assignments made under the old ID no
+longer apply; the Consistency Report lists them as assignments for an
+unknown chair.
 
 ---
 

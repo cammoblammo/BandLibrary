@@ -85,6 +85,7 @@ DOC_FILES = [
     ("Piece Importer",       "manual-editor.md"),
     ("Booklet Builder",      "booklet-builder.md"),
     ("Assignment Editor",    "assignment-editor.md"),
+    ("Ensembles Tab",        "ensemble-editor.md"),
     ("Setting Up Ensembles", "ensembles.md"),
     ("Add Part",             "add-part.md"),
     ("Library Check",        "validator.md"),

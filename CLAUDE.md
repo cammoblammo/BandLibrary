@@ -47,6 +47,9 @@ list (flagged in builds) → missing.
   is an LFS pointer, not a broken file.
 - The GUI importer's **Git push** box is on by default: each import commits
   `library/<slug>/` and pushes the current branch.
+- The **Ensembles** tab rewrites `config/ensembles/<band>.yaml` in a
+  standard layout (`lib/ensemble_io.py`): hand-written comments in those
+  files are lost on the next save from the app.
 - `output/` and `test-output/` are build output and not tracked.
 - `test/` is a sample library (used by Test mode); `testdata/` holds its
   source PDFs and manual files; `tests/` is the test suite.

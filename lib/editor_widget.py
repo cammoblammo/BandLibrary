@@ -512,6 +512,50 @@ class GitThread(QThread):
         return f"Imported and pushed '{title}'."
 
 
+class CommitThread(QThread):
+    """
+    Commit some paths (additions, changes or deletions) with a message and
+    push the current branch, off the UI thread. Used for saving bands.
+    """
+    progress = pyqtSignal(str)
+    done = pyqtSignal(bool, str)     # ok, message
+
+    def __init__(self, project_root: Path, paths: list[Path], message: str, what: str):
+        super().__init__()
+        self.project_root = project_root
+        self.paths = [str(p) for p in paths]
+        self.message = message
+        self.what = what
+
+    def _git(self, *args: str, timeout: int = 15):
+        import subprocess
+        return subprocess.run(["git", *args], cwd=str(self.project_root),
+                              capture_output=True, text=True, timeout=timeout)
+
+    def run(self):
+        try:
+            self.done.emit(True, self._commit_and_push())
+        except Exception as e:
+            self.done.emit(False, str(e))
+
+    def _commit_and_push(self) -> str:
+        self.progress.emit(f"Committing {self.what}…")
+        # -A stages deletions too (a deleted band)
+        result = self._git("add", "-A", "--", *self.paths)
+        if result.returncode != 0:
+            raise RuntimeError(f"git add failed:\n{result.stderr.strip()}")
+        if self._git("diff", "--cached", "--quiet", "--", *self.paths).returncode == 0:
+            return f"No changes to commit for {self.what}."
+        result = self._git("commit", "-m", self.message, "--", *self.paths)
+        if result.returncode != 0:
+            raise RuntimeError(f"git commit failed:\n{result.stderr.strip()}")
+        self.progress.emit(f"Pushing {self.what} to GitHub…")
+        result = self._git("push", "origin", "HEAD", timeout=300)
+        if result.returncode != 0:
+            raise RuntimeError(f"git push failed:\n{result.stderr.strip()}")
+        return f"Saved and pushed {self.what}."
+
+
 class DetectThread(QThread):
     progress = pyqtSignal(int, int, str)  # page, of pages, "text" or "ocr"
     done = pyqtSignal(object)        # lib.detect.Draft

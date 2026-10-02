@@ -1,7 +1,12 @@
 # Design: an Ensembles tab for creating and editing bands
 
-Status: **design approved, being built.** Branch `ensemble-editor`,
-2026-10-02. Nothing built yet.
+Status: **built** on branch `ensemble-editor`, 2026-10-02, awaiting
+owner review.
+
+As built, beyond the sketch: a chair whose own ID is in none of its
+groups (a new "Tuba 2") is a note, not an error, in the tab and in Check
+Library alike (`check_own_parts`); substitutes it can't read stay errors.
+Leaving the tab with unsaved changes offers to go back and save.
 
 ## Why
 
