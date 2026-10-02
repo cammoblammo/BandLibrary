@@ -138,6 +138,14 @@ instrument-specific booklets automatically.
 - Library browser filter/search
 - Part duplication (e.g. multiple copies of trumpet parts)
 - Divider pages between pieces
+- Ensemble editor: create and edit bands in the app instead of editing
+  `config/ensembles/<name>.yaml` by hand. Add, remove and reorder chairs;
+  pick reading groups from a list; build `prefer` / `compromise` lists from
+  part IDs that exist in the library (and `flex N`); check every chair can
+  read its lists. Before saving, show what changes for every chair in every
+  piece (the before/after grid used for rule changes). Saving rewrites the
+  YAML, so decide how to keep the explanatory comments at the top of the
+  files.
 
 ---
 
