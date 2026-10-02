@@ -360,6 +360,78 @@ class BadGuyTests(unittest.TestCase):
         self.assertIn("(this one for Tuba); also pages 25-26, for Trombone/Baritone", second)
 
 
+class LearnNamesTests(unittest.TestCase):
+    """Remembering names the owner corrected in a draft."""
+
+    def setUp(self):
+        self.tmp = TempDir()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def draft(self, *labels):
+        from lib.detect.pages import DraftPart
+        return [DraftPart(label, parse_name(label, ALIASES).part_id if parse_name(label, ALIASES)
+                          else label.lower(), n, n)
+                for n, label in enumerate(labels, 1)]
+
+    def imported(self, *labels):
+        from lib.aliases import normalise_part_id
+        return [{"label": l, "id": normalise_part_id(l, ALIASES), "pages": [n, n]}
+                for n, l in enumerate(labels, 1)]
+
+    def test_only_renames_that_change_the_part_are_offered(self):
+        from lib.detect.learn import suggestions
+        offered = suggestions(
+            self.draft("Trombone/Baritone B.C./Bassoon", "Drum Set", "Flute", "Part 4 in C",
+                       "Horn"),
+            self.imported("Trombone", "Drum kit", "flute", "Part 4 in C BC", "Tenor Horn"),
+            {**ALIASES, "horn": "french_horn"})
+        self.assertEqual([(s.printed, s.part_id, s.tick) for s in offered], [
+            ("Trombone/Baritone B.C./Bassoon", "trombone", True),
+            ("Drum Set", "drum_kit", True),
+            ("Horn", "tenor_horn", False),          # would change what "Horn" means
+        ])
+        self.assertEqual(offered[2].existing, "french_horn")
+
+    def test_remembering_adds_and_changes_aliases(self):
+        from lib.detect.learn import Suggestion, remember
+        path = self.tmp.write("aliases.yaml",
+                              'schema_version: 1\n\naliases:\n  "Horn": french_horn\n'
+                              '  "horn": french_horn\n  "Flute": flute\n')
+        remember(path, [Suggestion("Drum Set", "drum_kit", "Drum kit", None, True),
+                        Suggestion("Horn", "tenor_horn", "Tenor Horn", "french_horn", False)])
+        aliases = load_aliases(path)
+        self.assertEqual((aliases["drum set"], aliases["horn"], aliases["flute"]),
+                         ("drum_kit", "tenor_horn", "flute"))
+        self.assertIn("Learned from imports", path.read_text())
+        # A second time adds under the same heading
+        remember(path, [Suggestion("Bass Drum Set", "drum_kit", "Drum kit", None, True)])
+        self.assertEqual(path.read_text().count("Learned from imports"), 1)
+
+    def test_after_import_the_names_are_offered_and_remembered(self):
+        from unittest import mock
+        from PyQt6.QtWidgets import QApplication, QDialog, QStatusBar
+        from lib.detect import Draft
+        from lib.editor_widget import EditorWidget, LearnNamesDialog
+        app = LearnNamesTests.app = QApplication.instance() or QApplication([])
+        aliases_path = self.tmp.write("config/aliases.yaml",
+                                      (CONFIG / "aliases.yaml").read_text())
+        pdf = self.tmp.write("Some Piece.pdf", "x")
+        self.tmp.write("library/some-piece/some-piece.manual.txt", "Drum kit: 1\nFlute: 2\n")
+        importer = self.tmp.write("tools/import_piece.py", "")
+        widget = EditorWidget([], status_bar=QStatusBar(), importer_path=importer,
+                              aliases_path=aliases_path)
+        widget._draft = Draft(None, self.draft("Drum Set", "Flute"), [], 2, 2)
+        widget._draft_pdf = pdf
+        with mock.patch.object(LearnNamesDialog, "exec", return_value=QDialog.DialogCode.Accepted):
+            changed = widget._offer_learning(pdf)
+        self.assertEqual(changed, [aliases_path])
+        self.assertEqual(load_aliases(aliases_path)["drum set"], "drum_kit")
+        self.assertIsNone(widget._draft)                 # offered once
+        self.assertEqual(widget._offer_learning(pdf), [])
+
+
 class DetectButtonTests(unittest.TestCase):
     """The Piece Importer's Detect Parts button, without a display."""
 

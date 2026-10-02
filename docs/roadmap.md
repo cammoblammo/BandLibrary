@@ -118,7 +118,10 @@ instrument-specific booklets automatically.
   the PDF's text layer, with `# check` notes; `tools/detect_parts.py` for
   the command line and `--score` against the library
 - Stage 2: scanned pages read with local OCR (Tesseract)
-- Next: optional AI reader, polish (see `docs/design/part-detection.md`)
+- Learning names: after importing a draft, offers to remember corrected
+  part names as aliases
+- Next: optional AI reader, spotting two parts on one page
+  (see `docs/design/part-detection.md`)
 
 ### Phase 8 — Ensembles Tab
 

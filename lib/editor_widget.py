@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QApplication, QWidget, QSplitter, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QTextEdit, QFileDialog, QMessageBox,
     QScrollArea, QFrame, QStatusBar, QCheckBox, QToolBar, QMainWindow, QProgressBar,
+    QDialog,
 )
 
 import yaml
@@ -459,16 +460,58 @@ def current_branch(project_root: Path) -> str | None:
     return branch if result.returncode == 0 and branch and branch != "HEAD" else None
 
 
+class LearnNamesDialog(QDialog):
+    """Offer to remember part names corrected in a Detect Parts draft."""
+
+    def __init__(self, offered, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Remember these names?")
+        self.setMinimumWidth(560)
+        self._offered = offered
+        self._boxes: list[QCheckBox] = []
+        layout = QVBoxLayout(self)
+        layout.addWidget(QLabel(
+            "You renamed these parts from the Detect Parts draft. Remember the\n"
+            "printed names, so next time they import as the part you chose?\n"
+            "Untick any that were only right for this piece."))
+        for s in offered:
+            text = f'"{s.printed}"  →  {s.part_id}'
+            if s.existing:
+                text += f"   (now means {s.existing}; you used {s.final_label})"
+            box = QCheckBox(text)
+            box.setChecked(s.tick)
+            box.setToolTip(f"You imported it as \"{s.final_label}\"")
+            layout.addWidget(box)
+            self._boxes.append(box)
+        buttons = QHBoxLayout()
+        buttons.addStretch()
+        later = QPushButton("Not now")
+        ok = QPushButton("Remember")
+        ok.setObjectName("importBtn")
+        later.clicked.connect(self.reject)
+        ok.clicked.connect(self.accept)
+        buttons.addWidget(later)
+        buttons.addWidget(ok)
+        layout.addSpacing(6)
+        layout.addLayout(buttons)
+
+    def chosen(self):
+        return [s for s, box in zip(self._offered, self._boxes) if box.isChecked()]
+
+
 class GitThread(QThread):
     """Commit an imported piece and push the current branch, off the UI thread."""
     progress = pyqtSignal(str)
     done = pyqtSignal(bool, str)     # ok, message
 
-    def __init__(self, project_root: Path, piece_dir: Path, slug: str):
+    def __init__(self, project_root: Path, piece_dir: Path, slug: str,
+                 extra_paths: list[Path] | None = None):
         super().__init__()
         self.project_root = project_root
         self.piece_dir = piece_dir
         self.slug = slug
+        # e.g. config/aliases.yaml with names learned from this import
+        self.extra_paths = [str(p) for p in extra_paths or []]
 
     def _git(self, *args: str, timeout: int = 15):
         import subprocess
@@ -483,13 +526,14 @@ class GitThread(QThread):
 
     def _commit_and_push(self) -> str:
         piece = str(self.piece_dir)
+        paths = [piece, *self.extra_paths]
         self.progress.emit("Committing the imported piece…")
-        result = self._git("add", piece)
+        result = self._git("add", *paths)
         if result.returncode != 0:
             raise RuntimeError(f"git add failed:\n{result.stderr.strip()}")
 
         # Nothing to commit if the re-import produced identical files
-        if self._git("diff", "--cached", "--quiet", "--", piece).returncode == 0:
+        if self._git("diff", "--cached", "--quiet", "--", *paths).returncode == 0:
             return f"No changes to commit for {self.slug}."
 
         title = self.slug
@@ -500,7 +544,8 @@ class GitThread(QThread):
 
         # Pathspec limits the commit to this piece, ignoring anything else
         # that happens to be staged
-        result = self._git("commit", "-m", f"Import: {title}", "--", piece)
+        message = f"Import: {title}" + (" (and learned part names)" if self.extra_paths else "")
+        result = self._git("commit", "-m", message, "--", *paths)
         if result.returncode != 0:
             raise RuntimeError(f"git commit failed:\n{result.stderr.strip()}")
 
@@ -597,6 +642,9 @@ class EditorWidget(QWidget):
         self._importer_path = importer_path or Path(__file__).parent.parent / "tools" / "import_piece.py"
         self._aliases_path = aliases_path or Path(__file__).parent.parent / "config" / "aliases.yaml"
         self._detect_thread: DetectThread | None = None
+        # The last Detect Parts draft and its PDF, to learn corrected names
+        self._draft = None
+        self._draft_pdf: Path | None = None
         self._git_thread: GitThread | None = None
 
         # Use provided status bar or create internal one
@@ -869,6 +917,8 @@ class EditorWidget(QWidget):
 
     def _on_detect_done(self, draft):
         self.detect_btn.setEnabled(True)
+        if draft.parts:
+            self._draft, self._draft_pdf = draft, self._detect_thread.pdf_path
         self._idle(f"✓ Detected {len(draft.parts)} part{'s' if len(draft.parts) != 1 else ''}"
                    if draft.parts else "No parts detected", ok=bool(draft.parts))
         if not draft.parts:
@@ -1031,9 +1081,12 @@ class EditorWidget(QWidget):
             if "Unaliased labels" in stdout or UNGROUPED_HEADING in stdout:
                 self._show_unaliased_dialog(stdout)
 
+            # Offer to remember names corrected in the Detect Parts draft
+            learned = self._offer_learning(pdf_file)
+
             # Git commit and push if requested (skipped in test mode)
             if pushing:
-                self._git_commit_push(pdf_file)
+                self._git_commit_push(pdf_file, learned)
         else:
             self._idle("Import failed", ok=False)
             detail = stderr or stdout or "No output."
@@ -1101,12 +1154,48 @@ class EditorWidget(QWidget):
 
         dlg.exec()
 
-    def _git_commit_push(self, pdf_file: Path):
+    def _offer_learning(self, pdf_file: Path) -> list[Path]:
+        """
+        After an import from a Detect Parts draft, offer to remember the
+        names the owner corrected as aliases. Returns files changed.
+        """
+        from .detect.learn import remember, suggestions
+        from .manual import parse_manual_file
+        from .utils import slugify
+        draft, self._draft = self._draft, None          # offer once per draft
+        if draft is None or self._draft_pdf is None \
+                or self._draft_pdf.resolve() != pdf_file.resolve():
+            return []
+        slug = slugify(pdf_file.stem)
+        library = self._importer_path.parent.parent / (
+            "test" if self.test_checkbox.isChecked() else "library")
+        try:
+            aliases = load_aliases(self._aliases_path)
+            _, imported, _ = parse_manual_file(library / slug / f"{slug}.manual.txt", aliases)
+        except Exception:
+            return []
+        offered = suggestions(draft.parts, imported, aliases)
+        if not offered:
+            return []
+        dialog = LearnNamesDialog(offered, parent=self)
+        if dialog.exec() != QDialog.DialogCode.Accepted or not dialog.chosen():
+            return []
+        try:
+            count = remember(self._aliases_path, dialog.chosen())
+            load_aliases(self._aliases_path)            # still a valid file
+        except Exception as e:
+            QMessageBox.critical(self, "Remember names", f"Could not update the aliases:\n{e}")
+            return []
+        self.editor._alias_labels = load_alias_labels(self._aliases_path)
+        self._status.showMessage(f"Remembered {count} part name(s) for next time.", 6000)
+        return [self._aliases_path]
+
+    def _git_commit_push(self, pdf_file: Path, extra_paths: list[Path] | None = None):
         """Commit the new library entry and push the current branch, in the background."""
         from .utils import slugify
         slug = slugify(pdf_file.stem)
         project_root = self._importer_path.parent.parent
-        thread = GitThread(project_root, project_root / "library" / slug, slug)
+        thread = GitThread(project_root, project_root / "library" / slug, slug, extra_paths)
         thread.progress.connect(self._busy)
         thread.done.connect(self._on_git_done)
         self._git_thread = thread

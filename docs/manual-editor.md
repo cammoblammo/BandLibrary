@@ -104,6 +104,30 @@ name` notes or are added to the part before them, so check them by hand.
 If OCR isn't installed (`sudo apt install tesseract-ocr python3-pytesseract`),
 Detect Parts says so and leaves the part list alone.
 
+### Learning names you correct
+
+If you renamed parts in a Detect Parts draft, after **Import…** BandBook
+offers to remember them:
+
+```
+☑ "Trombone/Baritone B.C./Bassoon"  →  trombone
+☑ "Drum Set"  →  drum_kit
+☐ "Horn"  →  tenor_horn   (now means french_horn; you used Tenor Horn)
+```
+
+Ticked names are added to `config/aliases.yaml` (under "Learned from
+imports"), so the next piece that prints them imports as the part you chose,
+keeping the printed name as its label. Untick any that were only right for
+this piece; **Not now** remembers nothing. A name that already means another
+part starts unticked, and ticking it changes that alias. With **Git push**
+ticked, the new names are committed with the piece.
+
+Only renames that change which part it is are offered: not page-number
+changes, not a clef added to "Part 4 in C", and not a different spelling of
+the same part. A combined part such as "Trombone/Baritone" needs only one
+part: the other chairs (Baritone, Euphonium) reach it through their
+Prefers lists.
+
 ---
 
 ## Mapping the parts

@@ -105,8 +105,12 @@ GUI: a button and a `QThread` in `lib/editor_widget.py`, following the
    default for scans.
 3. **Optional AI reader.** For scans OCR can't handle. Off unless chosen for
    the current import (see "AI and copyright" below).
-4. **Polish.** Spot two parts on one page; learn names the user corrects
-   (offer to add them to `aliases.yaml`).
+4. **Polish.** Spot two parts on one page (not built); learn names the user
+   corrects (**built** 2026-10-02, `lib/detect/learn.py`: after an import
+   from a draft, renames that change the part ID are offered as aliases,
+   ticked unless they'd change an existing alias; the alias keeps the
+   printed name and points it at one ID: a combined "Trombone/Baritone"
+   part is `trombone`, and the other chairs reach it through their lists).
 
 Title detection is part of stage 1: the largest text on the first page with
 a text layer (or the most common non-instrument header text) becomes the

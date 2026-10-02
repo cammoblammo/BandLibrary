@@ -76,6 +76,20 @@ class GitThreadTests(unittest.TestCase):
         self.assertTrue(any("Pushing" in p for p in progress))
         self.assertEqual(git(self.remote, "log", "-1", "--format=%s"), "Import: Bad Guy")
 
+    def test_learned_names_go_in_the_same_commit(self):
+        aliases = self.repo / "aliases.yaml"
+        aliases.write_text("aliases:\n  \"Drum Set\": drum_kit\n")
+        piece = self.repo / "library" / "bad-guy"
+        piece.mkdir(parents=True, exist_ok=True)
+        (piece / "bad-guy.yaml").write_text("piece:\n  title: Bad Guy\n")
+        thread = GitThread(self.repo, piece, "bad-guy", [aliases])
+        thread.start()
+        thread.wait()
+        APP.processEvents()
+        self.assertEqual(git(self.remote, "log", "-1", "--format=%s"),
+                         "Import: Bad Guy (and learned part names)")
+        self.assertIn("aliases.yaml", git(self.remote, "show", "--name-only", "--format=", "HEAD"))
+
     def test_current_branch(self):
         self.assertEqual(current_branch(self.repo),
                          git(self.repo, "rev-parse", "--abbrev-ref", "HEAD"))
