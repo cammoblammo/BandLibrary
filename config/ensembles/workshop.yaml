@@ -5,17 +5,20 @@ ensemble:
   name: WORKSHOP
   band: South-East Sounds Workshop
 
-# Each chair:
+# Written by BandBook (Ensembles tab). Each chair:
 #   reads:      reading groups (config/reading_groups.yaml) this chair can play
 #   prefer:     good substitutes when the piece has no part for this chair, best first
 #   compromise: readable but not ideal (range, style); used last and flagged in builds
+#   takes: all  the chair gets every part it reads, in PDF order, instead of one
+#               part (the Percussion chair: percussionists move between
+#               instruments); a piece's assignment can list the parts instead
 # "flex N" means part N of a flexible arrangement, in any group the chair reads.
 
 parts:
-  - id: flute_1
+  - id: flute
     label: Flute 1
     reads: [c_treble]
-    prefer: [flute, flex 1]
+    prefer: [flute_1, flex 1]
     compromise: [mallets, keyboard_percussion, tuned_percussion, bells, glockenspiel, xylophone, marimba, vibraphone, chimes]
 
   - id: flute_2
@@ -70,10 +73,10 @@ parts:
     reads: [bb_treble]
     prefer: [trumpet_2, trumpet_1, flex 2]
 
-  - id: trombone_1
+  - id: trombone
     label: Trombone 1
     reads: [c_bass]
-    prefer: [trombone, baritone, euphonium, flex 3, flex 4]
+    prefer: [trombone_1, baritone, euphonium, flex 3, flex 4]
 
   - id: trombone_2
     label: Trombone 2
@@ -108,8 +111,6 @@ parts:
     prefer: [keyboard, mallets, keyboard_percussion, tuned_percussion, bells, glockenspiel, xylophone, marimba, vibraphone, chimes]
     compromise: [flute]
 
-  # Every percussion part in each piece, in PDF order: percussionists move
-  # between instruments. A piece's assignment can list the parts instead.
   - id: percussion
     label: Percussion
     reads: [percussion]
