@@ -70,3 +70,6 @@ aliases:
   "Auxiliary percussion": auxiliary_percussion
   "Aux Percussion": auxiliary_percussion
   "Aux perc": auxiliary_percussion
+
+  # Learned from imports (Detect Parts drafts you corrected)
+  "Trombone/Baritone/Bassoon": trombone
