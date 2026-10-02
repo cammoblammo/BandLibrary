@@ -85,6 +85,14 @@ groups:
       - french_horn_*
     flex: ["part_{n}_in_f"]
 
+  # No chair reads alto clef yet; the group makes viola a known part, so
+  # pieces that include one (for another ensemble) don't flag it.
+  c_alto:
+    label: C alto clef
+    parts:
+      - viola
+      - viola_*
+
   percussion:
     label: Percussion
     # Every part a percussionist might be given. The Percussion chair takes

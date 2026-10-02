@@ -83,6 +83,7 @@ glockenspiel, xylophone, marimba, vibraphone, chimes]`.
 | `c_treble` | C treble clef: flute, oboe, violin, guitar, piano, and tuned percussion (mallets, bells, glockenspiel, xylophone, marimba, vibraphone, keyboard/tuned percussion, chimes), which can double for these chairs through their `prefer` / `compromise` lists |
 | `c_bass` | C bass clef: trombone, baritone, euphonium, tuba, bassoon, cello, bass guitar, piano |
 | `f_treble` | F: French horn |
+| `c_alto` | C alto clef: viola (no chair reads it yet) |
 | `percussion` | Every percussion part: drum kit, snare and bass drum, timpani, auxiliary, mallets, bells, glockenspiel, chimes, `Percussion 1`… |
 
 A chair can read more than one group: piano reads `c_treble` and `c_bass`.

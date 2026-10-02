@@ -61,11 +61,11 @@ class ReadingGroupTests(unittest.TestCase):
         parts = [
             {"id": "flute", "label": "Flute"},
             {"id": "part_1_in_c", "label": "Part 1 in C"},
-            {"id": "viola", "label": "Viola"},
+            {"id": "kazoo", "label": "Kazoo"},
         ]
         self.assertEqual(
             ungrouped_parts(parts, self.groups),
-            [("Part 1 in C", "part_1_in_c"), ("Viola", "viola")],
+            [("Part 1 in C", "part_1_in_c"), ("Kazoo", "kazoo")],
         )
 
 
