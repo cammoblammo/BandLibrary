@@ -42,6 +42,7 @@ class NameMatch:
     part_id: str
     known: bool                     # resolved by an alias or the "Part N in X" pattern
     notes: list[str] = field(default_factory=list)
+    printed_for: str | None = None  # instruments printed with it: "Part 5 in C, Tuba"
 
 
 @dataclass
@@ -63,6 +64,8 @@ class DraftPart:
     end: int
     known: bool = True
     notes: list[str] = field(default_factory=list)
+    clef: str | None = None         # first staff's clef, if the PDF shows it
+    printed_for: str | None = None
 
 
 @dataclass

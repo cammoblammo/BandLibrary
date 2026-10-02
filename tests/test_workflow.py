@@ -44,6 +44,12 @@ class ManualFileTests(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def test_flexible_part_names_need_no_alias(self):
+        path = self.tmp.write("x.manual.txt",
+                              "Part 3 in C BC: 1\nPart 2 in Bb: 2\nPart 1 in C: 3\nKazoo: 4\n")
+        _, _, unaliased = parse_manual_file(path, {})
+        self.assertEqual(unaliased, [("Kazoo", "kazoo")])
+
     def test_rejects_entry_without_label(self):
         path = self.tmp.write("x.manual.txt", "Flute: 1\n: 2\n")
         with self.assertRaisesRegex(ValueError, "Line 2"):

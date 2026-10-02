@@ -174,8 +174,8 @@ Differences from the sketch above, found against the real PDFs:
   joined by merging spans on the same baseline.
 - **"Known" names** are those the aliases resolve, `Part N in X`, or whose
   ID a reading group covers ("Flute 1" → `flute_1`). Others get a note.
-- **Bare `Part N in C`** keeps no clef and is flagged; no clef is guessed.
-  The clef *hint* (below) reports what the first staff shows.
+- **Bare `Part N in C`** gets its clef from the first staff when the PDF
+  shows it (see "Clef hints"); otherwise it is flagged. No clef is guessed.
 - Module layout: `pages.py` holds the data classes; `score.py` compares a
   draft with a manual file.
 
@@ -226,12 +226,15 @@ Finale-style fonts (Inkpen2, Broadway Copyist, Maestro…). The first staff's
 clef (topmost clef glyph near the left edge) of a part's first page gives
 a `# check` note when:
 
-- a `Part N in C` has no clef in its name: "(the first staff is in bass clef)";
+- a `Part N in C` has no clef in its name: TC / BC is **added to the name**
+  ("clef added from the first staff"; owner's decision 2026-10-02, after
+  first trying it as a note). This runs before the duplicate check, so
+  "Part 3 in C" printed twice in two clefs is not a duplicate;
 - the reading groups read the name in the other clef (group labels say
   "treble clef" / "bass clef"): Euphonium in Soundstorm and Going Quackers,
   where the owner had named the parts Euphonium TC by hand.
 
-Notes only; names are never changed. Things That Go Bump's Opus font is
+Otherwise notes only. Things That Go Bump's Opus font is
 re-encoded, so it gets no hints; scans get none.
 
 ## Decisions (owner, 2026-10-01)
@@ -243,6 +246,10 @@ re-encoded, so it gets no hints; scans get none.
    environment, or a key saved in `~/.config/bandbook/gui.yaml` from a
    settings dialog. Never stored in the project.
 4. Title: yes, detect it (stage 1).
+
+Importing: `Part N in X` names no longer appear in the importer's
+"Unaliased labels" list (`FLEX_ID_RE` in `lib/manual.py`); they follow the
+naming convention and need no alias.
 
 ## Open (owner, 2026-10-02)
 

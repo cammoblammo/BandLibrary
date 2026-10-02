@@ -11,6 +11,11 @@ from .aliases import normalise_part_id
 from .utils import canonicalise_alias_key
 
 
+# "Part 3 in Eb", "Part 4 in C BC": the flexible-arrangement naming
+# convention (see docs/manual-editor.md, "Naming parts")
+FLEX_ID_RE = re.compile(r"part_\d+[a-z]?_in_[a-g]b?(?:_tc|_bc)?")
+
+
 def parse_page_spec(text: str, line_number: int) -> tuple[int, int]:
     text = text.strip()
 
@@ -46,7 +51,8 @@ def parse_manual_file(
     - title may be None if not specified
     - parts is a list of dicts with keys: label, id, pages
     - unaliased is a list of (label, id) tuples for labels resolved
-      by slugification rather than an explicit alias
+      by slugification rather than an explicit alias (flexible-arrangement
+      names like "Part 3 in Eb" are left out: they need no alias)
     """
     title = None
     parts = []
@@ -79,9 +85,10 @@ def parse_manual_file(
             start, end = parse_page_spec(value, i)
 
             part_id = normalise_part_id(key, aliases)
-            # Track labels that fell through to slugification
+            # Track labels that fell through to slugification, apart from
+            # flexible-arrangement names, which need no alias
             alias_key = canonicalise_alias_key(key)
-            if alias_key not in aliases:
+            if alias_key not in aliases and not FLEX_ID_RE.fullmatch(part_id):
                 unaliased.append((key, part_id))
 
             parts.append({

@@ -174,6 +174,17 @@ def _drop_standard_key(s: str) -> str:
 
 def parse_name(text: str, aliases: dict[str, str]) -> NameMatch | None:
     """Read text as a part name, or return None if it isn't one."""
+    match = _parse_name(text, aliases)
+    if match is None and "," in text:
+        # A running header: "Part 5 in C, Trombone/Baritone"
+        name, rest = text.split(",", 1)
+        match = _parse_name(name, aliases)
+        if match and rest.strip():
+            match.printed_for = rest.strip()
+    return match
+
+
+def _parse_name(text: str, aliases: dict[str, str]) -> NameMatch | None:
     if len(text) > MAX_LENGTH * 2:
         return None
     s, notes = normalise(text)

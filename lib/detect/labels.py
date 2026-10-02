@@ -114,6 +114,13 @@ def read_labels(pages: list[RawPage],
             # Nearest the page edge wins if a page has more than one
             line, match = min(in_slot, key=lambda lm: min(lm[0].y0, 1 - lm[0].y1))
             reading.label = match
+            if match.printed_for is None:
+                # e.g. "Part 5 in C" with "Tuba" printed just below it
+                near = [m.label for l, m in candidates[reading.page]
+                        if l is not line and _zone(l) == _zone(line)
+                        and abs(l.y0 - line.y0) < 0.05 and m.label != match.label]
+                if near:
+                    match.printed_for = near[0]
 
     _fill_off_slot(readings, candidates)
     return readings

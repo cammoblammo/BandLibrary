@@ -62,8 +62,8 @@ progress.
    # check: there is also a "Trombone 2": is this "Trombone 1"?
    Trombone: 19
    Trombone 2: 20
-   # check: clef not printed: add TC or BC
-   Part 4 in C: 17
+   # check: clef added from the first staff (bass clef)
+   Part 4 in C BC: 17
    ```
 
 3. Check every line against the PDF, starting with the `# check` notes
@@ -83,14 +83,16 @@ What the notes mean:
 | `no part name found` | Usually a cover or notes page; map by hand if it is a part |
 | `page N shows no part name` | A page without a name was added to the part above it. Check it belongs there |
 | `read "in B" as "in Bb"` | The flat was missing from the PDF's text |
-| `clef not printed: add TC or BC` | Add the clef, or no chair will get the part automatically. If BandBook could see the first staff's clef, the note says which it is |
+| `clef added from the first staff (bass clef)` | A C part's name didn't say its clef, so BandBook added `TC` or `BC` from the clef of the first staff. Check it |
+| `clef not printed: add TC or BC` | BandBook couldn't see the clef (e.g. a scan): add `TC` or `BC` after the key, as in `Part 3 in C BC: 13-14`, or no chair will get the part automatically |
 | `the first staff is in treble clef, but "Euphonium" is read as a bass-clef part` | The PDF's clef doesn't match the name: rename the part (e.g. `Euphonium TC`) if that's right |
 | `not a known part name` | Rename it to a name the aliases know, or add an alias |
 | `is this "Trombone 1"?` | The PDF prints just "Trombone" beside a "Trombone 2" |
-| `used more than once` | Two parts have the same name; rename or remove one |
+| `printed more than once` | The PDF uses the same name for two parts. The note says what differs (clef, or the instruments printed with it). Rename one (e.g. add TC / BC) or remove one you don't need: the import refuses duplicate names |
 
-Clef notes come only from PDFs made by notation software (not scans), and
-only for the first staff. BandBook never changes a name because of them.
+Clefs are read only from PDFs made by notation software (not scans), and
+only from the first staff. Apart from adding TC / BC to C parts, BandBook
+never changes a name because of a clef.
 Detection never guesses a clef or which chair should play a part (for
 example a "Beginners B♭" part shared by two chairs): set that up in
 **Assignments…** as usual.

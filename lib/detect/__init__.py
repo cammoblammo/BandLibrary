@@ -13,11 +13,12 @@ from typing import Callable
 
 import pymupdf
 
+from ..aliases import normalise_part_id
 from ..reading_groups import ReadingGroup, can_read
 from .labels import find_furniture, find_title, read_labels, real_lines
 from .pages import Draft, DraftPart, PageNote, PageReading, RawPage
 from .render import check_count, render
-from .segment import segment
+from .segment import name_notes, segment
 from .sources import ocr
 from .sources.text_layer import read_pdf
 
@@ -38,9 +39,11 @@ def detect_pages(pages: list[RawPage], aliases: dict[str, str],
     parts, skipped = segment(readings)
     names = list(groups or {})
     for part in parts:
+        _clef_hint(part, aliases, groups or {})
         if not part.known and not can_read(part.part_id, names, groups or {}):
             part.notes.insert(0, UNKNOWN_NOTE)
-        _clef_hint(part, readings, groups or {})
+    # After clefs are added: "Part 3 in C" twice may now be BC and TC
+    name_notes(parts)
     return Draft(
         title=find_title(pages, aliases),
         parts=parts,
@@ -98,20 +101,22 @@ def _group_clef(group: ReadingGroup) -> str | None:
     return "treble" if "treble clef" in label else "bass" if "bass clef" in label else None
 
 
-def _clef_hint(part: DraftPart, readings: list[PageReading],
+def _clef_hint(part: DraftPart, aliases: dict[str, str],
                groups: dict[str, ReadingGroup]) -> None:
     """
-    Say which clef the part's first staff is in, where it matters: a C part
-    with no clef in its name, or a name the reading groups read in the
-    other clef ("Euphonium" printed in treble clef). Never renames a part.
+    Use the clef of the part's first staff, where the PDF shows it:
+    - a C part with no clef in its name gets it added ("Part 3 in C BC");
+    - a name the reading groups read in the other clef ("Euphonium"
+      printed in treble clef) gets a note, but is not renamed.
     """
-    clef = next((r.clef for r in readings
-                 if part.start <= r.page <= part.end and r.clef), None)
+    clef = part.clef
     if clef is None:
         return
     if CLEF_NOT_PRINTED in part.notes:
-        i = part.notes.index(CLEF_NOT_PRINTED)
-        part.notes[i] = f"{CLEF_NOT_PRINTED} (the first staff is in {clef} clef)"
+        part.label = f"{part.label} {'TC' if clef == 'treble' else 'BC'}"
+        part.part_id = normalise_part_id(part.label, aliases)
+        part.notes[part.notes.index(CLEF_NOT_PRINTED)] = \
+            f"clef added from the first staff ({clef} clef)"
         return
     clefs = {_group_clef(g) for name, g in groups.items()
              if can_read(part.part_id, [name], groups)} - {None}

@@ -11,7 +11,7 @@ from lib.detect import detect_pages, detect_parts, render
 from lib.detect.names import parse_name
 from lib.detect.pages import PageReading, RawPage, TextLine
 from lib.detect.score import score_draft
-from lib.detect.segment import segment
+from lib.detect.segment import name_notes, segment
 from lib.manual import parse_manual_file
 from lib.reading_groups import load_reading_groups
 
@@ -59,6 +59,11 @@ class NameTests(unittest.TestCase):
         self.assertTrue(any("TC or BC" in n for n in m.notes))
         self.assertEqual(self.name("Part 4 in C BC").part_id, "part_4_in_c_bc")
 
+    def test_running_header_with_instruments(self):
+        m = self.name("Part 5 in C, Trombone/Baritone")
+        self.assertEqual((m.label, m.printed_for), ("Part 5 in C", "Trombone/Baritone"))
+        self.assertIsNone(self.name("Hard Rock, fast"))
+
     def test_clef_words(self):
         self.assertEqual(self.name("Euphonium (treble clef)").part_id, "euphonium_tc")
 
@@ -96,11 +101,29 @@ class SegmentTests(unittest.TestCase):
     def test_same_name_after_a_gap_is_flagged(self):
         parts, _ = segment([self.reading(1, "Part 5 in C"), self.reading(2, "Tuba"),
                             self.reading(3, "Part 5 in C")])
+        name_notes(parts)
         self.assertEqual(len(parts), 3)
         self.assertTrue(any("more than once" in n for n in parts[0].notes))
 
+    def test_same_name_in_different_clefs(self):
+        a, b = self.reading(1, "Part 3 in C"), self.reading(3, "Part 3 in C")
+        a.clef, b.clef = "bass", "treble"
+        parts, _ = segment([a, self.reading(2, "Tuba"), b])
+        name_notes(parts)
+        self.assertIn("adding TC or BC will tell them apart", parts[0].notes[-1])
+        self.assertIn("also page 3, treble clef", parts[0].notes[-1])
+
+    def test_same_name_for_different_instruments(self):
+        a, b = self.reading(1, "Part 5 in C"), self.reading(3, "Part 5 in C")
+        a.label.printed_for, b.label.printed_for = "Trombone/Baritone", "Tuba"
+        parts, _ = segment([a, self.reading(2, "Tuba"), b])
+        name_notes(parts)
+        self.assertIn("(this one for Trombone/Baritone); also page 3, for Tuba",
+                      parts[0].notes[-1])
+
     def test_bare_name_beside_a_numbered_one(self):
         parts, _ = segment([self.reading(1, "Trumpet"), self.reading(2, "Trumpet 2")])
+        name_notes(parts)
         self.assertTrue(any('"Trumpet 1"' in n for n in parts[0].notes))
 
 
@@ -170,11 +193,16 @@ class ClefHintTests(unittest.TestCase):
                  for n, (name, clef) in enumerate(names_and_clefs, 1)]
         return {p.label: p.notes for p in detect_pages(pages, ALIASES, GROUPS).parts}
 
-    def test_clef_shown_for_c_part_without_one(self):
+    def test_clef_added_to_c_part_without_one(self):
         notes = self.draft(("Part 4 in C", "bass"), ("Part 1 in C", None))
-        self.assertEqual(notes["Part 4 in C"],
-                         ["clef not printed: add TC or BC (the first staff is in bass clef)"])
+        self.assertEqual(notes["Part 4 in C BC"],
+                         ["clef added from the first staff (bass clef)"])
         self.assertEqual(notes["Part 1 in C"], ["clef not printed: add TC or BC"])
+
+    def test_same_c_name_in_two_clefs_is_not_a_duplicate(self):
+        notes = self.draft(("Part 3 in C", "bass"), ("Tuba", "bass"), ("Part 3 in C", "treble"))
+        self.assertEqual(notes["Part 3 in C BC"], ["clef added from the first staff (bass clef)"])
+        self.assertEqual(notes["Part 3 in C TC"], ["clef added from the first staff (treble clef)"])
 
     def test_name_read_in_the_other_clef(self):
         notes = self.draft(("Euphonium", "treble"), ("Trombone", "bass"),
@@ -250,7 +278,9 @@ class DetectButtonTests(unittest.TestCase):
         from lib.detect.sources import ocr
         from lib.editor_widget import EditorWidget
 
-        app = QApplication.instance() or QApplication([])
+        # Kept on the class: a QApplication that is garbage-collected
+        # takes its widgets with it
+        app = DetectButtonTests.app = QApplication.instance() or QApplication([])
         pdf = LIBRARY / slug / f"{slug}.pdf"
         if pdf.stat().st_size < 1000:
             self.skipTest("library PDFs are Git LFS pointers here")
