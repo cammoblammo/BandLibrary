@@ -26,6 +26,8 @@ FURNITURE_MIN_PAGES = 3    # …and at least this many
 SCORE_MIN_NAMES = 4        # distinct staff names that make a score page
 SCORE_MARGIN = 0.25        # …in the left quarter of the page
 SCORE_SPREAD = 0.25        # …spread over at least this much of its height
+TITLE_MIN_SIZE = 14        # points: repeated text smaller than this isn't the title
+PUNCTUATION = ".,'’!?&()-:;\"“”"
 
 
 def _zone(line: TextLine) -> str:
@@ -169,14 +171,18 @@ def _best_slot(candidates: dict[int, list[tuple[TextLine, NameMatch]]],
 
 def find_title(pages: list[RawPage], aliases: dict[str, str]) -> str | None:
     """
-    The largest repeated text that isn't a part name or a credit line;
-    failing that, the largest text on the first page with text.
+    The largest repeated text that isn't a part name or a credit line
+    (and is big enough to be a heading, not "Moderate Rock" under every
+    title); failing that, the largest text on the first page with text.
     """
     furniture = find_furniture(pages)
 
     def usable(line: TextLine) -> bool:
         low = line.text.lower()
-        return (sum(c.isalpha() for c in line.text) >= 3
+        # Mostly plain letters: music glyphs such as "œ" count as letters too
+        chars = [c for c in line.text if not c.isspace() and c not in PUNCTUATION]
+        letters = sum(c.isascii() and c.isalpha() for c in chars)
+        return (letters >= 3 and letters >= 0.6 * len(chars)
                 and line.text[:1].isalpha() and not parse_name(line.text, aliases)
                 and "www" not in low and "©" not in line.text
                 and "rights reserved" not in low and "copy purchased" not in low
@@ -186,7 +192,7 @@ def find_title(pages: list[RawPage], aliases: dict[str, str]) -> str | None:
     for page in pages:
         for line in page.lines:
             key = canonicalise_alias_key(line.text)
-            if key in furniture and usable(line):
+            if key in furniture and line.size >= TITLE_MIN_SIZE and usable(line):
                 best = repeated.get(key)
                 if best is None or line.size > best.size:
                     repeated[key] = line

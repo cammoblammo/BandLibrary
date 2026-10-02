@@ -97,3 +97,27 @@ def _duplicate_note(part: DraftPart, others: list[DraftPart]) -> str:
         advice = "rename one so each name is used once, or remove one you don't need"
     this = f" (this one for {part.printed_for})" if part.printed_for else ""
     return f'"{part.label}" is printed more than once{this}; also {where}: {advice}'
+
+
+OPENING_SHARE = 0.75    # share of parts that start on a page with the title
+
+
+def continuation_notes(parts: list[DraftPart], titled: set[int],
+                       checkable: set[int]) -> None:
+    """
+    Flag a part that starts on a page without the title when nearly every
+    other part starts on one: it may be a second page with a misprinted
+    header (Bad Guy, page 16). A note only; the pages are not merged.
+
+    titled: pages showing the piece's title; checkable: pages whose text
+    can be trusted for this (the text layer, not OCR).
+    """
+    starts = [p.start for p in parts if p.start in checkable]
+    if len(starts) < 3 or sum(s in titled for s in starts) < OPENING_SHARE * len(starts):
+        return
+    for before, part in zip(parts, parts[1:]):
+        if part.start in checkable and part.start not in titled \
+                and before.end == part.start - 1:
+            part.notes.insert(0, f"page {part.start} looks like a second page (no title), "
+                                 f'but its header says "{part.label}": is it part of '
+                                 f'"{before.label}" above?')

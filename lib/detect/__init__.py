@@ -15,10 +15,11 @@ import pymupdf
 
 from ..aliases import normalise_part_id
 from ..reading_groups import ReadingGroup, can_read
+from ..utils import canonicalise_alias_key
 from .labels import find_furniture, find_title, read_labels, real_lines
 from .pages import Draft, DraftPart, PageNote, PageReading, RawPage
 from .render import check_count, render
-from .segment import name_notes, segment
+from .segment import continuation_notes, name_notes, segment
 from .sources import ocr
 from .sources.text_layer import read_pdf
 
@@ -44,8 +45,14 @@ def detect_pages(pages: list[RawPage], aliases: dict[str, str],
             part.notes.insert(0, UNKNOWN_NOTE)
     # After clefs are added: "Part 3 in C" twice may now be BC and TC
     name_notes(parts)
+    title = find_title(pages, aliases)
+    if title:
+        key = canonicalise_alias_key(title)
+        titled = {p.page for p in pages
+                  if any(canonicalise_alias_key(l.text) == key for l in p.lines)}
+        continuation_notes(parts, titled, {p.page for p in pages if p.source == "text"})
     return Draft(
-        title=find_title(pages, aliases),
+        title=title,
         parts=parts,
         skipped=skipped,
         page_count=len(pages),

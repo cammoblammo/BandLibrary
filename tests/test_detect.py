@@ -177,6 +177,34 @@ class LabelFindingTests(unittest.TestCase):
         self.assertIsNone(draft.title)
 
 
+class SecondPageTests(unittest.TestCase):
+    def test_misprinted_header_on_a_second_page_is_flagged(self):
+        title = line("A Piece Title", y=0.05, size=30)
+
+        def first(n, name):
+            return page(n, title, line(name, y=0.1, size=16))
+
+        def second(n, name):
+            return page(n, line(name, y=0.05, size=10))
+
+        pages = [first(1, "Part 1 in Bb"), second(2, "Part 1 in Bb"),
+                 first(3, "Part 3 in Bb"), second(4, "Part 3 in F"),   # misprint
+                 first(5, "Part 3 in F"), first(6, "Part 4 in Bb")]
+        draft = detect_pages(pages, ALIASES, GROUPS)
+        notes = {(p.label, p.start): p.notes for p in draft.parts}
+        self.assertTrue(notes[("Part 3 in F", 4)][0].startswith(
+            "page 4 looks like a second page (no title)"))
+        self.assertEqual(notes[("Part 1 in Bb", 1)], [])
+
+
+class TitleTests(unittest.TestCase):
+    def test_music_glyphs_and_small_repeated_text_are_not_the_title(self):
+        pages = [page(n, line("j#œ œ ‰ >", y=0.3, size=40), line("Moderate Rock", y=0.15, size=9),
+                      line("T.W.A.", y=0.05, size=20) if n == 1 else line("x", y=0.9))
+                 for n in range(1, 5)]
+        self.assertEqual(detect_pages(pages, ALIASES, GROUPS).title, "T.W.A.")
+
+
 class KnownNameTests(unittest.TestCase):
     def test_names_outside_aliases_and_groups_are_flagged(self):
         pages = [page(n, *furniture(), line(name))

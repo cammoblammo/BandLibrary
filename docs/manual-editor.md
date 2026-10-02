@@ -88,6 +88,7 @@ What the notes mean:
 | `the first staff is in treble clef, but "Euphonium" is read as a bass-clef part` | The PDF's clef doesn't match the name: rename the part (e.g. `Euphonium TC`) if that's right |
 | `not a known part name` | Rename it to a name the aliases know, or add an alias |
 | `is this "Trombone 1"?` | The PDF prints just "Trombone" beside a "Trombone 2" |
+| `looks like a second page (no title)` | Every other part starts on a page with the title, but this one doesn't: its header may be misprinted. If the page belongs to the part above, delete this line and extend that part's range |
 | `printed more than once` | The PDF uses the same name for two parts. The note says what differs (clef, or the instruments printed with it). Rename one (e.g. add TC / BC) or remove one you don't need: the import refuses duplicate names |
 
 Clefs are read only from PDFs made by notation software (not scans), and

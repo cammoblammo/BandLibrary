@@ -247,6 +247,14 @@ re-encoded, so it gets no hints; scans get none.
    settings dialog. Never stored in the project.
 4. Title: yes, detect it (stage 1).
 
+**Misprinted second-page headers** (Bad Guy page 16 is page 2 of "Part 3
+in B♭" but headed "Part 3 in C"): when at least 75% of parts start on a
+page showing the title, a part starting on a text-layer page without it,
+straight after another part, gets "looks like a second page" — a note,
+never a merge. Found because the title had been read as music glyphs
+("j#œ œ ‰ >"): titles now need mostly plain letters, and repeated text
+must be at least 14 pt to count as the title.
+
 Importing: `Part N in X` names no longer appear in the importer's
 "Unaliased labels" list (`FLEX_ID_RE` in `lib/manual.py`); they follow the
 naming convention and need no alias.
