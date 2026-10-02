@@ -1,0 +1,47 @@
+schema_version: 1
+piece:
+  id: when-the-saints-go-marching-in
+  title: WHEN THE SAINTS GO MARCHING IN
+  source_pdf: when-the-saints-go-marching-in.pdf
+  status: manual
+parts:
+- label: Flute
+  id: flute
+  pages:
+  - 1
+  - 1
+- label: Clarinet
+  id: clarinet_1
+  pages:
+  - 2
+  - 2
+- label: Trumpet
+  id: trumpet_1
+  pages:
+  - 3
+  - 3
+- label: French Horn
+  id: french_horn
+  pages:
+  - 4
+  - 4
+- label: Trombone
+  id: trombone
+  pages:
+  - 5
+  - 5
+- label: Baritone TC
+  id: baritone_tc
+  pages:
+  - 6
+  - 6
+- label: Tuba
+  id: tuba
+  pages:
+  - 7
+  - 7
+- label: Percussion
+  id: percussion
+  pages:
+  - 8
+  - 8

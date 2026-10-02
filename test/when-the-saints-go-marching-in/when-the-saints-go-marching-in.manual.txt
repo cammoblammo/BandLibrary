@@ -1,0 +1,15 @@
+# check: title read from the PDF
+Title: WHEN THE SAINTS GO MARCHING IN
+# Detected by BandBook from the PDF's text. Check every line against
+# the PDF before importing; look first at lines marked "check".
+# Read from scanned images (OCR): pages 1-8.
+# OCR makes mistakes: check names and page numbers closely.
+Flute: 1
+Clarinet: 2
+Trumpet: 3
+French Horn: 4
+# check: not a known part name: check it, or add an alias
+Trombone: 5
+Baritone TC: 6
+Tuba: 7
+Percussion: 8
