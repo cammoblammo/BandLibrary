@@ -180,6 +180,19 @@ class BandBookWindow(QMainWindow):
         save_config(self._config)
 
     def closeEvent(self, event):
+        # Closing while a background job runs would kill BandBook mid-job
+        busy = self.editor_widget.is_busy()
+        build = getattr(self.build_widget, "_build_thread", None)
+        if busy is None and build is not None and build.isRunning():
+            busy = "building booklets"
+        if busy:
+            QMessageBox.information(
+                self, "Still working",
+                f"BandBook is still {busy}. Close it once that has finished "
+                "(the status bar shows progress).")
+            event.ignore()
+            return
+
         # Save window size
         self._config["window_width"] = self.width()
         self._config["window_height"] = self.height()
@@ -398,7 +411,26 @@ class TextReportDialog(QDialog):
 # Entry point
 # ---------------------------------------------------------------------------
 
+def _show_unexpected_error(exc_type, exc, tb):
+    """
+    Show an unexpected error instead of letting PyQt end the program
+    (its default for errors raised by buttons and menus).
+    """
+    import traceback
+    text = "".join(traceback.format_exception(exc_type, exc, tb))
+    print(text, file=sys.stderr)
+    if QApplication.instance() is None:
+        return
+    box = QMessageBox(QMessageBox.Icon.Critical, "Something went wrong",
+                      f"BandBook hit an unexpected error:\n\n{exc}\n\n"
+                      "It is still running, but check the last thing you did. "
+                      "The details below help when reporting this.")
+    box.setDetailedText(text)
+    box.exec()
+
+
 def main():
+    sys.excepthook = _show_unexpected_error
     parser = argparse.ArgumentParser(description="BandBook GUI")
     parser.add_argument(
         "--aliases",

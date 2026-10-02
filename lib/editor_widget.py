@@ -443,6 +443,59 @@ class ManualEditor(QTextEdit):
 # Background part detection
 # ---------------------------------------------------------------------------
 
+class GitThread(QThread):
+    """Commit an imported piece and push the current branch, off the UI thread."""
+    progress = pyqtSignal(str)
+    done = pyqtSignal(bool, str)     # ok, message
+
+    def __init__(self, project_root: Path, piece_dir: Path, slug: str):
+        super().__init__()
+        self.project_root = project_root
+        self.piece_dir = piece_dir
+        self.slug = slug
+
+    def _git(self, *args: str, timeout: int = 15):
+        import subprocess
+        return subprocess.run(["git", *args], cwd=str(self.project_root),
+                              capture_output=True, text=True, timeout=timeout)
+
+    def run(self):
+        try:
+            self.done.emit(True, self._commit_and_push())
+        except Exception as e:
+            self.done.emit(False, str(e))
+
+    def _commit_and_push(self) -> str:
+        piece = str(self.piece_dir)
+        self.progress.emit("Committing the imported piece…")
+        result = self._git("add", piece)
+        if result.returncode != 0:
+            raise RuntimeError(f"git add failed:\n{result.stderr.strip()}")
+
+        # Nothing to commit if the re-import produced identical files
+        if self._git("diff", "--cached", "--quiet", "--", piece).returncode == 0:
+            return f"No changes to commit for {self.slug}."
+
+        title = self.slug
+        yaml_path = self.piece_dir / f"{self.slug}.yaml"
+        if yaml_path.exists():
+            data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
+            title = data.get("piece", {}).get("title", self.slug)
+
+        # Pathspec limits the commit to this piece, ignoring anything else
+        # that happens to be staged
+        result = self._git("commit", "-m", f"Import: {title}", "--", piece)
+        if result.returncode != 0:
+            raise RuntimeError(f"git commit failed:\n{result.stderr.strip()}")
+
+        # Uploading the PDF (Git LFS) can take a while on a slow connection
+        self.progress.emit(f"Pushing '{title}' to GitHub (uploading the PDF)…")
+        result = self._git("push", "origin", "HEAD", timeout=300)
+        if result.returncode != 0:
+            raise RuntimeError(f"git push failed:\n{result.stderr.strip()}")
+        return f"Imported and pushed '{title}'."
+
+
 class DetectThread(QThread):
     progress = pyqtSignal(int, int, str)  # page, of pages, "text" or "ocr"
     done = pyqtSignal(object)        # lib.detect.Draft
@@ -484,6 +537,7 @@ class EditorWidget(QWidget):
         self._importer_path = importer_path or Path(__file__).parent.parent / "tools" / "import_piece.py"
         self._aliases_path = aliases_path or Path(__file__).parent.parent / "config" / "aliases.yaml"
         self._detect_thread: DetectThread | None = None
+        self._git_thread: GitThread | None = None
 
         # Use provided status bar or create internal one
         if status_bar is not None:
@@ -686,7 +740,16 @@ class EditorWidget(QWidget):
         )
         if path:
             p = Path(path)
-            self.editor.load_file(p)
+            try:
+                self.editor.load_file(p)
+            except (OSError, UnicodeDecodeError) as e:
+                hint = (" It looks like a PDF: use Open PDF… for that."
+                        if p.suffix.lower() == ".pdf" else "")
+                QMessageBox.warning(
+                    self, "Open Manual File",
+                    f"{p.name} is not a part list (.manual.txt) that BandBook can read."
+                    f"{hint}\n\n{e}")
+                return
             self.file_label.setText(p.name)
             self._status.showMessage(f"Loaded: {p.name}")
 
@@ -914,72 +977,34 @@ class EditorWidget(QWidget):
         dlg.exec()
 
     def _git_commit_push(self, pdf_file: Path):
-        """Commit the new library entry and push to main."""
+        """Commit the new library entry and push the current branch, in the background."""
         from .utils import slugify
         slug = slugify(pdf_file.stem)
         project_root = self._importer_path.parent.parent
-        piece_dir = project_root / "library" / slug
+        thread = GitThread(project_root, project_root / "library" / slug, slug)
+        thread.progress.connect(lambda msg: self._status.showMessage(msg))
+        thread.done.connect(self._on_git_done)
+        self._git_thread = thread
+        self.import_btn.setEnabled(False)
+        thread.start()
 
-        self._status.showMessage("Running git commit and push…")
+    def _on_git_done(self, ok: bool, message: str):
+        self.import_btn.setEnabled(True)
+        if ok:
+            self._status.showMessage(message, 6000)
+            return
+        QMessageBox.critical(self, "Git Error",
+            f"Import succeeded but git operation failed:\n\n{message}\n\n"
+            f"The piece is in the library — use the CLI to commit and push manually.")
+        self._status.showMessage("Import succeeded, git push failed.", 5000)
 
-        import subprocess
-
-        try:
-            # Stage the new piece directory
-            result = subprocess.run(
-                ["git", "add", str(piece_dir)],
-                cwd=str(project_root),
-                capture_output=True, text=True, timeout=15
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"git add failed:\n{result.stderr.strip()}")
-
-            # Derive title from YAML for commit message
-            # Nothing to commit if the re-import produced identical files
-            result = subprocess.run(
-                ["git", "diff", "--cached", "--quiet", "--", str(piece_dir)],
-                cwd=str(project_root),
-                capture_output=True, text=True, timeout=15
-            )
-            if result.returncode == 0:
-                self._status.showMessage(
-                    f"No changes to commit for {slug}.", 6000)
-                return
-
-            yaml_path = piece_dir / f"{slug}.yaml"
-            title = slug
-            if yaml_path.exists():
-                import yaml as _yaml
-                data = _yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
-                title = data.get("piece", {}).get("title", slug)
-
-            # Commit
-            result = subprocess.run(
-                # Pathspec limits the commit to this piece, ignoring
-                # anything else that happens to be staged
-                ["git", "commit", "-m", f"Import: {title}", "--", str(piece_dir)],
-                cwd=str(project_root),
-                capture_output=True, text=True, timeout=15
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"git commit failed:\n{result.stderr.strip()}")
-
-            # Push to main
-            result = subprocess.run(
-                ["git", "push", "origin", "HEAD"],
-                cwd=str(project_root),
-                capture_output=True, text=True, timeout=30
-            )
-            if result.returncode != 0:
-                raise RuntimeError(f"git push failed:\n{result.stderr.strip()}")
-
-            self._status.showMessage(f"Imported and pushed '{title}'.", 6000)
-
-        except Exception as e:
-            QMessageBox.critical(self, "Git Error",
-                f"Import succeeded but git operation failed:\n\n{e}\n\n"
-                f"The piece is in the library — use the CLI to commit and push manually.")
-            self._status.showMessage("Import succeeded, git push failed.", 5000)
+    def is_busy(self) -> str | None:
+        """What is still running in the background, if anything."""
+        if self._git_thread is not None and self._git_thread.isRunning():
+            return "pushing the imported piece to GitHub"
+        if self._detect_thread is not None and self._detect_thread.isRunning():
+            return "detecting parts"
+        return None
 
     def has_unsaved_changes(self) -> bool:
         return self.editor.is_modified()
